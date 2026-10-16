@@ -244,7 +244,7 @@ function Capture({ store, products }: { store: Store; products: Product[] }) {
     try {
       const add = await Promise.all(
         adding.map(async (draft) =>
-          toProductInput(draft, draft.photo ? await saveProductImage(store.slug, draft.photo) : undefined, shelf.name),
+          toProductInput(draft, draft.photo ? await saveProductImage(store, draft.photo) : undefined, shelf.name),
         ),
       );
       // Timestamp-based positions keep new items after older ones, in video order.

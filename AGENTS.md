@@ -17,4 +17,4 @@ Read `README.md` first. It covers the structure, import rules, data model, secur
 - Firestore rules are the access control. When a schema in `src/domain/` changes, update `firestore.rules` to match.
 - Styles: SCSS modules starting with `@use "styles" as *;`, tokens only, no borders, mobile first. Use CSS for entrance animation and `motion/react` for interaction.
 - Motion: animate only `transform`/`opacity` (use the `lift()` / `shadow-layer()` mixins for hover shadows), tier reduced motion per component, and follow `.claude/skills/60fps-animation` and `accessible-animation`.
-- Run `npm run typecheck`, `npm run lint` and `npm run build` before handing work back.
+- Run `npm run typecheck`, `npm run lint`, `npm test` and `npm run build` before handing work back. Pure logic gets a `*.test.ts` next to it.

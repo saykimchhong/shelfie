@@ -6,7 +6,7 @@ import { Button, Sheet, Spinner, Switch, TextField, Thumb } from "@/components/u
 import { SHELF_NAME_MAX, type Product, type ProductInput } from "@/domain/product";
 import { canonicalShelf } from "@/domain/shelf";
 import type { Store } from "@/domain/store";
-import { generateProductPhoto, saveProductImage, urlToBlob, useObjectUrl } from "@/features/media";
+import { generateProductPhoto, removeImage, saveProductImage, urlToBlob, useObjectUrl } from "@/features/media";
 import { addProducts, deleteProduct, updateProduct, useRefreshStorefront } from "./data";
 import styles from "./ProductEditor.module.scss";
 
@@ -95,11 +95,12 @@ function EditorForm({
         inStock,
       };
       const imageUrl =
-        photo.kind === "new" ? await saveProductImage(store.slug, photo.blob) : photo.kind === "removed" ? undefined : null;
+        photo.kind === "new" ? await saveProductImage(store, photo.blob) : photo.kind === "removed" ? undefined : null;
 
       if (product) {
         // imageUrl: null = leave as is; undefined = remove; string = replace.
         await updateProduct(store.slug, product.id, imageUrl === null ? fields : { ...fields, imageUrl });
+        if (imageUrl !== null) removeImage(product.imageUrl);
       } else {
         await addProducts(store.slug, [{ ...fields, imageUrl: imageUrl ?? undefined }], Date.now());
       }
@@ -117,6 +118,7 @@ function EditorForm({
     if (!confirmDelete) return setConfirmDelete(true);
     setSaving(true);
     await deleteProduct(store.slug, product.id);
+    removeImage(product.imageUrl);
     await refreshStorefront(store.slug);
     onDone();
   }

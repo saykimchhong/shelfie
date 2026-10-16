@@ -15,14 +15,16 @@ npm run dev                  # http://localhost:3000
 | `npm run dev` | Dev server (Turbopack) |
 | `npm run build` / `start` | Production build / serve |
 | `npm run typecheck` | Generate route types + `tsc` |
+| `npm test` | Unit tests (Vitest): shelves, restock merge, mock AI |
 | `npm run lint` | ESLint |
-| `npm run deploy:rules` | Push `firestore.rules` + indexes to Firebase |
+| `npm run deploy:rules` | Push `firestore.rules`, indexes and `storage.rules` to Firebase |
 
 ### One-time Firebase setup
 
 1. **Authentication → Sign-in method → Google → Enable.**
 2. **Firestore Database → Create database** in production mode. A region near our users, e.g. `asia-southeast1` (Singapore).
-3. **Deploy the rules:** `npx firebase-tools login`, then `npm run deploy:rules -- --project <project-id>`. Until you do, Firestore denies everything, and creating a store shows a "rules aren't deployed" message.
+   **Storage → Get started** to create the photo bucket (needs the Blaze plan).
+3. **Deploy the rules:** `npx firebase-tools login`, then `npm run deploy:rules -- --project <project-id>`. Until you do, Firestore denies everything, and creating a store shows a "rules aren't deployed" message. A bucket made in test mode stays open to everyone until `storage.rules` is deployed.
 4. **Authentication → Settings → Authorized domains:** add the deployed domain (localhost is already there).
 5. **Gemini:** create a key at <https://aistudio.google.com/apikey> and put it in `GEMINI_API_KEY`.
 
@@ -37,7 +39,7 @@ The whole seller flow (film → check → photos → store) runs today without a
 | Video → products | `SHELFIE_AI=mock`: sample products for the store's language and currency, after a 2s delay | `SHELFIE_AI=gemini` + `GEMINI_API_KEY` | `src/server/extraction/` |
 | Default product photo | Frame grabbed from the seller's own video, in the browser (free) | (already real) | `src/features/media/video.ts` |
 | "AI photo" | Local canvas "studio shot" of that frame | Call Gemini image editing from `generateProductPhoto()` | `src/features/media/generate.ts` |
-| Photo storage | Small WebP stored inline in the product doc (no Firebase Storage or Blaze plan) | Upload with `firebase/storage` in `saveProductImage()` | `src/features/media/storage.ts` |
+| Photo storage | Firebase Storage, `sellers/{uid}/stores/{slug}/…` (inline data URL only when no bucket is configured) | (already real) | `src/features/media/storage.ts` |
 
 The review screen shows a **Mock AI** badge when results come from the mock.
 
@@ -93,7 +95,8 @@ src/
   lib/                  Pure helpers (env, format, palette, contact links, site URLs) + Firebase client
   server/               server-only: token verification, extraction providers, cached reads, actions
   styles/               Tokens, mixins, globals
-firestore.rules         The real access control
+firestore.rules         The real access control (data)
+storage.rules           Photo uploads: sellers write only under their own uid
 ```
 
 **Import rules**
@@ -123,6 +126,7 @@ The schemas live in `src/domain/`. If you add a required field, update `validSto
 ## Security model
 
 - **Firestore rules are the boundary.** Anyone can read a store and its products once `published == true`. Only the owner (`ownerId == auth.uid`) can read drafts or write anything.
+- **Photos** sit in Storage under the seller's uid, so `storage.rules` checks ownership without reading Firestore. Anyone can read them, like the store they're on.
 - **The server reads as the public.** `server/storefront.ts` uses `firebase/firestore/lite` without credentials, so the rules apply to it too. It cannot leak a draft store even by mistake.
 - **API routes and server actions verify the Firebase ID token** (`server/auth.ts`). This only needs the project ID.
 - `<AuthGate>` is a UX redirect, not a security check.
@@ -174,7 +178,7 @@ App Hosting builds the app from GitHub on every push to `main`. No Firebase keys
 - **Next.js 16** isn't on App Hosting's official support list yet (it lists 13.5–15.2). Its adapter accepts any version and our standalone build runs, but if a rollout fails at the build step, check the build log first.
 - **Uploads go through Cloud Run, capped at 32 MB.** Mock mode never uploads the video (frames are taken in the browser). Real AI mode accepts videos up to 30 MB. For longer videos, upload straight from the browser to Gemini through a resumable upload URL created by the server.
 - **`maxInstances: 1`** keeps the in-memory storefront cache consistent. Add a shared cache (`use cache: remote`) before scaling out.
-- **Inline photos** make store pages heavy. A store with 6 photos is about 0.5 MB of HTML. Switch `saveProductImage()` to Firebase Storage before real traffic.
+- **Older products keep inline photos** (data URLs) until the seller replaces them. New photos go to Storage.
 
 ## Notes on this Next.js version (16.4)
 

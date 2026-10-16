@@ -32,7 +32,7 @@ import {
 } from "@/domain/store";
 import { DEFAULT_THEME, type Theme } from "@/domain/theme";
 import { useSignedInUser } from "@/features/auth";
-import { saveStoreLogo, useObjectUrl } from "@/features/media";
+import { removeImage, saveStoreLogo, useObjectUrl } from "@/features/media";
 import { StorefrontView } from "@/features/storefront";
 import { PhonePreview, ThemePicker } from "@/features/theme";
 import { initials } from "@/lib/format";
@@ -159,7 +159,7 @@ function StoreEditor({ store }: { store: Store }) {
     try {
       const logoPatch =
         logo.kind === "new"
-          ? { logoUrl: await saveStoreLogo(store.slug, logo.blob) }
+          ? { logoUrl: await saveStoreLogo(store, logo.blob) }
           : logo.kind === "removed"
             ? { logoUrl: undefined } // removes it
             : {};
@@ -172,6 +172,7 @@ function StoreEditor({ store }: { store: Store }) {
         restock: form.restock,
         ...logoPatch,
       });
+      if (logo.kind !== "kept") removeImage(store.logoUrl);
       await refreshStorefront(store.slug);
       setSaved(form);
       setLogo({ kind: "kept" });
