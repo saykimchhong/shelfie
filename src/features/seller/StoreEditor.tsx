@@ -20,12 +20,14 @@ import {
 } from "@/components/ui";
 import { sampleStorefront } from "@/domain/samples";
 import {
+  DEFAULT_RESTOCK,
   STORE_DESCRIPTION_MAX,
   storeInputSchema,
   storeSchema,
   type Currency,
   type LabelLanguage,
   type PublicStore,
+  type RestockSettings,
   type Store,
 } from "@/domain/store";
 import { DEFAULT_THEME, type Theme } from "@/domain/theme";
@@ -35,7 +37,7 @@ import { StorefrontView } from "@/features/storefront";
 import { PhonePreview, ThemePicker } from "@/features/theme";
 import { initials } from "@/lib/format";
 import { updateStore, useMyStore, useProducts, useRefreshStorefront } from "./data";
-import { CURRENCY_OPTIONS, LABEL_LANGUAGE_OPTIONS, PHONE_PLACEHOLDER } from "./options";
+import { CURRENCY_OPTIONS, LABEL_LANGUAGE_OPTIONS, MISSING_PRODUCT_OPTIONS, PHONE_PLACEHOLDER } from "./options";
 import { DashboardSkeleton } from "./SellerHome";
 import styles from "./StoreEditor.module.scss";
 
@@ -64,6 +66,7 @@ type Form = {
   currency: Currency;
   labelLanguage: LabelLanguage;
   theme: Theme;
+  restock: RestockSettings;
 };
 
 // The logo is a file, so it's tracked apart from the text fields.
@@ -79,6 +82,7 @@ function toForm(store: Store): Form {
     currency: store.currency,
     labelLanguage: store.labelLanguage,
     theme: store.theme ?? DEFAULT_THEME,
+    restock: store.restock ?? DEFAULT_RESTOCK,
   };
 }
 
@@ -165,6 +169,7 @@ function StoreEditor({ store }: { store: Store }) {
         tagline: parsed.data.tagline,
         description: parsed.data.description,
         theme: form.theme,
+        restock: form.restock,
         ...logoPatch,
       });
       await refreshStorefront(store.slug);
@@ -281,6 +286,22 @@ function StoreEditor({ store }: { store: Store }) {
               error={errors.line}
               autoCapitalize="none"
             />
+          </Section>
+        </Reveal>
+
+        <Reveal delay={0.18} className={styles.restock}>
+          <Section title="Restock">
+            <Stack gap={2}>
+              <Segmented
+                label="Products missing from a re-filmed shelf"
+                options={MISSING_PRODUCT_OPTIONS}
+                value={form.restock.missing}
+                onChange={(missing) => set("restock", { missing })}
+              />
+              <Text size="xs" tone="subtle">
+                You can still change each one before saving.
+              </Text>
+            </Stack>
           </Section>
         </Reveal>
       </div>

@@ -1,9 +1,10 @@
 "use client";
 
 import { ImageOff, ImagePlus, Sparkles, Trash2 } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import { useId, useState, type FormEvent } from "react";
 import { Button, Sheet, Spinner, Switch, TextField, Thumb } from "@/components/ui";
-import type { Product, ProductInput } from "@/domain/product";
+import { SHELF_NAME_MAX, type Product, type ProductInput } from "@/domain/product";
+import { canonicalShelf } from "@/domain/shelf";
 import type { Store } from "@/domain/store";
 import { generateProductPhoto, saveProductImage, urlToBlob, useObjectUrl } from "@/features/media";
 import { addProducts, deleteProduct, updateProduct, useRefreshStorefront } from "./data";
@@ -15,16 +16,19 @@ export function ProductEditor({
   onClose,
   store,
   product,
+  shelves,
 }: {
   open: boolean;
   onClose: () => void;
   store: Store;
   product: Product | null;
+  // The store's shelves, offered as suggestions.
+  shelves: readonly string[];
 }) {
   return (
     <Sheet open={open} onClose={onClose} title={product ? "Edit product" : "Add product"}>
       {/* Keyed so the form resets for each product. */}
-      <EditorForm key={product?.id ?? "new"} store={store} product={product} onDone={onClose} />
+      <EditorForm key={product?.id ?? "new"} store={store} product={product} shelves={shelves} onDone={onClose} />
     </Sheet>
   );
 }
@@ -34,12 +38,24 @@ type PhotoState =
   | { kind: "new"; blob: Blob }
   | { kind: "removed" };
 
-function EditorForm({ store, product, onDone }: { store: Store; product: Product | null; onDone: () => void }) {
+function EditorForm({
+  store,
+  product,
+  shelves,
+  onDone,
+}: {
+  store: Store;
+  product: Product | null;
+  shelves: readonly string[];
+  onDone: () => void;
+}) {
   const refreshStorefront = useRefreshStorefront();
+  const shelfListId = useId();
   const [name, setName] = useState(product?.name ?? "");
   const [localName, setLocalName] = useState(product?.localName ?? "");
   const [price, setPrice] = useState(product?.price != null ? String(product.price) : "");
   const [category, setCategory] = useState(product?.category ?? "");
+  const [shelf, setShelf] = useState(product?.shelf ?? "");
   const [inStock, setInStock] = useState(product?.inStock ?? true);
   const [photo, setPhoto] = useState<PhotoState>({ kind: "kept" });
   const [generating, setGenerating] = useState(false);
@@ -75,6 +91,7 @@ function EditorForm({ store, product, onDone }: { store: Store; product: Product
         localName: localName.trim() || undefined,
         price: amount,
         category: category.trim() || undefined,
+        shelf: canonicalShelf(shelf, shelves) || undefined,
         inStock,
       };
       const imageUrl =
@@ -158,6 +175,21 @@ function EditorForm({ store, product, onDone }: { store: Store; product: Product
         />
         <TextField label="Category" value={category} onChange={(event) => setCategory(event.target.value)} />
       </div>
+      <TextField
+        label="Shelf"
+        placeholder="e.g. Drinks"
+        maxLength={SHELF_NAME_MAX}
+        value={shelf}
+        onChange={(event) => setShelf(event.target.value)}
+        list={shelves.length > 0 ? shelfListId : undefined}
+      />
+      {shelves.length > 0 ? (
+        <datalist id={shelfListId}>
+          {shelves.map((option) => (
+            <option key={option} value={option} />
+          ))}
+        </datalist>
+      ) : null}
       <Switch checked={inStock} onChange={setInStock} label="In stock" showLabel />
 
       {error ? (

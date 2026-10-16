@@ -6,7 +6,7 @@
   gap: var(--space-6);
 }
 
-// Phone: profile → look → preview → details.
+// Phone: profile → look → preview → details → restock.
 // Desktop: settings on the left, sticky live preview on the right.
 .layout {
   display: grid;
@@ -14,16 +14,18 @@
     "profile"
     "look"
     "preview"
-    "details";
+    "details"
+    "restock";
   gap: var(--space-6);
 
   @include up(lg) {
     grid-template-columns: minmax(0, 1fr) 340px;
-    grid-template-rows: auto auto 1fr;
+    grid-template-rows: auto auto auto 1fr;
     grid-template-areas:
       "profile preview"
       "look preview"
-      "details preview";
+      "details preview"
+      "restock preview";
     align-items: start;
   }
 }
@@ -38,6 +40,10 @@
 
 .details {
   grid-area: details;
+}
+
+.restock {
+  grid-area: restock;
 }
 
 .preview {

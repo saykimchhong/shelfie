@@ -80,6 +80,14 @@
   }
 }
 
+// A known product's name: shown, not edited.
+.knownName {
+  display: block;
+  padding: var(--space-1) 0;
+  font-weight: 600;
+  @include truncate;
+}
+
 .meta {
   display: flex;
   align-items: center;
@@ -91,6 +99,28 @@
   font-size: var(--text-sm);
   color: var(--fg-muted);
   @include truncate;
+}
+
+.was {
+  font-size: var(--text-sm);
+  color: var(--fg-muted);
+  text-decoration: line-through;
+  white-space: nowrap;
+}
+
+.missingRow {
+  padding-left: var(--space-3);
+}
+
+// Label first, switch at the row's end. Fixed width so the row doesn't shift
+// when the label flips between "Sold out" and "In stock".
+.soldOut {
+  flex-shrink: 0;
+  flex-direction: row-reverse;
+  justify-content: flex-start;
+  min-width: 128px;
+  font-size: var(--text-sm);
+  font-weight: 600;
 }
 
 .price {

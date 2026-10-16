@@ -1,5 +1,5 @@
 import type { SegmentedOption } from "@/components/ui";
-import type { Currency, LabelLanguage } from "@/domain/store";
+import type { Currency, LabelLanguage, RestockSettings } from "@/domain/store";
 
 // Symbols and script samples instead of words: less text in the UI.
 // (No flag emojis: Windows renders them as plain letters.)
@@ -16,6 +16,12 @@ export const LABEL_LANGUAGE_OPTIONS: readonly SegmentedOption<LabelLanguage>[] =
   { value: "si", label: "සිං", ariaLabel: "Sinhala" },
   { value: "ta", label: "த", ariaLabel: "Tamil" },
   { value: "th", label: "ไทย", ariaLabel: "Thai" },
+];
+
+// Default for a re-filmed shelf's products that aren't in the new video.
+export const MISSING_PRODUCT_OPTIONS: readonly SegmentedOption<RestockSettings["missing"]>[] = [
+  { value: "soldOut", label: "Mark sold out" },
+  { value: "keep", label: "Keep in stock" },
 ];
 
 // Example number for the WhatsApp field, matched to the chosen currency.

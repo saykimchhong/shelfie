@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Reveal, Stagger } from "@/components/motion/Reveal";
 import { Avatar, Badge, Button, ButtonLink, EmptyState, Skeleton, Stack, Surface, Switch, Text } from "@/components/ui";
 import type { Product } from "@/domain/product";
+import { shelvesOf } from "@/domain/shelf";
 import type { Store } from "@/domain/store";
 import { storeUrl, storeUrlLabel } from "@/lib/site";
 import { updateProduct, updateStore, useProducts, useRefreshStorefront } from "./data";
@@ -141,6 +142,7 @@ export function StoreOverview({ store }: { store: Store }) {
         onClose={() => setEditing(null)}
         store={store}
         product={editing?.product ?? null}
+        shelves={shelvesOf(products.data)}
       />
     </Stack>
   );
