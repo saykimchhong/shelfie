@@ -1,5 +1,5 @@
 import { connection } from "next/server";
-import type { ExtractionResponse } from "@/domain/extraction";
+import { knownProductsSchema, type ExtractionResponse, type KnownProduct } from "@/domain/extraction";
 import { currencySchema, labelLanguageSchema } from "@/domain/store";
 import { AuthError, requireUser } from "@/server/auth";
 import { extractionProvider, extractProducts, MAX_VIDEO_BYTES } from "@/server/extraction";
@@ -7,7 +7,8 @@ import { extractionProvider, extractProducts, MAX_VIDEO_BYTES } from "@/server/e
 // GET  → { provider, needsVideo, maxVideoBytes }: lets the browser skip the
 //        upload entirely in mock mode, and check size before uploading.
 // POST multipart/form-data: video (file, real AI only), currency, labelLanguage,
-//      durationSeconds?  Header: Authorization: Bearer <Firebase ID token>
+//      durationSeconds?, known? (JSON KnownProduct[]: the filmed shelf's products)
+//      Header: Authorization: Bearer <Firebase ID token>
 //      → ExtractionResponse { provider, products }
 
 export const maxDuration = 120;
@@ -32,6 +33,7 @@ export async function POST(request: Request) {
   const currency = currencySchema.safeParse(form?.get("currency"));
   const labelLanguage = labelLanguageSchema.safeParse(form?.get("labelLanguage") ?? "en");
   const durationSeconds = Number(form?.get("durationSeconds")) || undefined;
+  const known = parseKnown(form?.get("known"));
   const hasVideo = video instanceof Blob && video.size > 0;
 
   if (extractionProvider() === "gemini") {
@@ -41,6 +43,7 @@ export async function POST(request: Request) {
   }
   if (!currency.success) return problem(400, "Missing or unknown `currency`");
   if (!labelLanguage.success) return problem(400, "Unknown `labelLanguage`");
+  if (!known) return problem(400, "`known` must be a JSON list of products");
 
   try {
     const { provider, extraction } = await extractProducts({
@@ -49,11 +52,24 @@ export async function POST(request: Request) {
       currency: currency.data,
       labelLanguage: labelLanguage.data,
       durationSeconds,
+      known,
     });
     return Response.json({ provider, ...extraction } satisfies ExtractionResponse);
   } catch (error) {
     console.error("Extraction failed", error);
     return problem(502, "We couldn't read that video. Try again with steady, well-lit footage.");
+  }
+}
+
+// Absent → no known products (a new shelf). null → present but invalid.
+function parseKnown(value: FormDataEntryValue | null | undefined): KnownProduct[] | null {
+  if (value == null) return [];
+  if (typeof value !== "string") return null;
+  try {
+    const parsed = knownProductsSchema.safeParse(JSON.parse(value));
+    return parsed.success ? parsed.data : null;
+  } catch {
+    return null;
   }
 }
 

@@ -16,6 +16,7 @@ import {
   updateDoc,
   where,
   writeBatch,
+  type WriteBatch,
 } from "firebase/firestore";
 import { useCallback, useEffect, useState } from "react";
 import type { Product, ProductInput } from "@/domain/product";
@@ -142,6 +143,7 @@ export type StorePatch = Partial<
     | "currency"
     | "labelLanguage"
     | "theme"
+    | "restock"
     | "published"
     | "paymentQrUrl"
   >
@@ -154,23 +156,52 @@ export async function updateStore(slug: string, patch: StorePatch): Promise<void
   });
 }
 
+const OPTIONAL_PRODUCT_FIELDS = ["localName", "category", "shelf", "imageUrl"] as const;
+
+// Firestore caps a batch at 500 writes.
+const BATCH_LIMIT = 500;
+
+export type ProductUpdate = { id: string; patch: Partial<ProductInput> };
+
+// Everything one shelf video changes, saved together: new products after the
+// existing ones (positions from startPosition, in video order) and updates to
+// known ones (new price, back in stock, sold out).
+export async function saveProductChanges(
+  slug: string,
+  changes: { add: ProductInput[]; update: ProductUpdate[] },
+  startPosition: number,
+): Promise<void> {
+  const writes: Array<(batch: WriteBatch) => void> = [
+    ...changes.add.map((item, index) => (batch: WriteBatch) => {
+      batch.set(doc(productsRef(slug)), {
+        ...item,
+        position: startPosition + index,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+    }),
+    ...changes.update.map(({ id, patch }) => (batch: WriteBatch) => {
+      batch.update(doc(productsRef(slug), id), {
+        ...withDeletes(patch, OPTIONAL_PRODUCT_FIELDS),
+        updatedAt: serverTimestamp(),
+      });
+    }),
+  ];
+
+  for (let start = 0; start < writes.length; start += BATCH_LIMIT) {
+    const batch = writeBatch(clientDb());
+    writes.slice(start, start + BATCH_LIMIT).forEach((write) => write(batch));
+    await batch.commit();
+  }
+}
+
 export async function addProducts(slug: string, items: ProductInput[], startPosition: number): Promise<void> {
-  // A batch holds up to 500 writes — far more than one shelf video produces.
-  const batch = writeBatch(clientDb());
-  items.forEach((item, index) => {
-    batch.set(doc(productsRef(slug)), {
-      ...item,
-      position: startPosition + index,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    });
-  });
-  await batch.commit();
+  await saveProductChanges(slug, { add: items, update: [] }, startPosition);
 }
 
 export async function updateProduct(slug: string, productId: string, patch: Partial<ProductInput>): Promise<void> {
   await updateDoc(doc(productsRef(slug), productId), {
-    ...withDeletes(patch, ["localName", "category", "imageUrl"]),
+    ...withDeletes(patch, OPTIONAL_PRODUCT_FIELDS),
     updatedAt: serverTimestamp(),
   });
 }

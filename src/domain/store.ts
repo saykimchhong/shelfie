@@ -15,6 +15,14 @@ export type LabelLanguage = z.infer<typeof labelLanguageSchema>;
 
 export const STORE_DESCRIPTION_MAX = 500;
 
+// Restocking re-films one shelf. This is what happens, by default, to that
+// shelf's products that aren't in the new video. The seller still sees each
+// one before anything is saved.
+export const MISSING_PRODUCT_ACTIONS = ["soldOut", "keep"] as const;
+export const restockSettingsSchema = z.object({ missing: z.enum(MISSING_PRODUCT_ACTIONS) });
+export type RestockSettings = z.infer<typeof restockSettingsSchema>;
+export const DEFAULT_RESTOCK: RestockSettings = { missing: "soldOut" };
+
 export const contactSchema = z.object({
   whatsapp: z
     .string()
@@ -37,6 +45,8 @@ export const storeSchema = z.object({
   contact: contactSchema,
   // Missing on stores created before themes existed → DEFAULT_THEME.
   theme: themeSchema.optional(),
+  // Missing on stores created before restock existed → DEFAULT_RESTOCK.
+  restock: restockSettingsSchema.optional(),
   paymentQrUrl: z.url().optional(),
   published: z.boolean(),
   createdAt: z.number(),

@@ -8,7 +8,7 @@ import {
   type Part,
 } from "@google/genai";
 import { z } from "zod";
-import { extractionSchema, type Extraction } from "@/domain/extraction";
+import { extractionSchema, type Extraction, type KnownProduct } from "@/domain/extraction";
 import type { Currency, LabelLanguage } from "@/domain/store";
 import { serverEnv } from "../env";
 import type { ExtractInput } from "./types";
@@ -36,9 +36,9 @@ function gemini(): GoogleGenAI {
   return client;
 }
 
-function buildPrompt(currency: Currency, labelLanguage: LabelLanguage): string {
+function buildPrompt(currency: Currency, labelLanguage: LabelLanguage, known: KnownProduct[]): string {
   const language = LANGUAGE_NAMES[labelLanguage];
-  return `You are cataloguing the products in a small shop from a video the owner recorded on their phone.
+  const prompt = `You are cataloguing the products in a small shop from a video the owner recorded on their phone.
 The owner walks past the shelves and may say prices out loud, often mixing ${language} and English, with numbers in either language.
 
 List every distinct product for sale that is visible in the video:
@@ -47,7 +47,23 @@ List every distinct product for sale that is visible in the video:
 - Labels are mostly in ${language}. Copy local-script names exactly as printed into localName.
 - The same product seen more than once is one item. Different sizes or flavours are separate items.
 - Ignore people, hands, furniture and anything that is not for sale.
-- Keep the order in which products first appear.`;
+- Keep the order in which products first appear.
+- Set note only when the owner should double-check something, in a few words.`;
+
+  if (known.length === 0) return `${prompt}\n- This is a new shelf: set matchId to null for every product.`;
+
+  // One line per product keeps the list compact for long shelves.
+  const lines = known.map((product) =>
+    [product.id, product.name, product.localName ?? "", product.price ?? "no price"].join(" | "),
+  );
+  return `${prompt}
+
+The shop already lists these products on this shelf (id | name | label name | price):
+${lines.join("\n")}
+
+- When a product in the video is one of these, set matchId to its id and keep its name.
+- Only report a price for it if one is said in the video.
+- Products not in this list get matchId null.`;
 }
 
 async function videoPart(video: Blob, mimeType: string): Promise<{ part: Part; fileName?: string }> {
@@ -80,7 +96,7 @@ export async function geminiExtract(input: ExtractInput & { video: Blob }): Prom
   try {
     const response = await ai.models.generateContent({
       model: serverEnv().GEMINI_MODEL,
-      contents: createUserContent([part, buildPrompt(input.currency, input.labelLanguage)]),
+      contents: createUserContent([part, buildPrompt(input.currency, input.labelLanguage, input.known)]),
       config: {
         responseMimeType: "application/json",
         responseJsonSchema,

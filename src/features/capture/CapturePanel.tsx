@@ -96,6 +96,7 @@ function Capture({ store }: { store: Store }) {
         currency: store.currency,
         labelLanguage: store.labelLanguage,
         durationSeconds: await videoDuration(url),
+        known: [],
         idToken: await getIdToken(),
         signal: controller.signal,
       });

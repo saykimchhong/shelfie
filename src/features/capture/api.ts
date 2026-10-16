@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { extractionResponseSchema, type ExtractionResponse } from "@/domain/extraction";
+import { extractionResponseSchema, type ExtractionResponse, type KnownProduct } from "@/domain/extraction";
 import type { Currency, LabelLanguage } from "@/domain/store";
 
 const configSchema = z.object({
@@ -18,6 +18,8 @@ export async function requestExtraction(input: {
   currency: Currency;
   labelLanguage: LabelLanguage;
   durationSeconds?: number;
+  // The filmed shelf's current products; empty for a new shelf.
+  known: KnownProduct[];
   idToken: string;
   signal?: AbortSignal;
 }): Promise<ExtractionResponse> {
@@ -37,6 +39,7 @@ export async function requestExtraction(input: {
   body.append("currency", input.currency);
   body.append("labelLanguage", input.labelLanguage);
   if (input.durationSeconds) body.append("durationSeconds", String(input.durationSeconds));
+  if (input.known.length > 0) body.append("known", JSON.stringify(input.known));
 
   const response = await fetch("/api/extract", {
     method: "POST",

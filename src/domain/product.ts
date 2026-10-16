@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+export const SHELF_NAME_MAX = 40;
+
 export const productSchema = z.object({
   id: z.string(),
   name: z.string().trim().min(1).max(120),
@@ -8,6 +10,9 @@ export const productSchema = z.object({
   // null = the seller hasn't set a price yet; storefront shows "Ask".
   price: z.number().nonnegative().nullable(),
   category: z.string().trim().max(40).optional(),
+  // The shelf or section it sits on, e.g. "Drinks". One video covers one shelf,
+  // so restocking a shelf only touches that shelf's products.
+  shelf: z.string().trim().max(SHELF_NAME_MAX).optional(),
   inStock: z.boolean(),
   imageUrl: z.url().optional(),
   // Sort order on the shelf; extraction keeps the order things appear in the video.
@@ -23,6 +28,7 @@ export const productInputSchema = productSchema.pick({
   localName: true,
   price: true,
   category: true,
+  shelf: true,
   inStock: true,
   imageUrl: true,
 });

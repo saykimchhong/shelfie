@@ -1,3 +1,4 @@
+import type { KnownProduct } from "@/domain/extraction";
 import type { Currency, LabelLanguage } from "@/domain/store";
 
 export type ExtractInput = {
@@ -8,6 +9,8 @@ export type ExtractInput = {
   labelLanguage: LabelLanguage;
   // Measured in the browser; lets the mock spread timestamps over the video.
   durationSeconds?: number;
+  // The filmed shelf's current products, so known ones come back with a matchId.
+  known: KnownProduct[];
 };
 
 export type ExtractionProvider = "mock" | "gemini";

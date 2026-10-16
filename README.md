@@ -109,12 +109,14 @@ stores/{slug}                       slug = document id = public URL
   ownerId, name, tagline?, description? (≤500, line breaks kept), logoUrl?,
   currency (USD|KHR|LKR|THB), labelLanguage (en|km|si|ta|th),
   contact { whatsapp?, line? }, theme? { template (grid|list|showcase), accent (#rrggbb) },
-  paymentQrUrl?, published, createdAt, updatedAt
+  restock? { missing (soldOut|keep) }, paymentQrUrl?, published, createdAt, updatedAt
 
 stores/{slug}/products/{id}
-  name, localName?, price (number | null = "Ask"), category?, inStock,
-  imageUrl?, position, createdAt, updatedAt
+  name, localName?, price (number | null = "Ask"), category?, shelf? (≤40),
+  inStock, imageUrl?, position, createdAt, updatedAt
 ```
+
+**Shelves and restock.** Each video covers one shelf. With the video, the browser sends that shelf's current products (`known`), and the AI returns a `matchId` for each one it recognises. The review then merges: new products are added, known ones get their new price or come back in stock, and in restock mode the shelf's unseen products default to `restock.missing`. Nothing is saved until the seller confirms.
 
 The schemas live in `src/domain/`. If you add a required field, update `validStore` / `validProduct` in `firestore.rules` too. The same goes for `RESERVED_SLUGS` in `src/domain/slug.ts`.
 
