@@ -1,0 +1,80 @@
+@use "styles" as *;
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.label {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--fg-muted);
+}
+
+.hiddenLabel {
+  @include visually-hidden;
+}
+
+// Filled, borderless control; focus is shown with the ring, errors with tint.
+.control {
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+  padding-inline: var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+  transition:
+    background-color var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out);
+
+  &:focus-within {
+    background: var(--bg-raised);
+    @include focus-ring;
+  }
+}
+
+.invalid {
+  background: var(--danger-soft);
+
+  &:focus-within {
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--danger) 40%, transparent);
+  }
+}
+
+.prefix {
+  color: var(--fg-subtle);
+  font-weight: 500;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  height: 48px;
+  border: 0;
+  background: transparent;
+  outline: none;
+  font-size: var(--text-md);
+
+  // The whole .control shows the ring; don't draw a second one on the input.
+  &:focus-visible {
+    box-shadow: none;
+  }
+
+  &::placeholder {
+    color: var(--fg-subtle);
+  }
+}
+
+.message {
+  font-size: var(--text-xs);
+  color: var(--fg-subtle);
+}
+
+.errorText {
+  color: var(--danger);
+  font-weight: 500;
+}

@@ -1,0 +1,36 @@
+@use "styles" as *;
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  height: 100%;
+  padding: var(--space-2) var(--space-3) var(--space-2) var(--space-2);
+  border-radius: var(--radius-lg);
+  background: var(--bg-raised);
+  @include elevation(1);
+  transition: box-shadow var(--dur-base) var(--ease-out);
+}
+
+.inCart {
+  box-shadow:
+    0 0 0 2px var(--brand),
+    0 8px 24px rgb(var(--shadow-color) / 10%);
+}
+
+.thumb {
+  width: 72px;
+  flex-shrink: 0;
+}
+
+.info {
+  flex: 1;
+  min-width: 0;
+}
+
+.soldOut {
+  .thumb,
+  .info {
+    opacity: 0.5;
+  }
+}

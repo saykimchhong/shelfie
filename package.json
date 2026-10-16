@@ -1,0 +1,36 @@
+{
+  "name": "shelfie",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "typecheck": "next typegen && tsc --noEmit",
+    "deploy:rules": "npx firebase-tools deploy --only firestore"
+  },
+  "dependencies": {
+    "@google/genai": "^2.30.0",
+    "client-only": "^0.0.1",
+    "clsx": "^2.1.1",
+    "firebase": "^13.0.0",
+    "firebase-admin": "^14.5.0",
+    "lucide-react": "^1.57.0",
+    "motion": "^14.3.0",
+    "next": "16.4.2",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "server-only": "^0.0.1",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.4.2",
+    "sass": "^1.105.2",
+    "typescript": "^5"
+  }
+}

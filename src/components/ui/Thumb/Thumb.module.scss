@@ -1,0 +1,30 @@
+.thumb {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  overflow: hidden;
+  container-type: inline-size;
+  background:
+    radial-gradient(circle at 30% 20%, hsl(var(--hue) var(--thumb-s) calc(var(--thumb-l) + 4%)), transparent 60%),
+    hsl(var(--hue) var(--thumb-s) var(--thumb-l));
+}
+
+.square {
+  border-radius: var(--radius-md);
+}
+
+.circle {
+  border-radius: 50%;
+}
+
+.image {
+  object-fit: cover;
+}
+
+.initials {
+  font-weight: 800;
+  font-size: clamp(0.75rem, 32cqi, 3rem);
+  letter-spacing: -0.03em;
+  color: hsl(var(--hue) 55% var(--thumb-ink-l));
+}

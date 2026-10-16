@@ -1,0 +1,85 @@
+@use "styles" as *;
+
+.card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  background: var(--bg-raised);
+  @include elevation(1);
+  transition:
+    transform var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out);
+
+  @include hover {
+    transform: translateY(-3px);
+    @include elevation(2);
+  }
+}
+
+.inCart {
+  box-shadow:
+    0 0 0 2px var(--brand),
+    0 8px 24px rgb(var(--shadow-color) / 10%);
+}
+
+.media {
+  position: relative;
+
+  .thumb {
+    border-radius: 0;
+  }
+}
+
+.badge {
+  position: absolute;
+  top: var(--space-2);
+  left: var(--space-2);
+}
+
+.body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-3);
+}
+
+.name {
+  line-height: var(--leading-snug);
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-top: auto;
+  padding-top: var(--space-2);
+  min-height: 46px;
+}
+
+.soldOut {
+  .media,
+  .name {
+    opacity: 0.5;
+  }
+}
+
+// "showcase" template: wide photo, bigger type, more air.
+.showcase {
+  border-radius: var(--radius-xl);
+
+  .media .thumb {
+    aspect-ratio: 4 / 3;
+  }
+
+  .body {
+    padding: var(--space-4) var(--space-5) var(--space-5);
+  }
+
+  .name {
+    font-size: var(--text-lg);
+  }
+}

@@ -1,0 +1,155 @@
+@use "styles" as *;
+
+.sources {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+}
+
+.source {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  aspect-ratio: 1;
+  max-height: 260px;
+  width: 100%;
+  border-radius: var(--radius-xl);
+  cursor: pointer;
+  @include pressable;
+
+  &:focus-within {
+    @include focus-ring;
+  }
+
+  @include hover {
+    transform: translateY(-3px);
+    @include elevation(2);
+  }
+}
+
+.brand {
+  background: linear-gradient(145deg, var(--brand), var(--berry));
+  color: #fff;
+  @include elevation(2);
+}
+
+.tint {
+  background: var(--surface-1);
+  color: var(--fg);
+}
+
+.fileInput {
+  @include visually-hidden;
+}
+
+.sourceIcon {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 22%);
+
+  svg {
+    width: 30px;
+    height: 30px;
+  }
+
+  .tint & {
+    background: var(--bg-raised);
+    color: var(--brand-text);
+  }
+}
+
+.sourceLabel {
+  font-weight: 700;
+  font-size: var(--text-lg);
+}
+
+.tips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.tip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: 36px;
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-full);
+  background: var(--sun-soft);
+  font-size: var(--text-sm);
+  font-weight: 600;
+
+  svg {
+    width: 16px;
+    height: 16px;
+    color: var(--brand-text);
+  }
+}
+
+.preview {
+  position: relative;
+  width: min(100%, 360px);
+  aspect-ratio: 9 / 16;
+  max-height: 60dvh;
+  overflow: hidden;
+  border-radius: var(--radius-xl);
+  background: var(--surface-2);
+  @include elevation(3);
+
+  video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+// A light sweeping down the video while Gemini "looks" at it.
+.scan {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 30%;
+  background: linear-gradient(
+    180deg,
+    transparent,
+    color-mix(in oklab, var(--brand) 35%, transparent) 85%,
+    color-mix(in oklab, #fff 80%, transparent)
+  );
+  mix-blend-mode: screen;
+  animation: scan 2.2s var(--ease-out) infinite;
+}
+
+@keyframes scan {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(340%);
+  }
+}
+
+.actions {
+  position: sticky;
+  bottom: var(--space-4);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2);
+  border-radius: var(--radius-full);
+  background: color-mix(in oklab, var(--bg-raised) 88%, transparent);
+  backdrop-filter: blur(12px);
+  @include elevation(3);
+}
+
+.primary {
+  flex: 1;
+  max-width: 320px;
+}

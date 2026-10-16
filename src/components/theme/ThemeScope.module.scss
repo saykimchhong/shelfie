@@ -1,0 +1,25 @@
+// The --t-* values come from derivePalette() as inline styles.
+.scope {
+  --brand: var(--t-brand);
+  --brand-solid: var(--t-solid);
+  --on-brand: var(--t-on);
+  --brand-soft: var(--t-soft);
+  --brand-text: var(--t-text);
+  --ring: color-mix(in oklab, var(--t-brand) 45%, transparent);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .scope {
+    --brand-solid: var(--t-solid-dark);
+    --on-brand: var(--t-on-dark);
+    --brand-soft: var(--t-soft-dark);
+    --brand-text: var(--t-text-dark);
+  }
+}
+
+:root[data-theme="dark"] .scope {
+  --brand-solid: var(--t-solid-dark);
+  --on-brand: var(--t-on-dark);
+  --brand-soft: var(--t-soft-dark);
+  --brand-text: var(--t-text-dark);
+}

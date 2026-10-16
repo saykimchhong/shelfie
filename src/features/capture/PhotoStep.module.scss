@@ -1,0 +1,134 @@
+@use "styles" as *;
+
+.step {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.bulk {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.uploadMany {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: 36px;
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-full);
+  background: var(--surface-1);
+  font-size: var(--text-sm);
+  font-weight: 650;
+  cursor: pointer;
+  @include pressable;
+
+  &:focus-within {
+    @include focus-ring;
+  }
+
+  svg {
+    width: 1.2em;
+    height: 1.2em;
+  }
+
+  input {
+    @include visually-hidden;
+  }
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+  padding: 0;
+  list-style: none;
+
+  @include up(md) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border-radius: var(--radius-lg);
+  background: var(--bg-raised);
+  @include elevation(1);
+}
+
+.photo {
+  position: relative;
+
+  .thumb {
+    width: 100%;
+  }
+}
+
+.busy {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-md);
+  background: color-mix(in oklab, var(--bg-raised) 65%, transparent);
+  color: var(--brand-text);
+  backdrop-filter: blur(2px);
+}
+
+.tag {
+  position: absolute;
+  top: var(--space-2);
+  left: var(--space-2);
+}
+
+.sources {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-1);
+  padding: 3px;
+  border-radius: var(--radius-full);
+  background: var(--surface-1);
+}
+
+.source {
+  display: grid;
+  place-items: center;
+  height: 32px;
+  border-radius: var(--radius-full);
+  color: var(--fg-muted);
+  cursor: pointer;
+  @include pressable;
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+
+  &:focus-within {
+    @include focus-ring;
+  }
+
+  input {
+    @include visually-hidden;
+  }
+
+  @include hover {
+    color: var(--fg);
+  }
+}
+
+.active {
+  background: var(--bg-raised);
+  color: var(--brand-text);
+  @include elevation(1);
+}

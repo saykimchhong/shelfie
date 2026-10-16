@@ -1,0 +1,83 @@
+@use "styles" as *;
+
+.bar {
+  position: fixed;
+  z-index: z(overlay);
+  left: 50%;
+  bottom: calc(var(--space-4) + env(safe-area-inset-bottom));
+  translate: -50% 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  width: min(calc(100% - var(--gutter) * 2), 560px);
+  padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4);
+  border-radius: var(--radius-full);
+  background: var(--fg);
+  color: var(--bg);
+  @include elevation(3);
+}
+
+.summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.bag {
+  position: relative;
+
+  svg {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+.count {
+  position: absolute;
+  top: -8px;
+  right: -10px;
+  display: grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: var(--radius-full);
+  background: var(--brand);
+  color: #fff;
+  font-size: var(--text-xs);
+  font-weight: 800;
+}
+
+.total {
+  font-size: var(--text-lg);
+  font-weight: 800;
+  @include truncate;
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+// Brand colors people already recognize — no extra words needed.
+// Nested under .actions so they beat the Button's own variant colors.
+.actions .whatsapp {
+  background: #25d366;
+  color: #08331a;
+
+  @include hover {
+    background: #1ebe5b;
+  }
+}
+
+.actions .line {
+  background: #06c755;
+  color: #fff;
+  font-weight: 800;
+
+  @include hover {
+    background: #05b04b;
+  }
+}

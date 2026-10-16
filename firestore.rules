@@ -1,0 +1,82 @@
+rules_version = '2';
+
+// Shelfie security model
+// - Anyone can read a store and its products once the store is published.
+// - Only the signed-in owner can read a draft store or write anything.
+// - Store ids are slugs. Keep validSlug() in sync with src/domain/slug.ts.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function ownsData(data) {
+      return signedIn() && data.ownerId == request.auth.uid;
+    }
+
+    function validSlug(slug) {
+      return slug.matches('^[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$')
+        && !(slug in ['about', 'admin', 'api', 'app', 'dashboard', 'help', 'login', 'logout',
+                      'new', 'privacy', 'settings', 'shelfie', 'templates', 'terms']);
+    }
+
+    // Optional look: layout template + accent color (src/domain/theme.ts).
+    function validTheme(data) {
+      return !('theme' in data)
+        || (data.theme.template in ['grid', 'list', 'showcase']
+            && data.theme.accent is string
+            && data.theme.accent.matches('^#[0-9a-fA-F]{6}$'));
+    }
+
+    function validStore(data) {
+      return data.keys().hasAll(['slug', 'ownerId', 'name', 'currency', 'labelLanguage', 'contact', 'published'])
+        && data.name is string && data.name.size() > 0 && data.name.size() <= 80
+        && data.currency in ['USD', 'KHR', 'LKR', 'THB']
+        && data.labelLanguage in ['en', 'km', 'si', 'ta', 'th']
+        && data.contact is map
+        && data.published is bool
+        && validTheme(data);
+    }
+
+    function validProduct(data) {
+      return data.keys().hasAll(['name', 'price', 'inStock', 'position'])
+        && data.name is string && data.name.size() > 0 && data.name.size() <= 120
+        && (data.price == null || (data.price is number && data.price >= 0))
+        && data.inStock is bool
+        && data.position is number
+        // Photos may be inline data URLs for now (src/features/media/storage.ts):
+        // cap them so a product doc stays far below Firestore's 1 MB limit.
+        && (!('imageUrl' in data) || (data.imageUrl is string && data.imageUrl.size() <= 250000));
+    }
+
+    match /stores/{slug} {
+      // `resource == null` lets the create flow check whether a slug is still free.
+      allow get: if resource == null || resource.data.published == true || ownsData(resource.data);
+      allow list: if resource.data.published == true || ownsData(resource.data);
+
+      allow create: if ownsData(request.resource.data)
+        && validSlug(slug)
+        && request.resource.data.slug == slug
+        && validStore(request.resource.data);
+
+      allow update: if ownsData(resource.data)
+        && request.resource.data.ownerId == resource.data.ownerId
+        && request.resource.data.slug == slug
+        && validStore(request.resource.data);
+
+      allow delete: if ownsData(resource.data);
+
+      match /products/{productId} {
+        function parentStore() {
+          return get(/databases/$(database)/documents/stores/$(slug)).data;
+        }
+
+        allow read: if parentStore().published == true || ownsData(parentStore());
+        allow create, update: if ownsData(parentStore()) && validProduct(request.resource.data);
+        allow delete: if ownsData(parentStore());
+      }
+    }
+  }
+}

@@ -1,0 +1,40 @@
+@use "styles" as *;
+
+.figure {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.frame {
+  zoom: var(--zoom, 0.7);
+  width: 390px;
+  height: 780px;
+  overflow: hidden;
+  border-radius: 44px;
+  background: var(--bg);
+  box-shadow:
+    0 0 0 10px var(--fg),
+    0 30px 60px rgb(var(--shadow-color) / 25%);
+  // Makes this the containing block for position: fixed children (order bar).
+  transform: translateZ(0);
+}
+
+.screen {
+  height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.caption {
+  font-weight: 700;
+  font-size: var(--text-sm);
+  color: var(--fg-muted);
+}

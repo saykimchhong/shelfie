@@ -1,0 +1,215 @@
+@use "styles" as *;
+
+// The storefront sizes itself by its own width (container queries), so it
+// looks identical on a phone and inside a 390px preview frame.
+.page {
+  container-type: inline-size;
+  min-height: 100dvh;
+  padding-bottom: calc(var(--space-20) + env(safe-area-inset-bottom));
+}
+
+// Banner glow in the store's own color.
+.banner {
+  padding-top: var(--space-12);
+  background:
+    radial-gradient(120% 90% at 10% 0%, color-mix(in oklab, var(--brand) 42%, transparent), transparent 62%),
+    radial-gradient(90% 80% at 95% 10%, color-mix(in oklab, var(--sun) 32%, transparent), transparent 60%),
+    var(--bg);
+
+  @include container-up(md) {
+    padding-top: var(--space-16);
+  }
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  padding-bottom: var(--space-8);
+  text-align: center;
+  animation: rise 0.6s var(--ease-out) both;
+}
+
+.titles {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--brand), color-mix(in oklab, var(--brand) 55%, var(--sun)));
+  color: #fff;
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  text-shadow: 0 1px 2px rgb(0 0 0 / 25%);
+  box-shadow: 0 0 0 5px var(--bg);
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.chips {
+  display: flex;
+  gap: var(--space-2);
+  overflow-x: auto;
+  margin-inline: calc(var(--gutter) * -1);
+  padding: var(--space-1) var(--gutter);
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.chip {
+  position: relative;
+  flex-shrink: 0;
+  height: 38px;
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-full);
+  background: var(--surface-1);
+  color: var(--fg-muted);
+  font-weight: 600;
+  font-size: var(--text-sm);
+  @include pressable;
+}
+
+.chipActive {
+  color: var(--on-brand);
+}
+
+.chipThumb {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--brand-solid);
+}
+
+.chipLabel {
+  position: relative;
+}
+
+// ── Template: grid (default) ────────────────────────────────
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+
+  @include container-up(md) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-5);
+  }
+
+  @include container-up(lg) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+// ── Template: showcase ──────────────────────────────────────
+.showcaseGrid {
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-5);
+
+  @include container-up(sm) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @include container-up(lg) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.t-showcase {
+  .banner {
+    padding-top: var(--space-16);
+  }
+
+  .avatar {
+    width: 104px;
+    height: 104px;
+    font-size: 2.4rem;
+  }
+}
+
+// ── Template: list ──────────────────────────────────────────
+.list {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-2);
+  padding: 0;
+  list-style: none;
+
+  @include container-up(md) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-3);
+  }
+}
+
+.t-list {
+  .banner {
+    padding-top: var(--space-8);
+  }
+
+  // Compact, left-aligned header: more of the list fits on screen.
+  .header {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--space-4);
+    padding-bottom: var(--space-6);
+    text-align: start;
+  }
+
+  .avatar {
+    width: 60px;
+    height: 60px;
+    font-size: 1.4rem;
+    box-shadow: 0 0 0 4px var(--bg);
+  }
+
+  .titles h1 {
+    font-size: var(--text-2xl);
+  }
+}
+
+// ────────────────────────────────────────────────────────────
+.skeletonCard {
+  aspect-ratio: 1;
+}
+
+.madeWith {
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
+  gap: var(--space-2);
+  margin-top: var(--space-8);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-full);
+  color: var(--fg-subtle);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  transition: background-color var(--dur-base) var(--ease-out);
+
+  @include hover {
+    background: var(--surface-1);
+    color: var(--fg-muted);
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}

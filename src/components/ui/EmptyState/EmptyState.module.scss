@@ -1,0 +1,64 @@
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-10) var(--space-4);
+  text-align: center;
+}
+
+.icon {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  margin-bottom: var(--space-2);
+  border-radius: var(--radius-xl);
+  animation: float 4s ease-in-out infinite;
+
+  svg {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+.brand {
+  background: var(--brand-soft);
+  color: var(--brand-text);
+}
+
+.accent {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.sun {
+  background: var(--sun-soft);
+  color: var(--fg);
+}
+
+.berry {
+  background: var(--berry-soft);
+  color: var(--berry);
+}
+
+.title {
+  font-size: var(--text-lg);
+  font-weight: 700;
+}
+
+.description {
+  max-width: 34ch;
+  color: var(--fg-muted);
+  font-size: var(--text-sm);
+}
+
+.action {
+  margin-top: var(--space-3);
+}
+
+@keyframes float {
+  50% {
+    transform: translateY(-6px) rotate(-3deg);
+  }
+}

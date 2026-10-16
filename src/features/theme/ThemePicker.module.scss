@@ -1,0 +1,137 @@
+@use "styles" as *;
+
+.picker {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.legend {
+  padding: 0;
+  margin-bottom: var(--space-3);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--fg-muted);
+}
+
+.templates {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.template {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-radius: var(--radius-lg);
+  background: var(--surface-1);
+  @include pressable;
+
+  @include hover {
+    background: var(--surface-2);
+  }
+}
+
+.selected {
+  background: var(--brand-soft);
+  box-shadow: 0 0 0 2px var(--brand);
+}
+
+.templateName {
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+
+// Wireframe glyphs
+.glyph {
+  display: grid;
+  gap: 4px;
+  width: 56px;
+  height: 64px;
+  padding: 6px;
+  border-radius: 10px;
+  background: var(--bg-raised);
+
+  span {
+    border-radius: 4px;
+    background: color-mix(in oklab, var(--brand) 55%, var(--surface-2));
+  }
+}
+
+.glyph-grid {
+  grid-template-columns: 1fr 1fr;
+}
+
+.glyph-list {
+  grid-template-rows: repeat(4, 1fr);
+
+  span {
+    background:
+      linear-gradient(90deg, color-mix(in oklab, var(--brand) 55%, var(--surface-2)) 30%, transparent 30% 36%, var(--surface-2) 36%);
+  }
+}
+
+.glyph-showcase {
+  grid-template-rows: 1fr 1fr;
+}
+
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.swatch {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--swatch);
+  color: #fff;
+  cursor: pointer;
+  @include pressable;
+
+  svg {
+    width: 18px;
+    height: 18px;
+    stroke-width: 3;
+    filter: drop-shadow(0 1px 1px rgb(0 0 0 / 35%));
+  }
+
+  @include hover {
+    transform: scale(1.08);
+  }
+}
+
+.swatchSelected {
+  box-shadow:
+    0 0 0 3px var(--bg),
+    0 0 0 5px var(--swatch, var(--fg));
+}
+
+.custom {
+  background: var(--swatch, conic-gradient(#f43f5e, #f59e0b, #84cc16, #06b6d4, #6366f1, #d946ef, #f43f5e));
+
+  &:focus-within {
+    @include focus-ring;
+  }
+
+  input {
+    @include visually-hidden;
+  }
+}

@@ -1,0 +1,73 @@
+@use "styles" as *;
+
+.text {
+  min-width: 0;
+}
+
+@each $size in (xs, sm, md, lg, xl) {
+  .size-#{$size} {
+    font-size: var(--text-#{$size});
+  }
+}
+
+@each $size in (2xl, 3xl, display) {
+  .size-#{$size} {
+    font-size: var(--text-#{$size});
+    line-height: var(--leading-tight);
+    letter-spacing: -0.02em;
+    font-weight: 750;
+  }
+}
+
+.size-display {
+  letter-spacing: -0.035em;
+  font-weight: 800;
+}
+
+.tone-default {
+  color: var(--fg);
+}
+
+.tone-muted {
+  color: var(--fg-muted);
+}
+
+.tone-subtle {
+  color: var(--fg-subtle);
+}
+
+.tone-brand {
+  color: var(--brand-text);
+}
+
+.tone-accent {
+  color: var(--accent);
+}
+
+.tone-danger {
+  color: var(--danger);
+}
+
+.tone-inherit {
+  color: inherit;
+}
+
+@each $weight in (400, 500, 600, 700, 800) {
+  .weight-#{$weight} {
+    font-weight: $weight;
+  }
+}
+
+.align-start {
+  text-align: start;
+}
+
+.align-center {
+  text-align: center;
+}
+
+@for $lines from 1 through 3 {
+  .clamp-#{$lines} {
+    @include line-clamp($lines);
+  }
+}

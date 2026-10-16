@@ -1,0 +1,69 @@
+@use "styles" as *;
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+// Phone: look → preview → details. Desktop: settings left, sticky preview right.
+.layout {
+  display: grid;
+  grid-template-areas:
+    "look"
+    "preview"
+    "details";
+  gap: var(--space-6);
+
+  @include up(lg) {
+    grid-template-columns: minmax(0, 1fr) 340px;
+    grid-template-areas:
+      "look preview"
+      "details preview";
+    align-items: start;
+  }
+}
+
+.look {
+  grid-area: look;
+}
+
+.details {
+  grid-area: details;
+}
+
+.preview {
+  grid-area: preview;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+
+  @include up(lg) {
+    position: sticky;
+    top: calc(var(--topbar-h) + var(--space-4));
+  }
+}
+
+.phone {
+  --zoom: 0.62;
+
+  @include up(lg) {
+    --zoom: 0.8;
+  }
+}
+
+.saveBar {
+  position: sticky;
+  bottom: var(--space-4);
+  z-index: z(sticky);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-2) var(--space-2) var(--space-5);
+  border-radius: var(--radius-full);
+  background: color-mix(in oklab, var(--bg-raised) 88%, transparent);
+  backdrop-filter: blur(12px);
+  @include elevation(3);
+}

@@ -1,0 +1,114 @@
+@use "sass:map";
+@use "tokens" as *;
+
+// Mobile-first breakpoint: `@include up(md) { ... }`
+@mixin up($name) {
+  @media (min-width: map.get($breakpoints, $name)) {
+    @content;
+  }
+}
+
+// Like up(), but measured against the nearest container (container-type set).
+// Use for components that must also look right inside previews.
+@mixin container-up($name) {
+  @container (min-width: #{map.get($breakpoints, $name)}) {
+    @content;
+  }
+}
+
+@mixin down($name) {
+  @media (max-width: calc(#{map.get($breakpoints, $name)} - 0.02px)) {
+    @content;
+  }
+}
+
+@function z($layer) {
+  @return map.get($z, $layer);
+}
+
+// Soft elevation instead of borders. Levels: 1 (resting), 2 (raised), 3 (floating).
+@mixin elevation($level: 1) {
+  @if $level == 1 {
+    box-shadow:
+      0 1px 2px rgb(var(--shadow-color) / 6%),
+      0 2px 8px rgb(var(--shadow-color) / 5%);
+  } @else if $level == 2 {
+    box-shadow:
+      0 2px 4px rgb(var(--shadow-color) / 6%),
+      0 8px 24px rgb(var(--shadow-color) / 9%);
+  } @else {
+    box-shadow:
+      0 4px 8px rgb(var(--shadow-color) / 8%),
+      0 18px 48px rgb(var(--shadow-color) / 16%);
+  }
+}
+
+@mixin focus-ring {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--ring);
+}
+
+// Hover lift + press feedback for anything tappable.
+@mixin pressable {
+  transition:
+    transform var(--dur-base) var(--ease-out),
+    background-color var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out),
+    color var(--dur-base) var(--ease-out);
+
+  &:active:not(:disabled) {
+    transform: scale(0.97);
+    transition-duration: var(--dur-fast);
+  }
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+}
+
+// Hover styles only on devices that really hover (no sticky hover on phones).
+@mixin hover {
+  @media (hover: hover) {
+    &:hover:not(:disabled) {
+      @content;
+    }
+  }
+}
+
+@mixin reduced-motion {
+  @media (prefers-reduced-motion: reduce) {
+    @content;
+  }
+}
+
+@mixin visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@mixin truncate {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+@mixin line-clamp($lines) {
+  display: -webkit-box;
+  -webkit-line-clamp: $lines;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+// Emits a token map as CSS custom properties.
+@mixin custom-properties($map) {
+  @each $name, $value in $map {
+    --#{$name}: #{$value};
+  }
+}

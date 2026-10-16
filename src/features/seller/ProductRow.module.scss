@@ -1,0 +1,50 @@
+@use "styles" as *;
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding-right: var(--space-3);
+  border-radius: var(--radius-lg);
+  transition: background-color var(--dur-base) var(--ease-out);
+
+  @include hover {
+    background: var(--surface-1);
+  }
+}
+
+.open {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+  padding: var(--space-2);
+  border-radius: var(--radius-lg);
+  text-align: start;
+  @include pressable;
+}
+
+.thumb {
+  width: 56px;
+  flex-shrink: 0;
+}
+
+.info {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.price {
+  white-space: nowrap;
+}
+
+.soldOut {
+  .thumb,
+  .info,
+  .price {
+    opacity: 0.45;
+  }
+}

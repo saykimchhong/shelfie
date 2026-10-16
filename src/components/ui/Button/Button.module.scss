@@ -1,0 +1,90 @@
+@use "styles" as *;
+
+.button {
+  --btn-h: 44px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  height: var(--btn-h);
+  padding: 0 var(--space-5);
+  border-radius: var(--radius-full);
+  font-weight: 650;
+  font-size: var(--text-md);
+  line-height: 1;
+  white-space: nowrap;
+  user-select: none;
+  @include pressable;
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  svg {
+    width: 1.2em;
+    height: 1.2em;
+    flex-shrink: 0;
+  }
+}
+
+.sm {
+  --btn-h: 36px;
+  padding: 0 var(--space-4);
+  font-size: var(--text-sm);
+}
+
+.lg {
+  --btn-h: 54px;
+  padding: 0 var(--space-6);
+  font-size: var(--text-lg);
+}
+
+.block {
+  width: 100%;
+}
+
+.iconOnly {
+  width: var(--btn-h);
+  padding: 0;
+}
+
+.primary {
+  background: var(--brand-solid);
+  color: var(--on-brand);
+  @include elevation(1);
+
+  @include hover {
+    background: color-mix(in oklab, var(--brand-solid) 88%, var(--fg));
+    @include elevation(2);
+    transform: translateY(-1px);
+  }
+}
+
+.soft {
+  background: var(--brand-soft);
+  color: var(--brand-text);
+
+  @include hover {
+    background: color-mix(in oklab, var(--brand-soft) 82%, var(--brand));
+  }
+}
+
+.ghost {
+  background: transparent;
+  color: var(--fg);
+
+  @include hover {
+    background: var(--surface-1);
+  }
+}
+
+.danger {
+  background: var(--danger-soft);
+  color: var(--danger);
+
+  @include hover {
+    background: color-mix(in oklab, var(--danger-soft) 80%, var(--danger));
+  }
+}

@@ -1,0 +1,59 @@
+@use "styles" as *;
+
+.control {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 3px;
+  border-radius: var(--radius-full);
+  background: var(--brand-soft);
+}
+
+.active {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+%round {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  @include pressable;
+
+  svg {
+    width: 16px;
+    height: 16px;
+    stroke-width: 2.6;
+  }
+}
+
+.step {
+  @extend %round;
+  color: var(--brand-text);
+
+  @include hover {
+    background: var(--bg-raised);
+  }
+}
+
+.add {
+  @extend %round;
+  background: var(--brand-solid);
+  color: var(--on-brand);
+}
+
+.count {
+  min-width: 1.5ch;
+  font-weight: 800;
+  text-align: center;
+  animation: bump var(--dur-slow) var(--ease-spring);
+}
+
+@keyframes bump {
+  from {
+    transform: scale(1.5);
+  }
+}

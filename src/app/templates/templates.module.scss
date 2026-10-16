@@ -1,0 +1,68 @@
+@use "styles" as *;
+
+.page {
+  min-height: 100dvh;
+  background:
+    radial-gradient(60% 40% at 50% 0%, color-mix(in oklab, var(--brand) 18%, transparent), transparent 70%),
+    var(--bg);
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--topbar-h);
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  padding-block: var(--space-6) var(--space-16);
+}
+
+.controls {
+  display: grid;
+  gap: var(--space-5);
+  max-width: 720px;
+  margin-inline: auto;
+
+  @include up(md) {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+    gap: var(--space-8);
+  }
+}
+
+// Swipe between phones on mobile; all three side by side on desktop.
+.phones {
+  display: flex;
+  gap: var(--space-6);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  margin-inline: calc(var(--gutter) * -1);
+  padding: var(--space-4) var(--gutter) var(--space-6);
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  @include up(lg) {
+    justify-content: center;
+    overflow: visible;
+  }
+}
+
+.slot {
+  flex-shrink: 0;
+  scroll-snap-align: center;
+}
+
+.phone {
+  --zoom: 0.72;
+
+  @include up(xl) {
+    --zoom: 0.8;
+  }
+}

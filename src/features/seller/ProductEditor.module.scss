@@ -1,0 +1,90 @@
+@use "styles" as *;
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.photoRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.photo {
+  position: relative;
+  width: 112px;
+  flex-shrink: 0;
+}
+
+.busy {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-md);
+  background: color-mix(in oklab, var(--bg-raised) 65%, transparent);
+  color: var(--brand-text);
+}
+
+.photoActions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.upload {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: 36px;
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-full);
+  background: var(--surface-1);
+  font-size: var(--text-sm);
+  font-weight: 650;
+  cursor: pointer;
+  @include pressable;
+
+  &:focus-within {
+    @include focus-ring;
+  }
+
+  svg {
+    width: 1.2em;
+    height: 1.2em;
+  }
+
+  input {
+    @include visually-hidden;
+  }
+}
+
+.pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+.error {
+  color: var(--danger);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-align: center;
+}
+
+.actions {
+  position: sticky;
+  bottom: calc(var(--space-5) * -1);
+  display: flex;
+  gap: var(--space-3);
+  margin: 0 calc(var(--space-5) * -1) calc(var(--space-5) * -1);
+  padding: var(--space-3) var(--space-5) var(--space-5);
+  background: var(--bg-raised);
+}
+
+.save {
+  flex: 1;
+}

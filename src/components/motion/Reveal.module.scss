@@ -1,0 +1,48 @@
+.reveal {
+  animation: rise 0.6s var(--ease-out) var(--reveal-delay, 0s) both;
+}
+
+.pop {
+  animation-name: pop;
+  animation-timing-function: var(--ease-spring);
+}
+
+.fade {
+  animation-name: fade;
+}
+
+.stagger > * {
+  animation: rise 0.55s var(--ease-out) both;
+  animation-delay: var(--reveal-delay, 0s);
+}
+
+// Past 16 items everything shares the last delay, so long lists don't drag.
+@for $i from 2 through 16 {
+  .stagger > :nth-child(#{$i}) {
+    animation-delay: calc(var(--reveal-delay, 0s) + var(--stagger-interval) * #{$i - 1});
+  }
+}
+
+.stagger > :nth-child(n + 17) {
+  animation-delay: calc(var(--reveal-delay, 0s) + var(--stagger-interval) * 16);
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}

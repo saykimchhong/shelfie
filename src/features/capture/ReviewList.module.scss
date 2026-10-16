@@ -1,0 +1,137 @@
+@use "styles" as *;
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3) var(--space-2) var(--space-2);
+  border-radius: var(--radius-lg);
+  background: var(--bg-raised);
+  @include elevation(1);
+  transition: opacity var(--dur-base) var(--ease-out);
+}
+
+.excluded {
+  opacity: 0.45;
+}
+
+.check {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--surface-2);
+  color: transparent;
+  @include pressable;
+
+  svg {
+    width: 16px;
+    height: 16px;
+    stroke-width: 3;
+  }
+}
+
+.checked {
+  background: var(--accent);
+  color: #fff;
+}
+
+.thumb {
+  width: 48px;
+  flex-shrink: 0;
+
+  @include down(sm) {
+    display: none;
+  }
+}
+
+.fields {
+  flex: 1;
+  min-width: 0;
+}
+
+.name {
+  width: 100%;
+  padding: var(--space-1) var(--space-2);
+  margin-left: calc(var(--space-2) * -1);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font-weight: 600;
+  outline: none;
+  @include truncate;
+
+  &:focus {
+    background: var(--surface-1);
+  }
+
+  &:focus-visible {
+    box-shadow: none;
+  }
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 0;
+}
+
+.local {
+  font-size: var(--text-sm);
+  color: var(--fg-muted);
+  @include truncate;
+}
+
+.price {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  width: 112px;
+  flex-shrink: 0;
+  padding: 0 var(--space-3);
+  height: 40px;
+  border-radius: var(--radius-full);
+  background: var(--brand-soft);
+  color: var(--brand-text);
+  font-weight: 700;
+
+  &:focus-within {
+    @include focus-ring;
+  }
+
+  input {
+    width: 100%;
+    min-width: 0;
+    border: 0;
+    background: transparent;
+    outline: none;
+    font-weight: 700;
+    color: inherit;
+    text-align: right;
+
+    &:focus-visible {
+      box-shadow: none;
+    }
+  }
+}
+
+.missing {
+  background: var(--sun-soft);
+  color: var(--fg);
+}
+
+.currency {
+  font-size: var(--text-xs);
+  opacity: 0.7;
+}

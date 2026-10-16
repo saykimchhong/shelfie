@@ -1,0 +1,26 @@
+.wrap {
+  max-width: 520px;
+  margin-inline: auto;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.icon {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-xl);
+  background: linear-gradient(135deg, var(--brand), var(--berry));
+  color: #fff;
+  transform: rotate(-6deg);
+
+  svg {
+    width: 30px;
+    height: 30px;
+  }
+}

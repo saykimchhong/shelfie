@@ -1,0 +1,46 @@
+.stack {
+  display: flex;
+  gap: var(--stack-gap);
+  min-width: 0;
+  list-style: none;
+  padding: 0;
+}
+
+.row {
+  flex-direction: row;
+}
+
+.column {
+  flex-direction: column;
+}
+
+.wrap {
+  flex-wrap: wrap;
+}
+
+$aligns: (
+  start: flex-start,
+  center: center,
+  end: flex-end,
+  stretch: stretch,
+  baseline: baseline,
+);
+
+@each $name, $value in $aligns {
+  .align-#{$name} {
+    align-items: $value;
+  }
+}
+
+$justifies: (
+  start: flex-start,
+  center: center,
+  end: flex-end,
+  between: space-between,
+);
+
+@each $name, $value in $justifies {
+  .justify-#{$name} {
+    justify-content: $value;
+  }
+}

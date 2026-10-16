@@ -1,0 +1,20 @@
+.screen {
+  display: grid;
+  place-items: center;
+  min-height: 70dvh;
+}
+
+.mark {
+  animation: breathe 1.2s var(--ease-out) infinite alternate;
+}
+
+@keyframes breathe {
+  from {
+    transform: scale(0.9);
+    opacity: 0.6;
+  }
+  to {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+}

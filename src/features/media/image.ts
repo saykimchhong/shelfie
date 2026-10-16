@@ -1,0 +1,51 @@
+// Browser image helpers. Everything runs on the seller's phone: no upload or
+// server cost until we actually store the final, compressed photo.
+
+// WebP where supported (smaller), JPEG otherwise (Safari can't encode WebP).
+export async function canvasToBlob(canvas: HTMLCanvasElement, quality = 0.82): Promise<Blob> {
+  const encode = (type: string) =>
+    new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, type, quality));
+  const webp = await encode("image/webp");
+  if (webp?.type === "image/webp") return webp;
+  const jpeg = await encode("image/jpeg");
+  if (!jpeg) throw new Error("Couldn't encode image");
+  return jpeg;
+}
+
+export function createCanvas(width: number, height = width): [HTMLCanvasElement, CanvasRenderingContext2D] {
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const context = canvas.getContext("2d");
+  if (!context) throw new Error("Canvas isn't available");
+  return [canvas, context];
+}
+
+// Largest centered square of a source, for square product tiles.
+export function centerSquare(width: number, height: number) {
+  const side = Math.min(width, height);
+  return { sx: (width - side) / 2, sy: (height - side) / 2, side };
+}
+
+// Square-crops and shrinks any photo (respecting EXIF rotation).
+export async function squarePhoto(source: Blob, size = 640): Promise<Blob> {
+  const bitmap = await createImageBitmap(source);
+  const { sx, sy, side } = centerSquare(bitmap.width, bitmap.height);
+  const [canvas, context] = createCanvas(Math.min(size, side));
+  context.drawImage(bitmap, sx, sy, side, side, 0, 0, canvas.width, canvas.height);
+  bitmap.close();
+  return canvasToBlob(canvas);
+}
+
+export function blobToDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(blob);
+  });
+}
+
+export async function urlToBlob(url: string): Promise<Blob> {
+  return (await fetch(url)).blob();
+}

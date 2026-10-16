@@ -1,0 +1,72 @@
+@use "styles" as *;
+
+.surface {
+  position: relative;
+  display: block;
+}
+
+.raised {
+  background: var(--bg-raised);
+  @include elevation(1);
+}
+
+.tint {
+  background: var(--surface-1);
+}
+
+.brand {
+  background: var(--brand-soft);
+}
+
+.accent {
+  background: var(--accent-soft);
+}
+
+.sun {
+  background: var(--sun-soft);
+}
+
+.berry {
+  background: var(--berry-soft);
+}
+
+.pad-none {
+  padding: 0;
+}
+
+.pad-sm {
+  padding: var(--space-3);
+}
+
+.pad-md {
+  padding: var(--space-5);
+}
+
+.pad-lg {
+  padding: var(--space-6);
+
+  @include up(md) {
+    padding: var(--space-8);
+  }
+}
+
+.radius-md {
+  border-radius: var(--radius-md);
+}
+
+.radius-lg {
+  border-radius: var(--radius-lg);
+}
+
+.radius-xl {
+  border-radius: var(--radius-xl);
+}
+
+.interactive {
+  @include pressable;
+
+  @include hover {
+    transform: translateY(-2px);
+    @include elevation(2);
+  }
+}
