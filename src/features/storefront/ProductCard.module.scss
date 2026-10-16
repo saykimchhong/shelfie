@@ -1,31 +1,42 @@
 @use "styles" as *;
 
 .card {
+  position: relative;
   display: flex;
   flex-direction: column;
   height: 100%;
-  overflow: hidden;
   border-radius: var(--radius-lg);
   background: var(--bg-raised);
   @include elevation(1);
-  transition:
-    transform var(--dur-base) var(--ease-out),
-    box-shadow var(--dur-base) var(--ease-out);
+  transition: transform var(--dur-slow) var(--ease-out);
+  @include lift(-3px, 2);
 
-  @include hover {
-    transform: translateY(-3px);
-    @include elevation(2);
+  // "In cart" ring: drawn once, faded with opacity (no box-shadow transition).
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border-radius: inherit;
+    box-shadow: 0 0 0 2px var(--brand);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--dur-base) var(--ease-out);
   }
 }
 
-.inCart {
-  box-shadow:
-    0 0 0 2px var(--brand),
-    0 8px 24px rgb(var(--shadow-color) / 10%);
+.inCart::before {
+  opacity: 1;
 }
 
+// Rounded top corners live on the photo, so the card itself needn't clip
+// (clipping would cut off the hover shadow layer).
 .media {
   position: relative;
+  overflow: hidden;
+  border-radius: inherit;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
 
   .thumb {
     border-radius: 0;
@@ -36,6 +47,14 @@
   position: absolute;
   top: var(--space-2);
   left: var(--space-2);
+}
+
+.quantity {
+  position: absolute;
+  right: var(--space-2);
+  bottom: var(--space-2);
+  border-radius: var(--radius-full);
+  @include elevation(1);
 }
 
 .body {
@@ -53,11 +72,8 @@
 .footer {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--space-2);
   margin-top: auto;
-  padding-top: var(--space-2);
-  min-height: 46px;
+  padding-top: var(--space-1);
 }
 
 .soldOut {

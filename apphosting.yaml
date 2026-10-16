@@ -1,0 +1,34 @@
+# Firebase App Hosting config — read on every rollout from GitHub.
+# Docs: https://firebase.google.com/docs/app-hosting/configure
+#
+# Firebase web config needs no entry here: App Hosting injects it at build time
+# (FIREBASE_WEBAPP_CONFIG) and next.config.ts maps it to NEXT_PUBLIC_FIREBASE_*.
+
+runConfig:
+  minInstances: 0 # scale to zero when idle: no cost between demos
+  # One instance keeps the in-memory storefront cache consistent (a seller's
+  # "refresh" clears it everywhere). Raise once a shared cache is set up.
+  maxInstances: 1
+  concurrency: 80
+  cpu: 1
+  memoryMiB: 1024
+
+env:
+  # "mock" = sample products, no AI calls. Switch to "gemini" when ready and
+  # add the GEMINI_API_KEY secret below.
+  - variable: SHELFIE_AI
+    value: mock
+    availability:
+      - RUNTIME
+
+  # Public URL for share links and page metadata. Set it to this backend's
+  # URL (shown in the console after the first rollout), e.g.
+  # https://shelfie--project08-empty.asia-southeast1.hosted.app
+  # - variable: NEXT_PUBLIC_SITE_URL
+  #   value: https://<backend>--<project>.<region>.hosted.app
+
+  # Real AI: create the secret once with
+  #   npx firebase-tools apphosting:secrets:set geminiApiKey
+  # then uncomment:
+  # - variable: GEMINI_API_KEY
+  #   secret: geminiApiKey

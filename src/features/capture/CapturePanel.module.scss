@@ -24,10 +24,7 @@
     @include focus-ring;
   }
 
-  @include hover {
-    transform: translateY(-3px);
-    @include elevation(2);
-  }
+  @include lift(-3px, 3);
 }
 
 .brand {
@@ -122,16 +119,32 @@
     color-mix(in oklab, var(--brand) 35%, transparent) 85%,
     color-mix(in oklab, #fff 80%, transparent)
   );
-  mix-blend-mode: screen;
+  will-change: transform; // loops for the whole wait: keep it on its own layer
   animation: scan 2.2s var(--ease-out) infinite;
+
+  // Progress indicator, so keep it (tier 3) — as a gentle glow, not a sweep.
+  @include reduced-motion {
+    inset: 0;
+    height: auto;
+    animation: glow 1.6s ease-in-out infinite alternate;
+  }
 }
 
 @keyframes scan {
   from {
-    transform: translateY(-100%);
+    transform: translate3d(0, -100%, 0);
   }
   to {
-    transform: translateY(340%);
+    transform: translate3d(0, 340%, 0);
+  }
+}
+
+@keyframes glow {
+  from {
+    opacity: 0.2;
+  }
+  to {
+    opacity: 0.6;
   }
 }
 
@@ -144,8 +157,9 @@
   gap: var(--space-3);
   padding: var(--space-2);
   border-radius: var(--radius-full);
-  background: color-mix(in oklab, var(--bg-raised) 88%, transparent);
-  backdrop-filter: blur(12px);
+  // Near-opaque instead of backdrop-filter: content scrolls underneath, and a
+  // blur would be recomputed on every scroll frame.
+  background: color-mix(in oklab, var(--bg-raised) 94%, transparent);
   @include elevation(3);
 }
 

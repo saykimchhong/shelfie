@@ -48,12 +48,16 @@
   box-shadow: 0 0 0 3px var(--ring);
 }
 
-// Hover lift + press feedback for anything tappable.
+// ── Motion rules (60fps) ────────────────────────────────────────────────
+// Only transform and opacity animate per frame; they run on the compositor.
+// Never transition box-shadow, filter, width/height or background-position.
+// Bigger shadows are painted once on a pseudo-element and faded in (below).
+
+// Press feedback for anything tappable.
 @mixin pressable {
   transition:
     transform var(--dur-base) var(--ease-out),
     background-color var(--dur-base) var(--ease-out),
-    box-shadow var(--dur-base) var(--ease-out),
     color var(--dur-base) var(--ease-out);
 
   &:active:not(:disabled) {
@@ -63,6 +67,44 @@
 
   &:focus-visible {
     @include focus-ring;
+  }
+}
+
+// A larger shadow rendered once on ::after and shown by fading its opacity —
+// smooth at any frame rate, unlike transitioning box-shadow. Needs a
+// positioned element and no `overflow: hidden` (it would clip the shadow).
+@mixin shadow-layer($level: 2) {
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    @include elevation($level);
+    opacity: 0;
+    transition: opacity var(--dur-slow) var(--ease-out);
+  }
+}
+
+// Hover: rise a little and fade in the bigger shadow. Pressing wins over
+// hovering, and reduced-motion users keep the shadow but not the movement.
+@mixin lift($y: -2px, $level: 2) {
+  @include shadow-layer($level);
+
+  @media (hover: hover) {
+    &:hover:not(:disabled):not(:active) {
+      transform: translateY($y);
+    }
+
+    &:hover:not(:disabled)::after {
+      opacity: 1;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &:hover:not(:disabled):not(:active) {
+      transform: none;
+    }
   }
 }
 

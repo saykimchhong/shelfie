@@ -1,5 +1,14 @@
+@use "styles" as *;
+
+// All entrance motion is transform + opacity only (compositor, 60fps).
+//
+// Fill mode is `backwards`, never `both`: once an entrance finishes, the
+// element's own transform/opacity take over again, so hover lifts and press
+// feedback keep transitioning smoothly instead of being frozen by the
+// finished animation.
+
 .reveal {
-  animation: rise 0.6s var(--ease-out) var(--reveal-delay, 0s) both;
+  animation: rise 0.6s var(--ease-out) var(--reveal-delay, 0s) backwards;
 }
 
 .pop {
@@ -12,7 +21,7 @@
 }
 
 .stagger > * {
-  animation: rise 0.55s var(--ease-out) both;
+  animation: rise 0.55s var(--ease-out) backwards;
   animation-delay: var(--reveal-delay, 0s);
 }
 
@@ -27,10 +36,36 @@
   animation-delay: calc(var(--reveal-delay, 0s) + var(--stagger-interval) * 16);
 }
 
+// <ScrollStagger>: children that start off-screen wait (set by JS after
+// hydration, so nothing is hidden before it), then play a short, time-based
+// rise when they scroll into view. It always runs to the end: no
+// half-faded items when scrolling stops.
+.stagger > [data-reveal="waiting"] {
+  opacity: 0;
+  transform: translate3d(0, 24px, 0);
+  animation: none;
+}
+
+.stagger > [data-reveal="in"] {
+  animation: rise 0.5s var(--ease-out) backwards;
+  animation-delay: calc(var(--reveal-order, 0) * 60ms);
+}
+
+// Reduced motion (tier 2): keep a short fade so nothing pops in abruptly,
+// drop the movement.
+@include reduced-motion {
+  .reveal,
+  .stagger > * {
+    animation-name: fade;
+    animation-duration: 0.2s;
+    animation-delay: 0s;
+  }
+}
+
 @keyframes rise {
   from {
     opacity: 0;
-    transform: translateY(14px);
+    transform: translate3d(0, 16px, 0);
   }
 }
 

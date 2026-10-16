@@ -73,7 +73,7 @@ async function videoPart(video: Blob, mimeType: string): Promise<{ part: Part; f
   return { part: createPartFromUri(file.uri, file.mimeType ?? mimeType), fileName: file.name };
 }
 
-export async function geminiExtract(input: ExtractInput): Promise<Extraction> {
+export async function geminiExtract(input: ExtractInput & { video: Blob }): Promise<Extraction> {
   const ai = gemini();
   const { part, fileName } = await videoPart(input.video, input.mimeType);
 

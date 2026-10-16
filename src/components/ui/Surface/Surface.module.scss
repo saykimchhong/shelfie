@@ -64,9 +64,5 @@
 
 .interactive {
   @include pressable;
-
-  @include hover {
-    transform: translateY(-2px);
-    @include elevation(2);
-  }
+  @include lift(-2px, 2);
 }

@@ -132,12 +132,24 @@ function withDeletes(patch: object, optionalFields: readonly string[]): Record<s
 }
 
 export type StorePatch = Partial<
-  Pick<Store, "name" | "tagline" | "contact" | "currency" | "labelLanguage" | "theme" | "published" | "paymentQrUrl">
+  Pick<
+    Store,
+    | "name"
+    | "tagline"
+    | "description"
+    | "logoUrl"
+    | "contact"
+    | "currency"
+    | "labelLanguage"
+    | "theme"
+    | "published"
+    | "paymentQrUrl"
+  >
 >;
 
 export async function updateStore(slug: string, patch: StorePatch): Promise<void> {
   await updateDoc(storeRef(slug), {
-    ...withDeletes(patch, ["tagline", "paymentQrUrl"]),
+    ...withDeletes(patch, ["tagline", "description", "logoUrl", "paymentQrUrl"]),
     updatedAt: serverTimestamp(),
   });
 }

@@ -35,8 +35,9 @@ next-env.d.ts
 *serviceAccount*.json
 *-firebase-adminsdk-*.json
 
-# firebase
+# firebase (.apphosting/ is the App Hosting adapter's local build output)
 .firebase/
+.apphosting/
 firebase-debug.log*
 firestore-debug.log*
 database-debug.log*
@@ -63,5 +64,8 @@ yarn-error.log*
 Thumbs.db
 desktop.ini
 
-# local AI-assistant settings
-.claude/settings.local.json
+# Claude Code: local to each machine (settings, installed skills, notes).
+# skills-lock.json stays tracked so anyone can restore the same skills with
+# `npx skills experimental_install`.
+.claude/
+CLAUDE.local.md

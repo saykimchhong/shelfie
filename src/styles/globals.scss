@@ -98,13 +98,12 @@ p {
   border-radius: var(--radius-sm);
 }
 
+// Reduced motion is tiered, not a kill switch: each component drops its own
+// large movement (tier 1/2) and keeps short fades, loaders and feedback
+// (tier 3). See .claude/skills/accessible-animation. motion/react follows the
+// same setting via <MotionProvider>. This is only the global backstop.
 @include reduced-motion {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+  html {
     scroll-behavior: auto !important;
   }
 }

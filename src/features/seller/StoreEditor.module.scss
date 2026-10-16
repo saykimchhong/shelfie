@@ -6,10 +6,12 @@
   gap: var(--space-6);
 }
 
-// Phone: look → preview → details. Desktop: settings left, sticky preview right.
+// Phone: profile → look → preview → details.
+// Desktop: settings on the left, sticky live preview on the right.
 .layout {
   display: grid;
   grid-template-areas:
+    "profile"
     "look"
     "preview"
     "details";
@@ -17,11 +19,17 @@
 
   @include up(lg) {
     grid-template-columns: minmax(0, 1fr) 340px;
+    grid-template-rows: auto auto 1fr;
     grid-template-areas:
+      "profile preview"
       "look preview"
       "details preview";
     align-items: start;
   }
+}
+
+.profile {
+  grid-area: profile;
 }
 
 .look {
@@ -53,6 +61,60 @@
   }
 }
 
+.logoRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.logo {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 88px;
+  height: 88px;
+  overflow: hidden;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--brand), color-mix(in oklab, var(--brand) 55%, var(--sun)));
+  color: #fff;
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.logoImage {
+  object-fit: cover;
+}
+
+.upload {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: 36px;
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-full);
+  background: var(--brand-soft);
+  color: var(--brand-text);
+  font-size: var(--text-sm);
+  font-weight: 650;
+  cursor: pointer;
+  @include pressable;
+
+  &:focus-within {
+    @include focus-ring;
+  }
+
+  svg {
+    width: 1.2em;
+    height: 1.2em;
+  }
+
+  input {
+    @include visually-hidden;
+  }
+}
+
 .saveBar {
   position: sticky;
   bottom: var(--space-4);
@@ -63,7 +125,6 @@
   gap: var(--space-3);
   padding: var(--space-2) var(--space-2) var(--space-2) var(--space-5);
   border-radius: var(--radius-full);
-  background: color-mix(in oklab, var(--bg-raised) 88%, transparent);
-  backdrop-filter: blur(12px);
+  background: color-mix(in oklab, var(--bg-raised) 92%, transparent);
   @include elevation(3);
 }

@@ -1,17 +1,39 @@
 "use client";
 
-import { ArrowLeft, Check, TriangleAlert } from "lucide-react";
+import { ArrowLeft, Check, ImageOff, ImagePlus, TriangleAlert } from "lucide-react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Reveal } from "@/components/motion/Reveal";
 import { ThemeScope } from "@/components/theme/ThemeScope";
-import { Badge, Button, ButtonLink, EmptyState, Segmented, Stack, Surface, Text, TextField } from "@/components/ui";
+import {
+  Badge,
+  Button,
+  ButtonLink,
+  EmptyState,
+  Segmented,
+  Stack,
+  Surface,
+  Text,
+  TextArea,
+  TextField,
+} from "@/components/ui";
 import { sampleStorefront } from "@/domain/samples";
-import { storeInputSchema, type Currency, type LabelLanguage, type PublicStore, type Store } from "@/domain/store";
+import {
+  STORE_DESCRIPTION_MAX,
+  storeInputSchema,
+  storeSchema,
+  type Currency,
+  type LabelLanguage,
+  type PublicStore,
+  type Store,
+} from "@/domain/store";
 import { DEFAULT_THEME, type Theme } from "@/domain/theme";
 import { useSignedInUser } from "@/features/auth";
+import { saveStoreLogo, useObjectUrl } from "@/features/media";
 import { StorefrontView } from "@/features/storefront";
 import { PhonePreview, ThemePicker } from "@/features/theme";
+import { initials } from "@/lib/format";
 import { updateStore, useMyStore, useProducts, useRefreshStorefront } from "./data";
 import { CURRENCY_OPTIONS, LABEL_LANGUAGE_OPTIONS, PHONE_PLACEHOLDER } from "./options";
 import { DashboardSkeleton } from "./SellerHome";
@@ -36,6 +58,7 @@ export function StoreEditorPage() {
 type Form = {
   name: string;
   tagline: string;
+  description: string;
   whatsapp: string;
   line: string;
   currency: Currency;
@@ -43,10 +66,14 @@ type Form = {
   theme: Theme;
 };
 
+// The logo is a file, so it's tracked apart from the text fields.
+type Logo = { kind: "kept" } | { kind: "new"; blob: Blob } | { kind: "removed" };
+
 function toForm(store: Store): Form {
   return {
     name: store.name,
     tagline: store.tagline ?? "",
+    description: store.description ?? "",
     whatsapp: store.contact.whatsapp ?? "",
     line: store.contact.line ?? "",
     currency: store.currency,
@@ -55,28 +82,32 @@ function toForm(store: Store): Form {
   };
 }
 
-const detailsSchema = storeInputSchema.pick({
-  name: true,
-  tagline: true,
-  currency: true,
-  labelLanguage: true,
-  contact: true,
-});
+const detailsSchema = storeInputSchema
+  .pick({ name: true, tagline: true, currency: true, labelLanguage: true, contact: true })
+  .extend({ description: storeSchema.shape.description });
 
-type Errors = Partial<Record<"name" | "tagline" | "whatsapp" | "line" | "form", string>>;
+type Errors = Partial<Record<"name" | "tagline" | "description" | "whatsapp" | "line" | "form", string>>;
 
 function StoreEditor({ store }: { store: Store }) {
   const products = useProducts(store.slug);
   const refreshStorefront = useRefreshStorefront();
   const [saved, setSaved] = useState(() => toForm(store));
   const [form, setForm] = useState(saved);
+  const [logo, setLogo] = useState<Logo>({ kind: "kept" });
   const [errors, setErrors] = useState<Errors>({});
   const [saving, setSaving] = useState(false);
   const [justSaved, setJustSaved] = useState(false);
 
-  const dirty = JSON.stringify(form) !== JSON.stringify(saved);
+  const newLogoUrl = useObjectUrl(logo.kind === "new" ? logo.blob : null);
+  const logoUrl = logo.kind === "new" ? newLogoUrl : logo.kind === "kept" ? store.logoUrl : undefined;
+
+  const dirty = logo.kind !== "kept" || JSON.stringify(form) !== JSON.stringify(saved);
   const set = <K extends keyof Form>(key: K, value: Form[K]) => {
     setForm((current) => ({ ...current, [key]: value }));
+    setJustSaved(false);
+  };
+  const changeLogo = (next: Logo) => {
+    setLogo(next);
     setJustSaved(false);
   };
 
@@ -85,6 +116,8 @@ function StoreEditor({ store }: { store: Store }) {
     slug: store.slug,
     name: form.name || store.name,
     tagline: form.tagline || undefined,
+    description: form.description.trim() || undefined,
+    logoUrl: logoUrl ?? undefined,
     currency: form.currency,
     labelLanguage: form.labelLanguage,
     contact: { whatsapp: form.whatsapp || undefined, line: form.line || undefined },
@@ -100,6 +133,7 @@ function StoreEditor({ store }: { store: Store }) {
     const parsed = detailsSchema.safeParse({
       name: form.name,
       tagline: form.tagline.trim() || undefined,
+      description: form.description.trim() || undefined,
       currency: form.currency,
       labelLanguage: form.labelLanguage,
       contact: { whatsapp: form.whatsapp.trim() || undefined, line: form.line.trim() || undefined },
@@ -119,10 +153,23 @@ function StoreEditor({ store }: { store: Store }) {
     setErrors({});
     setSaving(true);
     try {
-      // tagline is always sent: undefined removes it.
-      await updateStore(store.slug, { ...parsed.data, tagline: parsed.data.tagline, theme: form.theme });
+      const logoPatch =
+        logo.kind === "new"
+          ? { logoUrl: await saveStoreLogo(store.slug, logo.blob) }
+          : logo.kind === "removed"
+            ? { logoUrl: undefined } // removes it
+            : {};
+      // tagline/description are always sent: undefined removes them.
+      await updateStore(store.slug, {
+        ...parsed.data,
+        tagline: parsed.data.tagline,
+        description: parsed.data.description,
+        theme: form.theme,
+        ...logoPatch,
+      });
       await refreshStorefront(store.slug);
       setSaved(form);
+      setLogo({ kind: "kept" });
       setJustSaved(true);
     } catch (cause) {
       console.error(cause);
@@ -142,59 +189,99 @@ function StoreEditor({ store }: { store: Store }) {
       </Stack>
 
       <div className={styles.layout}>
-        <Reveal className={styles.look}>
+        <Reveal className={styles.profile}>
+          <Section title="Profile">
+            <div className={styles.logoRow}>
+              <span className={styles.logo}>
+                {logoUrl ? <Image src={logoUrl} alt="" fill sizes="88px" className={styles.logoImage} /> : initials(form.name || store.name)}
+              </span>
+              <Stack gap={2} align="start">
+                <label className={styles.upload}>
+                  <ImagePlus aria-hidden />
+                  {logoUrl ? "Change logo" : "Add logo"}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      if (file) changeLogo({ kind: "new", blob: file });
+                      event.target.value = "";
+                    }}
+                  />
+                </label>
+                {logoUrl ? (
+                  <Button variant="ghost" size="sm" icon={<ImageOff />} onClick={() => changeLogo({ kind: "removed" })}>
+                    Remove
+                  </Button>
+                ) : (
+                  <Text size="xs" tone="subtle">
+                    Optional · a shop photo works too
+                  </Text>
+                )}
+              </Stack>
+            </div>
+            <TextField label="Shop name" value={form.name} onChange={(e) => set("name", e.target.value)} error={errors.name} />
+            <TextField
+              label="Tagline"
+              placeholder="Fresh groceries in Phnom Penh"
+              value={form.tagline}
+              onChange={(e) => set("tagline", e.target.value)}
+              error={errors.tagline}
+            />
+            <TextArea
+              label="About your shop (optional)"
+              placeholder={"Family shop since 1998.\nOpen 7am–9pm · Delivery around Toul Kork"}
+              maxLength={STORE_DESCRIPTION_MAX}
+              value={form.description}
+              onChange={(e) => set("description", e.target.value)}
+              error={errors.description}
+            />
+          </Section>
+        </Reveal>
+
+        <Reveal delay={0.06} className={styles.look}>
           {/* Scoped to the chosen color so the picker itself previews it. */}
           <ThemeScope accent={form.theme.accent}>
-            <Surface padding="lg" radius="xl">
+            <Section title="Look">
               <ThemePicker value={form.theme} onChange={(theme) => set("theme", theme)} />
-            </Surface>
+            </Section>
           </ThemeScope>
         </Reveal>
 
-        <Reveal delay={0.06} className={styles.preview}>
+        <Reveal delay={0.1} className={styles.preview}>
           <PhonePreview className={styles.phone}>
             <StorefrontView store={previewStore} products={previewProducts} embedded />
           </PhonePreview>
           {usingSamples ? <Badge tone="sun">Sample products</Badge> : null}
         </Reveal>
 
-        <Reveal delay={0.12} className={styles.details}>
-          <Surface padding="lg" radius="xl">
-            <Stack gap={5}>
-              <TextField label="Shop name" value={form.name} onChange={(e) => set("name", e.target.value)} error={errors.name} />
-              <TextField
-                label="Tagline"
-                placeholder="Fresh groceries in Phnom Penh"
-                value={form.tagline}
-                onChange={(e) => set("tagline", e.target.value)}
-                error={errors.tagline}
-              />
-              <Segmented label="Currency" options={CURRENCY_OPTIONS} value={form.currency} onChange={(v) => set("currency", v)} />
-              <Segmented
-                label="Label language"
-                options={LABEL_LANGUAGE_OPTIONS}
-                value={form.labelLanguage}
-                onChange={(v) => set("labelLanguage", v)}
-              />
-              <TextField
-                label="WhatsApp"
-                type="tel"
-                inputMode="tel"
-                placeholder={PHONE_PLACEHOLDER[form.currency]}
-                value={form.whatsapp}
-                onChange={(e) => set("whatsapp", e.target.value)}
-                error={errors.whatsapp}
-              />
-              <TextField
-                label="LINE ID"
-                placeholder="@yourshop"
-                value={form.line}
-                onChange={(e) => set("line", e.target.value)}
-                error={errors.line}
-                autoCapitalize="none"
-              />
-            </Stack>
-          </Surface>
+        <Reveal delay={0.14} className={styles.details}>
+          <Section title="Orders & labels">
+            <Segmented label="Currency" options={CURRENCY_OPTIONS} value={form.currency} onChange={(v) => set("currency", v)} />
+            <Segmented
+              label="Label language"
+              options={LABEL_LANGUAGE_OPTIONS}
+              value={form.labelLanguage}
+              onChange={(v) => set("labelLanguage", v)}
+            />
+            <TextField
+              label="WhatsApp"
+              type="tel"
+              inputMode="tel"
+              placeholder={PHONE_PLACEHOLDER[form.currency]}
+              value={form.whatsapp}
+              onChange={(e) => set("whatsapp", e.target.value)}
+              error={errors.whatsapp}
+            />
+            <TextField
+              label="LINE ID"
+              placeholder="@yourshop"
+              value={form.line}
+              onChange={(e) => set("line", e.target.value)}
+              error={errors.line}
+              autoCapitalize="none"
+            />
+          </Section>
         </Reveal>
       </div>
 
@@ -215,5 +302,18 @@ function StoreEditor({ store }: { store: Store }) {
         </Button>
       </div>
     </div>
+  );
+}
+
+function Section({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <Surface as="section" padding="lg" radius="xl">
+      <Stack gap={5}>
+        <Text as="h2" size="lg" weight={700}>
+          {title}
+        </Text>
+        {children}
+      </Stack>
+    </Surface>
   );
 }

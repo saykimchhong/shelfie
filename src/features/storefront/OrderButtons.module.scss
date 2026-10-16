@@ -1,0 +1,34 @@
+@use "styles" as *;
+
+.buttons {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.block {
+  width: 100%;
+
+  > * {
+    flex: 1;
+  }
+}
+
+// Nested under .buttons so they beat the Button's own variant colors.
+.buttons .whatsapp {
+  background: #25d366;
+  color: #08331a;
+
+  @include hover {
+    background: #1ebe5b;
+  }
+}
+
+.buttons .line {
+  background: #06c755;
+  color: #fff;
+  font-weight: 800;
+
+  @include hover {
+    background: #05b04b;
+  }
+}

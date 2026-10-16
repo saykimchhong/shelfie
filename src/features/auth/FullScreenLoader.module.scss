@@ -1,11 +1,25 @@
+@use "styles" as *;
+
 .screen {
   display: grid;
   place-items: center;
   min-height: 70dvh;
 }
 
+
 .mark {
   animation: breathe 1.2s var(--ease-out) infinite alternate;
+
+  // Loader stays (tier 3), without the scaling.
+  @include reduced-motion {
+    animation-name: fade-pulse;
+  }
+}
+
+@keyframes fade-pulse {
+  from {
+    opacity: 0.5;
+  }
 }
 
 @keyframes breathe {

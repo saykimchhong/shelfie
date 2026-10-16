@@ -5,13 +5,20 @@ import { geminiExtract } from "./gemini";
 import { mockExtract } from "./mock";
 import type { ExtractInput, ExtractionProvider } from "./types";
 
-export type { ExtractInput, ExtractionProvider } from "./types";
+export { MAX_VIDEO_BYTES, type ExtractInput, type ExtractionProvider } from "./types";
 
-// The one switch between mock and real AI: SHELFIE_AI in .env.local.
+// The one switch between mock and real AI: SHELFIE_AI in the environment.
+export function extractionProvider(): ExtractionProvider {
+  return serverEnv().SHELFIE_AI;
+}
+
 export async function extractProducts(
   input: ExtractInput,
 ): Promise<{ provider: ExtractionProvider; extraction: Extraction }> {
-  const provider = serverEnv().SHELFIE_AI;
-  const extraction = provider === "gemini" ? await geminiExtract(input) : await mockExtract(input);
-  return { provider, extraction };
+  const provider = extractionProvider();
+  if (provider === "gemini") {
+    if (!input.video) throw new Error("The real AI needs the video");
+    return { provider, extraction: await geminiExtract({ ...input, video: input.video }) };
+  }
+  return { provider, extraction: await mockExtract(input) };
 }

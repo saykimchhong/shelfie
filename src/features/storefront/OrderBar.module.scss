@@ -9,24 +9,36 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-3);
+  gap: var(--space-2);
   width: min(calc(100% - var(--gutter) * 2), 560px);
-  padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4);
+  padding: var(--space-2);
   border-radius: var(--radius-full);
   background: var(--fg);
   color: var(--bg);
   @include elevation(3);
 }
 
+// The tappable "open cart" part of the bar.
 .summary {
   display: flex;
+  flex: 1;
   align-items: center;
   gap: var(--space-3);
   min-width: 0;
+  height: 44px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-full);
+  color: inherit;
+  @include pressable;
+
+  @include hover {
+    background: color-mix(in oklab, var(--bg) 12%, transparent);
+  }
 }
 
 .bag {
   position: relative;
+  flex-shrink: 0;
 
   svg {
     width: 24px;
@@ -56,28 +68,10 @@
   @include truncate;
 }
 
-.actions {
-  display: flex;
-  gap: var(--space-2);
-}
-
-// Brand colors people already recognize — no extra words needed.
-// Nested under .actions so they beat the Button's own variant colors.
-.actions .whatsapp {
-  background: #25d366;
-  color: #08331a;
-
-  @include hover {
-    background: #1ebe5b;
-  }
-}
-
-.actions .line {
-  background: #06c755;
-  color: #fff;
-  font-weight: 800;
-
-  @include hover {
-    background: #05b04b;
-  }
+.chevron {
+  width: 18px;
+  height: 18px;
+  margin-left: auto;
+  flex-shrink: 0;
+  opacity: 0.6;
 }

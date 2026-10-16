@@ -1,6 +1,7 @@
 @use "styles" as *;
 
 .item {
+  position: relative;
   display: flex;
   align-items: center;
   gap: var(--space-3);
@@ -9,13 +10,22 @@
   border-radius: var(--radius-lg);
   background: var(--bg-raised);
   @include elevation(1);
-  transition: box-shadow var(--dur-base) var(--ease-out);
+
+  // "In cart" ring, faded in with opacity.
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: 0 0 0 2px var(--brand);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--dur-base) var(--ease-out);
+  }
 }
 
-.inCart {
-  box-shadow:
-    0 0 0 2px var(--brand),
-    0 8px 24px rgb(var(--shadow-color) / 10%);
+.inCart::before {
+  opacity: 1;
 }
 
 .thumb {

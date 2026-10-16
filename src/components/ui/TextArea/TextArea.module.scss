@@ -1,0 +1,39 @@
+.control {
+  align-items: stretch;
+  padding-block: var(--space-3);
+}
+
+.textarea {
+  flex: 1;
+  min-width: 0;
+  min-height: 4.5lh;
+  max-height: 14lh;
+  border: 0;
+  background: transparent;
+  outline: none;
+  resize: vertical;
+  font-size: var(--text-md);
+  line-height: var(--leading-normal);
+  // Grow with the text (Chromium); other browsers keep min-height + resize.
+  field-sizing: content;
+
+  &::placeholder {
+    color: var(--fg-subtle);
+  }
+
+  // The whole control shows the focus ring.
+  &:focus-visible {
+    box-shadow: none;
+  }
+}
+
+.meta {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.near {
+  color: var(--brand-text);
+  font-weight: 600;
+}

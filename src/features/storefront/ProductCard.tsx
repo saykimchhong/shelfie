@@ -39,6 +39,12 @@ export function ProductCard({
             Sold out
           </Badge>
         ) : null}
+        {/* Floats on the photo's corner, so the stepper can grow without covering the price. */}
+        {onQuantityChange && product.inStock ? (
+          <div className={styles.quantity}>
+            <QuantityControl quantity={quantity} onChange={onQuantityChange} label={product.name} />
+          </div>
+        ) : null}
       </div>
       <div className={styles.body}>
         <Text weight={600} clamp={2} className={styles.name}>
@@ -53,9 +59,6 @@ export function ProductCard({
           <Text weight={800} tone={product.price === null ? "subtle" : "brand"}>
             {product.price === null ? "Ask" : formatPrice(product.price, currency)}
           </Text>
-          {onQuantityChange && product.inStock ? (
-            <QuantityControl quantity={quantity} onChange={onQuantityChange} label={product.name} />
-          ) : null}
         </div>
       </div>
     </article>

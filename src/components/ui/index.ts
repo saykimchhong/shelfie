@@ -12,5 +12,6 @@ export { Stack, type StackProps } from "./Stack/Stack";
 export { Surface, type SurfaceProps } from "./Surface/Surface";
 export { Switch, type SwitchProps } from "./Switch/Switch";
 export { Text, type TextProps } from "./Text/Text";
+export { TextArea, type TextAreaProps } from "./TextArea/TextArea";
 export { TextField, type TextFieldProps } from "./TextField/TextField";
 export { Thumb, type ThumbProps } from "./Thumb/Thumb";

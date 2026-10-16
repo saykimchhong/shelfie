@@ -1,5 +1,13 @@
 @use "styles" as *;
 
+// Enter and exit are transitions on opacity + transform only. `display` and
+// `overlay` are transitioned as discrete properties so the dialog stays in the
+// top layer until the exit finishes; @starting-style gives the enter its
+// "from" values. Browsers without these features just open/close instantly.
+
+$enter: 300ms;
+$exit: 200ms;
+
 .dialog {
   width: 100%;
   max-width: 100%;
@@ -10,24 +18,45 @@
   border: 0;
   background: transparent;
   color: inherit;
+  opacity: 0;
+  transition:
+    opacity $exit ease-in,
+    overlay $exit allow-discrete,
+    display $exit allow-discrete;
 
   &[open] {
     display: flex;
     align-items: flex-end;
     justify-content: center;
+    opacity: 1;
+    transition-duration: $enter;
+    transition-timing-function: ease-out;
 
     @include up(sm) {
       align-items: center;
+    }
+
+    @starting-style {
+      opacity: 0;
     }
   }
 
   &::backdrop {
     background: var(--overlay);
-    backdrop-filter: blur(4px);
+    opacity: 0;
+    transition:
+      opacity $exit ease-in,
+      overlay $exit allow-discrete,
+      display $exit allow-discrete;
   }
 
   &[open]::backdrop {
-    animation: fade var(--dur-slow) var(--ease-out);
+    opacity: 1;
+    transition-duration: $enter;
+
+    @starting-style {
+      opacity: 0;
+    }
   }
 }
 
@@ -40,13 +69,37 @@
   background: var(--bg-raised);
   padding-bottom: env(safe-area-inset-bottom);
   @include elevation(3);
-  animation: sheet-up var(--dur-slow) var(--ease-out);
+  // Closed position: below the screen (phones) / slightly shrunk (desktop).
+  transform: translate3d(0, 100%, 0);
+  transition: transform $exit cubic-bezier(0.4, 0, 1, 1);
 
   @include up(sm) {
     width: min(100% - 2rem, 480px);
     border-radius: var(--radius-xl);
     padding-bottom: 0;
-    animation-name: pop-in;
+    transform: scale(0.95);
+  }
+
+  .dialog[open] & {
+    transform: none;
+    transition: transform $enter cubic-bezier(0.16, 1, 0.3, 1);
+
+    @starting-style {
+      transform: translate3d(0, 100%, 0);
+
+      @include up(sm) {
+        transform: scale(0.95);
+      }
+    }
+  }
+
+  // Tier 2: no sliding for reduced motion; the dialog's fade remains.
+  @include reduced-motion {
+    &,
+    .dialog[open] & {
+      transform: none;
+      transition: none;
+    }
   }
 }
 
@@ -66,6 +119,7 @@
 .body {
   flex: 1;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: var(--space-2) var(--space-5) var(--space-5);
 }
 
@@ -73,23 +127,4 @@
   display: flex;
   gap: var(--space-3);
   padding: var(--space-3) var(--space-5) var(--space-5);
-}
-
-@keyframes sheet-up {
-  from {
-    transform: translateY(100%);
-  }
-}
-
-@keyframes pop-in {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-}
-
-@keyframes fade {
-  from {
-    opacity: 0;
-  }
 }

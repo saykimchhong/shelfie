@@ -3,6 +3,7 @@
 .button {
   --btn-h: 44px;
 
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -54,11 +55,10 @@
   background: var(--brand-solid);
   color: var(--on-brand);
   @include elevation(1);
+  @include lift(-1px, 2);
 
   @include hover {
     background: color-mix(in oklab, var(--brand-solid) 88%, var(--fg));
-    @include elevation(2);
-    transform: translateY(-1px);
   }
 }
 

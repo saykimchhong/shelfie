@@ -106,7 +106,8 @@ firestore.rules         The real access control
 
 ```
 stores/{slug}                       slug = document id = public URL
-  ownerId, name, tagline?, currency (USD|KHR|LKR|THB), labelLanguage (en|km|si|ta|th),
+  ownerId, name, tagline?, description? (≤500, line breaks kept), logoUrl?,
+  currency (USD|KHR|LKR|THB), labelLanguage (en|km|si|ta|th),
   contact { whatsapp?, line? }, theme? { template (grid|list|showcase), accent (#rrggbb) },
   paymentQrUrl?, published, createdAt, updatedAt
 
@@ -133,8 +134,45 @@ The goal is **less text, more signal**. Color, icons and motion carry the meanin
 - **Light and dark** come for free from the tokens. Check both.
 - **Mobile first:** `@include up(md) { … }`. Sellers and buyers are mostly on phones.
 - **Icons over words** (lucide-react), one short sentence at most in empty states, and visual pickers (`Segmented`) over dropdowns.
-- **Motion:** entrances use CSS (`<Reveal>`, `<Stagger>`), so pages work before JavaScript loads on slow phones. `motion/react` is for interaction: layout, presence and gestures. `prefers-reduced-motion` is respected everywhere.
+- **Motion:** entrances use CSS (`<Reveal>`, `<Stagger>`), so pages work before JavaScript loads on slow phones. `motion/react` is for interaction: layout, presence and gestures. `<ScrollStagger>` reveals long lists as they enter the screen: an IntersectionObserver flips a data attribute, and a short CSS animation always plays to the end, never stuck half-way.
+- **Entrance fill mode is `backwards`, never `both`.** A finished `both` animation keeps control of `transform`, which freezes hover lifts and press feedback.
+- **60fps rule:** only `transform` and `opacity` may animate.
+  - Never transition `box-shadow`, `filter`, sizes or `background-position`.
+  - Hover shadows: use `@include lift()` / `shadow-layer()`. The bigger shadow is drawn once and fades in.
+  - Rings: draw them on a pseudo-element and fade its opacity.
+  - Don't put `backdrop-filter` over moving content.
+  - Check in DevTools → Performance: animations should show no per-frame Layout or Paint. The landing page measures about 61 fps with 0 Layout and 0 Paint.
+- **Reduced motion is tiered:**
+  - Stop large movement and decorative loops.
+  - Turn slides into short fades.
+  - Keep loaders and feedback.
+
+  Each component handles its own case (`@include reduced-motion`). There's no global kill switch.
+- **Animation skills:** the `iart-ai/web-animation-skills` pack (60fps, accessible animation, micro-interactions…) is installed per machine into `.claude/`, which git ignores. Restore it with `npx skills experimental_install`, which reads the tracked `skills-lock.json`.
 - **Layout with `<Stack>`/`<Container>`** instead of one-off margins.
+
+## Deploy (Firebase App Hosting, from the console)
+
+App Hosting builds the app from GitHub on every push to `main`. No Firebase keys are needed in the repo or the console: App Hosting injects the web app config at build time, and `next.config.ts` maps it in. Run settings and the AI switch live in `apphosting.yaml`.
+
+1. Push the repo to GitHub.
+2. In the Firebase console, open **Build → App Hosting → Get started**. **The Blaze plan is required.** With `minInstances: 0`, idle time costs nothing.
+3. Pick the region closest to our users (Asia). Connect GitHub and choose the repo. Use root directory `/`, live branch `main`, and turn on automatic rollouts.
+4. **Associate the existing Firebase web app**, the one from `.env.local`. This is what provides the config. Pick Node runtime **nodejs22** or newer.
+5. Click **Finish and deploy**. The first rollout takes a few minutes, and the URL looks like `https://<backend>--<project>.<region>.hosted.app`.
+6. After the first rollout:
+   - Add that domain under **Authentication → Settings → Authorized domains**, or Google sign-in will fail.
+   - Set `NEXT_PUBLIC_SITE_URL` to the URL, in `apphosting.yaml` or the backend's Environment settings, and push.
+   - Deploy the rules with `npm run deploy:rules -- --project <project-id>`.
+
+**Check before pushing:** `NEXT_PRIVATE_STANDALONE=true npm run build`, then copy `.next/static` into `.next/standalone/.next/` and run `node .next/standalone/server.js`. That's the same server App Hosting runs.
+
+**Known limits:**
+
+- **Next.js 16** isn't on App Hosting's official support list yet (it lists 13.5–15.2). Its adapter accepts any version and our standalone build runs, but if a rollout fails at the build step, check the build log first.
+- **Uploads go through Cloud Run, capped at 32 MB.** Mock mode never uploads the video (frames are taken in the browser). Real AI mode accepts videos up to 30 MB. For longer videos, upload straight from the browser to Gemini through a resumable upload URL created by the server.
+- **`maxInstances: 1`** keeps the in-memory storefront cache consistent. Add a shared cache (`use cache: remote`) before scaling out.
+- **Inline photos** make store pages heavy. A store with 6 photos is about 0.5 MB of HTML. Switch `saveProductImage()` to Firebase Storage before real traffic.
 
 ## Notes on this Next.js version (16.4)
 

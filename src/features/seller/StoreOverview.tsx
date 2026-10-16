@@ -3,7 +3,7 @@
 import { ExternalLink, Palette, Plus, Video } from "lucide-react";
 import { useState } from "react";
 import { Reveal, Stagger } from "@/components/motion/Reveal";
-import { Badge, Button, ButtonLink, EmptyState, Skeleton, Stack, Surface, Switch, Text } from "@/components/ui";
+import { Avatar, Badge, Button, ButtonLink, EmptyState, Skeleton, Stack, Surface, Switch, Text } from "@/components/ui";
 import type { Product } from "@/domain/product";
 import type { Store } from "@/domain/store";
 import { storeUrl, storeUrlLabel } from "@/lib/site";
@@ -43,14 +43,17 @@ export function StoreOverview({ store }: { store: Store }) {
         <Surface tone="brand" padding="lg" radius="xl" className={styles.hero}>
           <Stack gap={4}>
             <Stack direction="row" justify="between" align="start" gap={3}>
-              <Stack gap={1}>
-                <Text as="h1" size="3xl">
-                  {store.name}
-                </Text>
-                <a href={storeUrl(store.slug)} target="_blank" rel="noreferrer" className={styles.link}>
-                  {storeUrlLabel(store.slug)}
-                  <ExternalLink aria-hidden />
-                </a>
+              <Stack direction="row" align="center" gap={3}>
+                <Avatar name={store.name} src={store.logoUrl} size={56} />
+                <Stack gap={1}>
+                  <Text as="h1" size="3xl">
+                    {store.name}
+                  </Text>
+                  <a href={storeUrl(store.slug)} target="_blank" rel="noreferrer" className={styles.link}>
+                    {storeUrlLabel(store.slug)}
+                    <ExternalLink aria-hidden />
+                  </a>
+                </Stack>
               </Stack>
               {store.published ? (
                 <Badge tone="success" pulse>

@@ -9,7 +9,14 @@
   top: 0;
   z-index: z(sticky);
   background: color-mix(in oklab, var(--bg) 82%, transparent);
-  backdrop-filter: saturate(1.6) blur(14px);
+  // Content scrolls under this, so the blur is redone every scroll frame:
+  // keep the radius small (cost grows with it).
+  backdrop-filter: blur(8px);
+
+  @media (prefers-reduced-transparency: reduce) {
+    background: var(--bg);
+    backdrop-filter: none;
+  }
 }
 
 .bar {

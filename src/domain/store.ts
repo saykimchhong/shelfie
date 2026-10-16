@@ -13,6 +13,8 @@ export const LABEL_LANGUAGES = ["en", "km", "si", "ta", "th"] as const;
 export const labelLanguageSchema = z.enum(LABEL_LANGUAGES);
 export type LabelLanguage = z.infer<typeof labelLanguageSchema>;
 
+export const STORE_DESCRIPTION_MAX = 500;
+
 export const contactSchema = z.object({
   whatsapp: z
     .string()
@@ -26,6 +28,10 @@ export const storeSchema = z.object({
   ownerId: z.string().min(1),
   name: z.string().trim().min(1, "Give your shop a name").max(80, "Keep it under 80 characters"),
   tagline: z.string().trim().max(140, "Keep it under 140 characters").optional(),
+  // Optional "about the shop" text: story, opening hours, delivery area…
+  description: z.string().trim().max(STORE_DESCRIPTION_MAX, `Keep it under ${STORE_DESCRIPTION_MAX} characters`).optional(),
+  // Shop logo / photo, shown as the round avatar. Initials when missing.
+  logoUrl: z.url().optional(),
   currency: currencySchema,
   labelLanguage: labelLanguageSchema,
   contact: contactSchema,

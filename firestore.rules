@@ -37,7 +37,10 @@ service cloud.firestore {
         && data.labelLanguage in ['en', 'km', 'si', 'ta', 'th']
         && data.contact is map
         && data.published is bool
-        && validTheme(data);
+        && validTheme(data)
+        && (!('description' in data) || (data.description is string && data.description.size() <= 500))
+        // Logo may be an inline data URL for now, like product photos.
+        && (!('logoUrl' in data) || (data.logoUrl is string && data.logoUrl.size() <= 250000));
     }
 
     function validProduct(data) {

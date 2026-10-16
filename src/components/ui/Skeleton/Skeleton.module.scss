@@ -1,15 +1,23 @@
+// The shimmer is a gradient layer sliding with transform (compositor-only),
+// not an animated background-position (which repaints every frame).
 .skeleton {
+  position: relative;
   display: block;
-  background: linear-gradient(90deg, var(--surface-1) 0%, var(--surface-2) 50%, var(--surface-1) 100%);
-  background-size: 200% 100%;
-  animation: shimmer 1.4s ease-in-out infinite;
+  overflow: hidden;
+  background: var(--surface-1);
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, var(--surface-2), transparent);
+    transform: translateX(-100%);
+    animation: shimmer 1.4s ease-in-out infinite;
+  }
 }
 
 @keyframes shimmer {
-  from {
-    background-position: 100% 0;
-  }
   to {
-    background-position: -100% 0;
+    transform: translateX(100%);
   }
 }

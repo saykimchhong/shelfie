@@ -3,17 +3,19 @@
 import clsx from "clsx";
 import { PackageOpen } from "lucide-react";
 import { motion } from "motion/react";
+import Image from "next/image";
 import Link from "next/link";
 import { useId, useMemo, useState } from "react";
 import { LogoMark } from "@/components/brand/Logo";
-import { Stagger } from "@/components/motion/Reveal";
+import { ScrollStagger } from "@/components/motion/ScrollStagger";
 import { ThemeScope } from "@/components/theme/ThemeScope";
 import { Container, EmptyState, Text } from "@/components/ui";
 import type { Product } from "@/domain/product";
 import type { PublicStore } from "@/domain/store";
 import { DEFAULT_THEME } from "@/domain/theme";
 import { initials } from "@/lib/format";
-import { OrderBar, type CartLine } from "./OrderBar";
+import { OrderBar } from "./OrderBar";
+import type { CartLine } from "./order";
 import { ProductCard } from "./ProductCard";
 import { ProductListItem } from "./ProductListItem";
 import styles from "./StorefrontView.module.scss";
@@ -62,7 +64,11 @@ export function StorefrontView({ store, products, embedded }: StorefrontViewProp
       <header className={styles.banner}>
         <Container className={styles.header}>
           <span className={styles.avatar} aria-hidden>
-            {initials(store.name)}
+            {store.logoUrl ? (
+              <Image src={store.logoUrl} alt="" fill sizes="104px" className={styles.avatarImage} />
+            ) : (
+              initials(store.name)
+            )}
           </span>
           <div className={styles.titles}>
             <Text as="h1" size="3xl">
@@ -73,6 +79,7 @@ export function StorefrontView({ store, products, embedded }: StorefrontViewProp
                 {store.tagline}
               </Text>
             ) : null}
+            {store.description ? <About text={store.description} /> : null}
           </div>
         </Container>
       </header>
@@ -101,15 +108,18 @@ export function StorefrontView({ store, products, embedded }: StorefrontViewProp
         {products.length === 0 ? (
           <EmptyState icon={<PackageOpen />} title="Shelves coming soon" tone="sun" />
         ) : theme.template === "list" ? (
-          <Stagger as="ul" className={styles.list} interval={0.03}>
+          <ScrollStagger as="ul" className={styles.list} interval={0.03}>
             {visible.map((product) => (
               <li key={product.id}>
                 <ProductListItem {...itemProps(product)} />
               </li>
             ))}
-          </Stagger>
+          </ScrollStagger>
         ) : (
-          <Stagger className={clsx(styles.grid, theme.template === "showcase" && styles.showcaseGrid)} interval={0.035}>
+          <ScrollStagger
+            className={clsx(styles.grid, theme.template === "showcase" && styles.showcaseGrid)}
+            interval={0.035}
+          >
             {visible.map((product) => (
               <ProductCard
                 key={product.id}
@@ -117,7 +127,7 @@ export function StorefrontView({ store, products, embedded }: StorefrontViewProp
                 {...itemProps(product)}
               />
             ))}
-          </Stagger>
+          </ScrollStagger>
         )}
 
         <Link href="/" className={styles.madeWith}>
@@ -126,7 +136,24 @@ export function StorefrontView({ store, products, embedded }: StorefrontViewProp
         </Link>
       </Container>
 
-      <OrderBar store={store} lines={lines} />
+      <OrderBar store={store} lines={lines} onQuantityChange={setQuantity} onClear={() => setCart({})} />
     </ThemeScope>
+  );
+}
+
+// Shop description: three lines, with "More" when there's more to read.
+function About({ text }: { text: string }) {
+  const [open, setOpen] = useState(false);
+  const long = text.length > 140 || text.split("\n").length > 3;
+
+  return (
+    <div className={styles.about}>
+      <p className={clsx(styles.description, long && !open && styles.clamped)}>{text}</p>
+      {long ? (
+        <button type="button" className={styles.more} aria-expanded={open} onClick={() => setOpen(!open)}>
+          {open ? "Less" : "More"}
+        </button>
+      ) : null}
+    </div>
   );
 }

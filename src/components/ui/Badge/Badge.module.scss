@@ -1,4 +1,5 @@
 @use "sass:list";
+@use "styles" as *;
 
 .badge {
   display: inline-flex;
@@ -48,6 +49,12 @@ $tones: (
     border-radius: inherit;
     background: currentColor;
     animation: pulse 1.6s var(--ease-out) infinite;
+
+    // Decorative loop: stop it for reduced motion (the dot itself stays).
+    @include reduced-motion {
+      animation: none;
+      opacity: 0;
+    }
   }
 }
 

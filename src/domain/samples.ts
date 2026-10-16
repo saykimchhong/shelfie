@@ -89,12 +89,41 @@ export function sampleCatalog(language: LabelLanguage, currency: Currency): Samp
   }));
 }
 
-const SAMPLE_SHOPS: Record<LabelLanguage, { name: string; tagline: string; currency: Currency }> = {
-  en: { name: "Corner Pantry", tagline: "Fresh basics, five minutes from you", currency: "USD" },
-  km: { name: "Sokha Mart", tagline: "Groceries & Kampot pepper · Phnom Penh", currency: "USD" },
-  si: { name: "Kamal Stores", tagline: "Your corner shop in Kandy", currency: "LKR" },
-  ta: { name: "Selvi Stores", tagline: "Daily needs · Jaffna", currency: "LKR" },
-  th: { name: "Baan Suan Shop", tagline: "Thai pantry staples · Chiang Mai", currency: "THB" },
+const SAMPLE_SHOPS: Record<
+  LabelLanguage,
+  { name: string; tagline: string; description: string; currency: Currency }
+> = {
+  en: {
+    name: "Corner Pantry",
+    tagline: "Fresh basics, five minutes from you",
+    description:
+      "A small family pantry on the corner since 2009. Bread arrives every morning at 7, eggs come from a farm twenty minutes away, and we always keep a few treats by the till.\nOpen daily 7am–9pm · Free delivery on orders over $20",
+    currency: "USD",
+  },
+  km: {
+    name: "Sokha Mart",
+    tagline: "Groceries & Kampot pepper · Phnom Penh",
+    description: "Family shop since 1998.\nOpen 6am–9pm · Delivery around Toul Kork",
+    currency: "USD",
+  },
+  si: {
+    name: "Kamal Stores",
+    tagline: "Your corner shop in Kandy",
+    description: "Open 7am–8pm, closed Poya days.",
+    currency: "LKR",
+  },
+  ta: {
+    name: "Selvi Stores",
+    tagline: "Daily needs · Jaffna",
+    description: "Fresh Jaffna mangoes in season.",
+    currency: "LKR",
+  },
+  th: {
+    name: "Baan Suan Shop",
+    tagline: "Thai pantry staples · Chiang Mai",
+    description: "Open every day 8am–8pm near Nimman.",
+    currency: "THB",
+  },
 };
 
 // A complete storefront (store + products) for previews.
@@ -107,6 +136,7 @@ export function sampleStorefront(
     slug: "sample",
     name: shop.name,
     tagline: shop.tagline,
+    description: shop.description,
     currency: shop.currency,
     labelLanguage: language,
     contact: { whatsapp: "+85512345678" },

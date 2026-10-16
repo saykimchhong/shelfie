@@ -1,79 +1,90 @@
 "use client";
 
-import { MessageCircle, ShoppingBag } from "lucide-react";
+import { ChevronUp, ShoppingBag } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { ButtonLink } from "@/components/ui";
-import type { Product } from "@/domain/product";
+import { useState } from "react";
 import type { PublicStore } from "@/domain/store";
-import { lineLink, orderMessage, whatsappLink } from "@/lib/contact";
-import { formatPrice } from "@/lib/format";
+import { CartSheet } from "./CartSheet";
+import { summarizeOrder, type CartLine } from "./order";
+import { OrderButtons } from "./OrderButtons";
 import styles from "./OrderBar.module.scss";
 
-export type CartLine = { product: Product; quantity: number };
+export type { CartLine } from "./order";
 
-export function OrderBar({ store, lines }: { store: PublicStore; lines: CartLine[] }) {
-  const count = lines.reduce((sum, line) => sum + line.quantity, 0);
-  const subtotal = lines.reduce((sum, line) => sum + (line.product.price ?? 0) * line.quantity, 0);
-  const hasUnpriced = lines.some((line) => line.product.price === null);
-  const price = (amount: number) => formatPrice(amount, store.currency);
-  const total = subtotal > 0 ? `${price(subtotal)}${hasUnpriced ? "+" : ""}` : null;
+// Floating bar once the cart has something in it. Tap the summary to open the
+// full cart and edit it; tap Order to send it straight away.
+export function OrderBar({
+  store,
+  lines,
+  onQuantityChange,
+  onClear,
+}: {
+  store: PublicStore;
+  lines: CartLine[];
+  onQuantityChange: (productId: string, quantity: number) => void;
+  onClear: () => void;
+}) {
+  const [cartOpen, setCartOpen] = useState(false);
+  const summary = summarizeOrder(store, lines);
 
-  const message = orderMessage({
-    storeName: store.name,
-    lines: lines.map((line) => ({
-      name: line.product.name,
-      quantity: line.quantity,
-      lineTotal: line.product.price === null ? null : line.product.price * line.quantity,
-    })),
-    total,
-    formatLineTotal: price,
-  });
+  function changeQuantity(productId: string, quantity: number) {
+    // Removing the last item closes the cart instead of leaving it empty.
+    if (quantity <= 0 && lines.length === 1) setCartOpen(false);
+    onQuantityChange(productId, quantity);
+  }
+
+  function clear() {
+    setCartOpen(false);
+    onClear();
+  }
 
   return (
-    <AnimatePresence>
-      {count > 0 ? (
-        <motion.div
-          className={styles.bar}
-          initial={{ y: 120, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: 120, opacity: 0 }}
-          transition={{ type: "spring", bounce: 0.25, duration: 0.5 }}
-        >
-          <div className={styles.summary}>
-            <span className={styles.bag}>
-              <ShoppingBag aria-hidden />
-              <motion.span key={count} className={styles.count} initial={{ scale: 1.6 }} animate={{ scale: 1 }}>
-                {count}
-              </motion.span>
-            </span>
-            {total ? <strong className={styles.total}>{total}</strong> : null}
-          </div>
-          <div className={styles.actions}>
-            {store.contact.line ? (
-              <ButtonLink
-                href={lineLink(store.contact.line, message)}
-                target="_blank"
-                rel="noreferrer"
-                className={styles.line}
-                aria-label="Order on LINE"
-              >
-                LINE
-              </ButtonLink>
-            ) : null}
-            {store.contact.whatsapp ? (
-              <ButtonLink
-                href={whatsappLink(store.contact.whatsapp, message)}
-                target="_blank"
-                rel="noreferrer"
-                icon={<MessageCircle />}
-                className={styles.whatsapp}
-              >
-                Order
-              </ButtonLink>
-            ) : null}
-          </div>
-        </motion.div>
-      ) : null}
-    </AnimatePresence>
+    <>
+      <AnimatePresence>
+        {summary.count > 0 ? (
+          <motion.div
+            className={styles.bar}
+            initial={{ y: 120, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 120, opacity: 0, transition: { duration: 0.18, ease: [0.4, 0, 1, 1] } }}
+            transition={{ type: "spring", bounce: 0.25, duration: 0.5 }}
+          >
+            <button
+              type="button"
+              className={styles.summary}
+              onClick={() => setCartOpen(true)}
+              aria-haspopup="dialog"
+              aria-label={`Review order: ${summary.count} items${summary.total ? `, ${summary.total}` : ""}`}
+            >
+              <span className={styles.bag}>
+                <ShoppingBag aria-hidden />
+                <motion.span
+                  key={summary.count}
+                  className={styles.count}
+                  initial={{ scale: 1.6 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", stiffness: 500, damping: 18 }}
+                >
+                  {summary.count}
+                </motion.span>
+              </span>
+              {summary.total ? <strong className={styles.total}>{summary.total}</strong> : null}
+              <ChevronUp aria-hidden className={styles.chevron} />
+            </button>
+            <OrderButtons summary={summary} />
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+
+      <CartSheet
+        open={cartOpen && summary.count > 0}
+        onClose={() => setCartOpen(false)}
+        store={store}
+        lines={lines}
+        summary={summary}
+        onQuantityChange={changeQuantity}
+        onClear={clear}
+      />
+    </>
   );
 }
