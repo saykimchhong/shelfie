@@ -12,9 +12,11 @@
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
     "deploy:rules": "npx firebase-tools deploy --only firestore,storage",
-    "test": "vitest run"
+    "test": "vitest run",
+    "record:watch": "tsx --conditions=react-server scripts/record-watch.mts"
   },
   "dependencies": {
+    "@google/adk": "^2.3.0",
     "@google/genai": "^2.30.0",
     "client-only": "^0.0.1",
     "clsx": "^2.1.1",
@@ -35,6 +37,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.4.2",
     "sass": "^1.105.2",
+    "tsx": "^4.23.15",
     "typescript": "^5",
     "vite": "^8.3.1",
     "vitest": "^5.0.3"

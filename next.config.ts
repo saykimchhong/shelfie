@@ -30,8 +30,8 @@ const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
   env: firebaseEnvFromAppHosting(),
+  serverExternalPackages: ["@google/adk"],
   sassOptions: {
-    // Lets every style module write `@use "styles" as *;` for tokens + mixins.
     loadPaths: [path.join(process.cwd(), "src")],
   },
   images: {

@@ -17,6 +17,11 @@ export function formatPrice(amount: number, currency: Currency): string {
   }).format(amount);
 }
 
+// "1 product" · "18 products"
+export function pluralize(count: number, noun: string): string {
+  return `${count} ${noun}${count === 1 ? "" : "s"}`;
+}
+
 // "Bananas (bunch)" → "BB", "កាហ្វេ" → "កា". Leading punctuation is skipped.
 export function initials(name: string): string {
   const words = name

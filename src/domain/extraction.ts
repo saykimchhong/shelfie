@@ -1,29 +1,33 @@
 import { z } from "zod";
+import { agentEventSchema } from "./agents";
 
-// The exact shape we ask Gemini to return. Descriptions are part of the prompt.
+// Where a product sits in its video frame, as fractions (0–1) of the frame.
+export const frameBoxSchema = z.object({
+  left: z.number().min(0).max(1),
+  top: z.number().min(0).max(1),
+  width: z.number().min(0).max(1),
+  height: z.number().min(0).max(1),
+});
+
+export type FrameBox = z.infer<typeof frameBoxSchema>;
+
+// One product the pipeline read from the video, ready for the seller to review.
 export const extractedProductSchema = z.object({
-  name: z
-    .string()
-    .describe("Short English name a customer would search for: brand + product + size if visible."),
-  localName: z
-    .string()
-    .nullable()
-    .describe("Name exactly as printed on the label in Khmer, Sinhala, Tamil or Thai script. null if none."),
-  price: z
-    .number()
-    .nullable()
-    .describe("Price the seller says out loud for this product, in the store currency. null if not said."),
-  category: z.string().nullable().describe("One or two English words, e.g. Rice, Snacks, Soap."),
-  seenAtSeconds: z.number().describe("Seconds from the start of the video where the product is clearest."),
-  confidence: z.number().min(0).max(1).describe("0 to 1: how sure you are about the name and price."),
-  matchId: z
-    .string()
-    .nullable()
-    .describe("id of the shop's existing product this is, from the list in the prompt. null if it is new."),
-  note: z
-    .string()
-    .nullable()
-    .describe("Only if the seller should double-check: a few words, e.g. 'Price not said'. Otherwise null."),
+  name: z.string(),
+  localName: z.string().nullable(),
+  // null = no price was said; a known product then keeps its current price.
+  price: z.number().nullable(),
+  category: z.string().nullable(),
+  // When the product is clearest, and where it is in that frame (for its photo).
+  seenAtSeconds: z.number(),
+  box: frameBoxSchema.nullable(),
+  // When the price was said, so the seller can check it.
+  priceSaidAt: z.number().nullable(),
+  confidence: z.number().min(0).max(1),
+  // The shop's existing product this is, or null when it's new.
+  matchId: z.string().nullable(),
+  // Why the seller should double-check it, in a few words.
+  note: z.string().nullable(),
 });
 
 export const extractionSchema = z.object({
@@ -40,6 +44,16 @@ export const extractionResponseSchema = extractionSchema.extend({
 });
 
 export type ExtractionResponse = z.infer<typeof extractionResponseSchema>;
+
+// POST /api/extract streams one JSON message per line: a step event as each
+// agent starts and finishes, then the result or an error.
+export const extractStreamMessageSchema = z.discriminatedUnion("type", [
+  z.object({ type: z.literal("step"), event: agentEventSchema }),
+  z.object({ type: z.literal("result"), result: extractionResponseSchema }),
+  z.object({ type: z.literal("error"), error: z.string() }),
+]);
+
+export type ExtractStreamMessage = z.infer<typeof extractStreamMessageSchema>;
 
 // Products the shop already has on the filmed shelf, sent with the video so the
 // AI can recognise them (matchId) instead of listing them again as new.

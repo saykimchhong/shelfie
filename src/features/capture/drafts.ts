@@ -1,4 +1,4 @@
-import type { ExtractedProduct } from "@/domain/extraction";
+import type { ExtractedProduct, FrameBox } from "@/domain/extraction";
 import type { Product, ProductInput } from "@/domain/product";
 import type { ProductUpdate } from "@/features/seller/data";
 
@@ -29,6 +29,8 @@ export type Draft = {
   // Why the AI wants a second look, e.g. "Price not said".
   note: string | null;
   seenAtSeconds: number | null;
+  // Where the product is in that frame, so its photo is cropped to it.
+  box: FrameBox | null;
   // Frame grabbed from the video at seenAtSeconds (input for "video" and "ai").
   frame: Blob | null;
   photo: Blob | null;
@@ -51,6 +53,7 @@ export function toDraft(item: ExtractedProduct, index: number, known?: Product):
     confidence: item.confidence,
     note: item.note,
     seenAtSeconds: item.seenAtSeconds,
+    box: item.box,
     frame: null,
     photo: null,
     photoSource: "none",

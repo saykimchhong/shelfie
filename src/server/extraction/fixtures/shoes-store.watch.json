@@ -1,0 +1,140 @@
+{
+  "video": "sample-vdo/shoes-store.mp4",
+  "model": "gemini-3-flash-preview",
+  "recordedAt": "2026-10-17T08:16:39.889Z",
+  "currency": "USD",
+  "labelLanguage": "en",
+  "watch": {
+    "products": [
+      {
+        "name": "Brown Crocodile Print Dress Shoe",
+        "localName": null,
+        "category": "Shoes",
+        "firstSeenSeconds": 0,
+        "lastSeenSeconds": 18,
+        "clearestSeconds": 1,
+        "box": [
+          25,
+          68,
+          350,
+          995
+        ],
+        "confidence": 0.9,
+        "note": null
+      },
+      {
+        "name": "Barker Black Leather Brogue Shoe",
+        "localName": null,
+        "category": "Shoes",
+        "firstSeenSeconds": 0,
+        "lastSeenSeconds": 18,
+        "clearestSeconds": 4,
+        "box": [
+          370,
+          5,
+          675,
+          990
+        ],
+        "confidence": 0.9,
+        "note": null
+      },
+      {
+        "name": "Tan Leather Dress Shoe",
+        "localName": null,
+        "category": "Shoes",
+        "firstSeenSeconds": 0,
+        "lastSeenSeconds": 18,
+        "clearestSeconds": 1,
+        "box": [
+          650,
+          20,
+          950,
+          850
+        ],
+        "confidence": 0.9,
+        "note": null
+      },
+      {
+        "name": "Aliante Patterned Handbag",
+        "localName": null,
+        "category": "Bags",
+        "firstSeenSeconds": 3,
+        "lastSeenSeconds": 18,
+        "clearestSeconds": 3,
+        "box": [
+          145,
+          735,
+          335,
+          935
+        ],
+        "confidence": 0.9,
+        "note": null
+      },
+      {
+        "name": "Medicus Royal Black Leather Loafer",
+        "localName": null,
+        "category": "Shoes",
+        "firstSeenSeconds": 8,
+        "lastSeenSeconds": 14,
+        "clearestSeconds": 10,
+        "box": [
+          370,
+          300,
+          510,
+          560
+        ],
+        "confidence": 0.9,
+        "note": null
+      },
+      {
+        "name": "Watson Tan Leather Loafer",
+        "localName": null,
+        "category": "Shoes",
+        "firstSeenSeconds": 8,
+        "lastSeenSeconds": 14,
+        "clearestSeconds": 10,
+        "box": [
+          385,
+          605,
+          565,
+          860
+        ],
+        "confidence": 0.9,
+        "note": null
+      },
+      {
+        "name": "Peredini Black Woven Leather Loafer",
+        "localName": null,
+        "category": "Shoes",
+        "firstSeenSeconds": 9,
+        "lastSeenSeconds": 14,
+        "clearestSeconds": 10,
+        "box": [
+          550,
+          290,
+          685,
+          555
+        ],
+        "confidence": 0.9,
+        "note": null
+      },
+      {
+        "name": "John Drake Brown Leather Dress Shoe",
+        "localName": null,
+        "category": "Shoes",
+        "firstSeenSeconds": 15,
+        "lastSeenSeconds": 18,
+        "clearestSeconds": 16,
+        "box": [
+          695,
+          295,
+          845,
+          630
+        ],
+        "confidence": 0.9,
+        "note": null
+      }
+    ],
+    "prices": []
+  }
+}

@@ -12,11 +12,15 @@ export async function canvasToBlob(canvas: HTMLCanvasElement, quality = 0.82): P
   return jpeg;
 }
 
-export function createCanvas(width: number, height = width): [HTMLCanvasElement, CanvasRenderingContext2D] {
+export function createCanvas(
+  width: number,
+  height = width,
+  settings?: CanvasRenderingContext2DSettings,
+): [HTMLCanvasElement, CanvasRenderingContext2D] {
   const canvas = document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;
-  const context = canvas.getContext("2d");
+  const context = canvas.getContext("2d", settings);
   if (!context) throw new Error("Canvas isn't available");
   return [canvas, context];
 }

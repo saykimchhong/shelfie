@@ -164,8 +164,9 @@ function Capture({ store, products }: { store: Store; products: Product[] }) {
     }
   }
 
-  // Grab one frame per new product from the video, once. They're the default
-  // photos; known products keep the photo they have.
+  // Grab one photo per new product from the video, once: cropped to the
+  // product, from the sharpest frame. They're the default photos (AI can redo
+  // them); known products keep the photo they have.
   async function goToPhotos() {
     setPhase("photos");
     if (framesReady || !previewUrl) return;
@@ -175,7 +176,7 @@ function Capture({ store, products }: { store: Store; products: Product[] }) {
     setDrafts((current) => current.map((draft) => (freshKeys.has(draft.key) ? { ...draft, photoBusy: true } : draft)));
     const frames = await captureFrames(
       previewUrl,
-      fresh.map((draft) => draft.seenAtSeconds ?? 0),
+      fresh.map((draft) => ({ seconds: draft.seenAtSeconds ?? 0, box: draft.box })),
     );
     const frameByKey = new Map(fresh.map((draft, index) => [draft.key, frames[index] ?? null]));
     setDrafts((current) =>
