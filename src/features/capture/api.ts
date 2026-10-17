@@ -1,6 +1,8 @@
 import { z } from "zod";
-import { extractionResponseSchema, type ExtractionResponse, type KnownProduct } from "@/domain/extraction";
+import type { AgentEvent } from "@/domain/agents";
+import { extractStreamMessageSchema, type ExtractionResponse, type KnownProduct } from "@/domain/extraction";
 import type { Currency, LabelLanguage } from "@/domain/store";
+import { readNdjson } from "@/lib/ndjson";
 
 const configSchema = z.object({
   provider: z.enum(["mock", "gemini"]),
@@ -22,6 +24,8 @@ export async function requestExtraction(input: {
   known: KnownProduct[];
   idToken: string;
   signal?: AbortSignal;
+  // Each agent's progress while the video is read, for the activity feed.
+  onStep?: (event: AgentEvent) => void;
 }): Promise<ExtractionResponse> {
   // The mock doesn't need the video (photos are grabbed from it right here in
   // the browser), so it's only uploaded when the real AI is on — and only if
@@ -47,11 +51,17 @@ export async function requestExtraction(input: {
     body,
     signal: input.signal,
   });
-  const json: unknown = await response.json().catch(() => null);
-
-  if (!response.ok) {
+  if (!response.ok || !response.body) {
+    const json: unknown = await response.json().catch(() => null);
     const message = (json as { error?: string } | null)?.error;
     throw new Error(message ?? `Something went wrong (${response.status})`);
   }
-  return extractionResponseSchema.parse(json);
+
+  for await (const line of readNdjson(response.body)) {
+    const message = extractStreamMessageSchema.parse(line);
+    if (message.type === "step") input.onStep?.(message.event);
+    else if (message.type === "error") throw new Error(message.error);
+    else return message.result;
+  }
+  throw new Error("The connection closed before the products arrived. Try again.");
 }

@@ -21,6 +21,8 @@ const seen = (name: string, extra: Partial<ExtractedProduct> = {}): ExtractedPro
   price: null,
   category: null,
   seenAtSeconds: 1,
+  box: null,
+  priceSaidAt: null,
   confidence: 0.9,
   matchId: null,
   note: null,

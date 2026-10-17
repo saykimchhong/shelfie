@@ -15,7 +15,8 @@ npm run dev                  # http://localhost:3000
 | `npm run dev` | Dev server (Turbopack) |
 | `npm run build` / `start` | Production build / serve |
 | `npm run typecheck` | Generate route types + `tsc` |
-| `npm test` | Unit tests (Vitest): shelves, restock merge, mock AI |
+| `npm test` | Unit tests (Vitest): shelves, restock merge, AI agents, mock AI |
+| `npm run record:watch -- <video>` | Read a video with the real Watcher once and save it as a test fixture (see [AI agents](#ai-agents)) |
 | `npm run lint` | ESLint |
 | `npm run deploy:rules` | Push `firestore.rules`, indexes and `storage.rules` to Firebase |
 
@@ -36,12 +37,29 @@ The whole seller flow (film → check → photos → store) runs today without a
 
 | Piece | Today | Go live by | Where |
 | --- | --- | --- | --- |
-| Video → products | `SHELFIE_AI=mock`: sample products for the store's language and currency, after a 2s delay | `SHELFIE_AI=gemini` + `GEMINI_API_KEY` | `src/server/extraction/` |
+| Video → products | `SHELFIE_AI=mock`: the same agent pipeline, with sample products for the store's language and currency in place of the two Gemini steps | `SHELFIE_AI=gemini` + `GEMINI_API_KEY` | `src/server/extraction/` |
 | Default product photo | Frame grabbed from the seller's own video, in the browser (free) | (already real) | `src/features/media/video.ts` |
 | "AI photo" | Local canvas "studio shot" of that frame | Call Gemini image editing from `generateProductPhoto()` | `src/features/media/generate.ts` |
 | Photo storage | Firebase Storage, `sellers/{uid}/stores/{slug}/…` (inline data URL only when no bucket is configured) | (already real) | `src/features/media/storage.ts` |
 
 The review screen shows a **Mock AI** badge when results come from the mock.
+
+## AI agents
+
+Reading a shelf video is a [Google ADK](https://github.com/google/adk-js) workflow (`src/server/extraction/pipeline.ts`). Only the Watcher reads the video. The other steps work on its data.
+
+| Step | What it does | How |
+| --- | --- | --- |
+| **Watcher** | Lists every product (name, label text, when and where it's on screen) and every price said, with its time | Gemini: video + audio, one call |
+| **Price matcher** | Ties each price to its product by time | Code |
+| **Shelf matcher** | Restock only: finds the products the shop already sells. If it fails, the review still matches by name | Gemini: text only |
+| **Checker** | Writes the "double-check" notes: no price, two prices, a 3× price jump, duplicates, low confidence | Code |
+
+- `POST /api/extract` streams each step's progress (`AgentEvent` in `src/domain/agents.ts`), then the result, for the activity feed.
+- Agents only propose. Nothing is saved until the seller confirms, and no step invents a price.
+- Shared helpers: `src/server/gemini.ts` (client, video upload) and `src/server/adk.ts` (ADK model, `runWorkflow`).
+
+**Test without calling Gemini again.** `npm run record:watch -- sample-vdo/shoes-store.mp4 --currency USD --language en` reads the video with the real Watcher once, saves `src/server/extraction/fixtures/shoes-store.watch.json`, and prints what the rest of the pipeline makes of it. `pipeline.test.ts` replays that file. The script reads the key from `.env.local`.
 
 ## Templates and colors
 
@@ -58,8 +76,8 @@ Review every combination with sample shops in each language at **`/templates`**.
 Seller (browser)                         Server (Next.js)                     Google
 ────────────────                         ────────────────                     ──────
 Google sign-in ───────────────────────────────────────────────────────────▶ Firebase Auth
-Film video ──▶ POST /api/extract ──▶ verify ID token ──▶ video + prompt ──▶ Gemini
-           ◀── products JSON ◀────────────────────────────────────────────
+Film video ──▶ POST /api/extract ──▶ verify ID token ──▶ agent workflow ──▶ Gemini
+           ◀── step events, then products (NDJSON) ◀──────────────────────
 Review & edit ──▶ write directly to Firestore (rules check ownership) ───▶ Firestore
               ──▶ refreshStorefront() server action ──▶ expire cache tag
 
@@ -91,10 +109,11 @@ src/
     media/              Browser-only: video frames, photo compression, AI photos, photo storage
     theme/              ThemePicker (layout + color) and PhonePreview
     storefront/         Public store view in 3 templates, cart, order bar
-  domain/               Zod schemas + types (store, product, theme, extraction) + sample shops
-  lib/                  Pure helpers (env, format, palette, contact links, site URLs) + Firebase client
-  server/               server-only: token verification, extraction providers, cached reads, actions
+  domain/               Zod schemas + types (store, product, theme, extraction, agents) + sample shops
+  lib/                  Pure helpers (env, format, palette, contact links, site URLs, NDJSON streams) + Firebase client
+  server/               server-only: token verification, Gemini + ADK helpers, extraction agents, cached reads, actions
   styles/               Tokens, mixins, globals
+scripts/                Dev tools (record-watch.mts)
 firestore.rules         The real access control (data)
 storage.rules           Photo uploads: sellers write only under their own uid
 ```

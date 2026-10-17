@@ -1,6 +1,7 @@
 import { connection } from "next/server";
-import { knownProductsSchema, type ExtractionResponse, type KnownProduct } from "@/domain/extraction";
+import { knownProductsSchema, type ExtractStreamMessage, type KnownProduct } from "@/domain/extraction";
 import { currencySchema, labelLanguageSchema } from "@/domain/store";
+import { NDJSON_CONTENT_TYPE, ndjsonStream } from "@/lib/ndjson";
 import { AuthError, requireUser } from "@/server/auth";
 import { extractionProvider, extractProducts, MAX_VIDEO_BYTES } from "@/server/extraction";
 
@@ -9,7 +10,9 @@ import { extractionProvider, extractProducts, MAX_VIDEO_BYTES } from "@/server/e
 // POST multipart/form-data: video (file, real AI only), currency, labelLanguage,
 //      durationSeconds?, known? (JSON KnownProduct[]: the filmed shelf's products)
 //      Header: Authorization: Bearer <Firebase ID token>
-//      → ExtractionResponse { provider, products }
+//      → 4xx JSON { error } when the request is invalid, otherwise an NDJSON
+//        stream of ExtractStreamMessage: a "step" per agent update, then
+//        "result" (ExtractionResponse) or "error".
 
 export const maxDuration = 120;
 
@@ -45,20 +48,26 @@ export async function POST(request: Request) {
   if (!labelLanguage.success) return problem(400, "Unknown `labelLanguage`");
   if (!known) return problem(400, "`known` must be a JSON list of products");
 
-  try {
-    const { provider, extraction } = await extractProducts({
-      video: hasVideo ? video : null,
-      mimeType: hasVideo ? video.type : "",
-      currency: currency.data,
-      labelLanguage: labelLanguage.data,
-      durationSeconds,
-      known,
-    });
-    return Response.json({ provider, ...extraction } satisfies ExtractionResponse);
-  } catch (error) {
-    console.error("Extraction failed", error);
-    return problem(502, "We couldn't read that video. Try again with steady, well-lit footage.");
-  }
+  const input = {
+    video: hasVideo ? video : null,
+    mimeType: hasVideo ? video.type : "",
+    currency: currency.data,
+    labelLanguage: labelLanguage.data,
+    durationSeconds,
+    known,
+  };
+
+  const stream = ndjsonStream<ExtractStreamMessage>(async (send) => {
+    try {
+      const { provider, extraction } = await extractProducts(input, (event) => send({ type: "step", event }));
+      send({ type: "result", result: { provider, ...extraction } });
+    } catch (error) {
+      console.error("Extraction failed", error);
+      send({ type: "error", error: "We couldn't read that video. Try again with steady, well-lit footage." });
+    }
+  });
+
+  return new Response(stream, { headers: { "Content-Type": NDJSON_CONTENT_TYPE, "Cache-Control": "no-store" } });
 }
 
 // Absent → no known products (a new shelf). null → present but invalid.
