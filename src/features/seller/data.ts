@@ -7,6 +7,7 @@ import {
   deleteField,
   doc,
   getDoc,
+  getDocsFromServer,
   limit,
   onSnapshot,
   orderBy,
@@ -23,6 +24,7 @@ import type { Product, ProductInput } from "@/domain/product";
 import type { Store, StoreInput } from "@/domain/store";
 import { DEFAULT_THEME } from "@/domain/theme";
 import { useAuth } from "@/features/auth";
+import { chunk } from "@/lib/chunk";
 import { clientDb } from "@/lib/firebase/client";
 import { isPermissionDenied, toProduct, toStore } from "@/lib/firebase/convert";
 import { refreshStorefront } from "@/server/actions";
@@ -161,6 +163,16 @@ const OPTIONAL_PRODUCT_FIELDS = ["localName", "category", "shelf", "imageUrl"] a
 // Firestore caps a batch at 500 writes.
 const BATCH_LIMIT = 500;
 
+type Write = (batch: WriteBatch) => void;
+
+async function commitInBatches(writes: Write[]): Promise<void> {
+  for (const group of chunk(writes, BATCH_LIMIT)) {
+    const batch = writeBatch(clientDb());
+    group.forEach((write) => write(batch));
+    await batch.commit();
+  }
+}
+
 export type ProductUpdate = { id: string; patch: Partial<ProductInput> };
 
 // Everything one shelf video changes, saved together: new products after the
@@ -171,7 +183,7 @@ export async function saveProductChanges(
   changes: { add: ProductInput[]; update: ProductUpdate[] },
   startPosition: number,
 ): Promise<void> {
-  const writes: Array<(batch: WriteBatch) => void> = [
+  await commitInBatches([
     ...changes.add.map((item, index) => (batch: WriteBatch) => {
       batch.set(doc(productsRef(slug)), {
         ...item,
@@ -186,13 +198,7 @@ export async function saveProductChanges(
         updatedAt: serverTimestamp(),
       });
     }),
-  ];
-
-  for (let start = 0; start < writes.length; start += BATCH_LIMIT) {
-    const batch = writeBatch(clientDb());
-    writes.slice(start, start + BATCH_LIMIT).forEach((write) => write(batch));
-    await batch.commit();
-  }
+  ]);
 }
 
 export async function addProducts(slug: string, items: ProductInput[], startPosition: number): Promise<void> {
@@ -208,6 +214,17 @@ export async function updateProduct(slug: string, productId: string, patch: Part
 
 export async function deleteProduct(slug: string, productId: string): Promise<void> {
   await deleteDoc(doc(productsRef(slug), productId));
+}
+
+// Deletes every product in the store, read fresh from the server so none are
+// missed. Returns their photo URLs so the caller can delete the files too.
+export async function deleteAllProducts(slug: string): Promise<string[]> {
+  const products = await getDocsFromServer(productsRef(slug));
+  await commitInBatches(products.docs.map((product) => (batch: WriteBatch) => batch.delete(product.ref)));
+  return products.docs.flatMap((product) => {
+    const imageUrl: unknown = product.get("imageUrl");
+    return typeof imageUrl === "string" ? [imageUrl] : [];
+  });
 }
 
 // Call after any write that should show up on the public storefront.

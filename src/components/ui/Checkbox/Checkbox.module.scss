@@ -1,0 +1,97 @@
+@use "styles" as *;
+
+.root {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+
+  &:active .box {
+    transform: scale(0.92);
+    transition-duration: var(--dur-fast);
+  }
+}
+
+.brand {
+  --checkbox-fill: var(--brand-solid);
+}
+
+.danger {
+  --checkbox-fill: var(--danger);
+}
+
+.disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.input {
+  @include visually-hidden;
+}
+
+.box {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  transition: transform var(--dur-base) var(--ease-out);
+
+  // The fill is painted once and faded in, so ticking only animates opacity
+  // and transform.
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: var(--checkbox-fill);
+    opacity: 0;
+    transform: scale(0.6);
+    transition:
+      opacity var(--dur-fast) var(--ease-out),
+      transform var(--dur-base) var(--ease-out);
+  }
+}
+
+.tick {
+  position: relative;
+  width: 16px;
+  height: 16px;
+  color: var(--on-brand);
+  opacity: 0;
+  transform: scale(0.4);
+  transition:
+    opacity var(--dur-fast) var(--ease-out),
+    transform var(--dur-slow) var(--ease-spring);
+}
+
+.input:checked + .box {
+  &::before,
+  .tick {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.input:focus-visible + .box {
+  @include focus-ring;
+}
+
+.label {
+  font-weight: 600;
+  font-size: var(--text-sm);
+  line-height: var(--leading-snug);
+}
+
+// Keep the tick as feedback, as a plain fade.
+@include reduced-motion {
+  .root:active .box,
+  .box::before,
+  .tick {
+    transform: none;
+  }
+}

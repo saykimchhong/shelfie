@@ -2,6 +2,8 @@
 export { Avatar } from "./Avatar/Avatar";
 export { Badge, type BadgeProps } from "./Badge/Badge";
 export { Button, ButtonLink, type ButtonLinkProps, type ButtonProps } from "./Button/Button";
+export { Checkbox, type CheckboxProps } from "./Checkbox/Checkbox";
+export { ConfirmSheet, type ConfirmSheetProps } from "./ConfirmSheet/ConfirmSheet";
 export { Container, type ContainerProps } from "./Container/Container";
 export { EmptyState, type EmptyStateProps } from "./EmptyState/EmptyState";
 export { Segmented, type SegmentedOption, type SegmentedProps } from "./Segmented/Segmented";

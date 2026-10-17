@@ -1,14 +1,28 @@
 "use client";
 
-import { ExternalLink, Palette, Plus, Video } from "lucide-react";
+import { ExternalLink, ListX, Palette, Plus, Trash2, Video } from "lucide-react";
 import { useState } from "react";
 import { Reveal, Stagger } from "@/components/motion/Reveal";
-import { Avatar, Badge, Button, ButtonLink, EmptyState, Skeleton, Stack, Surface, Switch, Text } from "@/components/ui";
+import {
+  Avatar,
+  Badge,
+  Button,
+  ButtonLink,
+  ConfirmSheet,
+  EmptyState,
+  Skeleton,
+  Stack,
+  Surface,
+  Switch,
+  Text,
+} from "@/components/ui";
 import type { Product } from "@/domain/product";
 import { shelvesOf } from "@/domain/shelf";
 import type { Store } from "@/domain/store";
+import { removeImage } from "@/features/media";
+import { pluralize } from "@/lib/format";
 import { storeUrl, storeUrlLabel } from "@/lib/site";
-import { updateProduct, updateStore, useProducts, useRefreshStorefront } from "./data";
+import { deleteAllProducts, updateProduct, updateStore, useProducts, useRefreshStorefront } from "./data";
 import { ProductEditor } from "./ProductEditor";
 import { ProductRow } from "./ProductRow";
 import { ShareLinkButton } from "./ShareLinkButton";
@@ -22,6 +36,13 @@ export function StoreOverview({ store }: { store: Store }) {
   const refreshStorefront = useRefreshStorefront();
   const [publishing, setPublishing] = useState(false);
   const [editing, setEditing] = useState<Editing>(null);
+  const [clearing, setClearing] = useState(false);
+
+  async function clearProducts() {
+    const photos = await deleteAllProducts(store.slug);
+    photos.forEach(removeImage);
+    await refreshStorefront(store.slug);
+  }
 
   async function setPublished(published: boolean) {
     setPublishing(true);
@@ -98,9 +119,22 @@ export function StoreOverview({ store }: { store: Store }) {
               </Text>
               {products.status === "ready" ? <Badge tone="brand">{products.data.length}</Badge> : null}
             </Stack>
-            <Button variant="soft" size="sm" icon={<Plus />} onClick={() => setEditing({ product: null })}>
-              Add
-            </Button>
+            <Stack direction="row" gap={2}>
+              {products.data.length > 0 ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  iconOnly
+                  icon={<ListX />}
+                  aria-label="Clear all products"
+                  title="Clear all products"
+                  onClick={() => setClearing(true)}
+                />
+              ) : null}
+              <Button variant="soft" size="sm" icon={<Plus />} onClick={() => setEditing({ product: null })}>
+                Add
+              </Button>
+            </Stack>
           </Stack>
 
           {products.status === "loading" ? (
@@ -144,6 +178,20 @@ export function StoreOverview({ store }: { store: Store }) {
         product={editing?.product ?? null}
         shelves={shelvesOf(products.data)}
       />
+
+      <ConfirmSheet
+        open={clearing}
+        onClose={() => setClearing(false)}
+        title="Clear all products?"
+        acknowledge="I understand this can't be undone"
+        confirmLabel={`Delete ${pluralize(products.data.length, "product")}`}
+        confirmIcon={<Trash2 />}
+        onConfirm={clearProducts}
+        errorMessage="Couldn't clear the products. Try again."
+      >
+        This deletes every product and its photo, for you and your customers. Your store link, details and look stay
+        as they are.
+      </ConfirmSheet>
     </Stack>
   );
 }
