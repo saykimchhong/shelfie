@@ -68,9 +68,14 @@ function EditorForm({
 
   async function makeAiPhoto() {
     setGenerating(true);
+    setError(null);
     try {
+      // Reading a saved photo back needs the bucket's CORS setting (cors.json).
       const frame = photo.kind === "new" ? photo.blob : photoUrl ? await urlToBlob(photoUrl) : null;
       setPhoto({ kind: "new", blob: await generateProductPhoto({ name: name || "Product", frame }) });
+    } catch (cause) {
+      console.error(cause);
+      setError("Couldn't make the photo. Try again.");
     } finally {
       setGenerating(false);
     }

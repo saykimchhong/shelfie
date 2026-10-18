@@ -61,6 +61,9 @@ export function blobToDataUrl(blob: Blob): Promise<string> {
   });
 }
 
+// A Storage URL only reads back in the browser once the bucket has cors.json.
 export async function urlToBlob(url: string): Promise<Blob> {
-  return (await fetch(url)).blob();
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`Couldn't load the photo (${response.status})`);
+  return response.blob();
 }

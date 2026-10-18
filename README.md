@@ -52,6 +52,7 @@ Local values go in `.env.local` (never committed). On App Hosting, the Firebase 
 2. **Firestore Database → Create database** in production mode. A region near our users, e.g. `asia-southeast1` (Singapore).
    **Storage → Get started** to create the photo bucket (needs the Blaze plan).
 3. **Deploy the rules:** `npx firebase-tools login`, then `npm run deploy:rules -- --project <project-id>`. Until you do, Firestore denies everything, and creating a store shows a "rules aren't deployed" message. A bucket made in test mode stays open to everyone until `storage.rules` is deployed.
+   **Let the browser read photos back** (the "AI photo" button reloads a saved photo): in Google Cloud Shell, upload `cors.json` and run `gcloud storage buckets update gs://<bucket> --cors-file=cors.json`. Photos are public already, so it allows `GET` from any site.
 4. **Authentication → Settings → Authorized domains:** add the deployed domain (localhost is already there).
 5. **Gemini:** create a key at <https://aistudio.google.com/apikey> and put it in `GEMINI_API_KEY`.
 
