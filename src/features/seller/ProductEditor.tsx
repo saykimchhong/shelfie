@@ -35,7 +35,9 @@ export function ProductEditor({
 
 type PhotoState =
   | { kind: "kept" } // unchanged: whatever product.imageUrl is
-  | { kind: "new"; blob: Blob }
+  // source: the photo an AI photo was made from, so another tap starts from it
+  // again instead of stacking the effect on its own output.
+  | { kind: "new"; blob: Blob; source?: Blob }
   | { kind: "removed" };
 
 function EditorForm({
@@ -71,8 +73,9 @@ function EditorForm({
     setError(null);
     try {
       // Reading a saved photo back needs the bucket's CORS setting (cors.json).
-      const frame = photo.kind === "new" ? photo.blob : photoUrl ? await urlToBlob(photoUrl) : null;
-      setPhoto({ kind: "new", blob: await generateProductPhoto({ name: name || "Product", frame }) });
+      const frame = photo.kind === "new" ? (photo.source ?? photo.blob) : photoUrl ? await urlToBlob(photoUrl) : null;
+      const blob = await generateProductPhoto({ name: name || "Product", frame });
+      setPhoto({ kind: "new", blob, source: frame ?? undefined });
     } catch (cause) {
       console.error(cause);
       setError("Couldn't make the photo. Try again.");

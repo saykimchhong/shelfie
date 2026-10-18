@@ -62,8 +62,10 @@ export function blobToDataUrl(blob: Blob): Promise<string> {
 }
 
 // A Storage URL only reads back in the browser once the bucket has cors.json.
+// "reload" skips the cache: a copy cached for an <img> before CORS was set has
+// no CORS header, and the browser would block reading it.
 export async function urlToBlob(url: string): Promise<Blob> {
-  const response = await fetch(url);
+  const response = await fetch(url, { cache: "reload" });
   if (!response.ok) throw new Error(`Couldn't load the photo (${response.status})`);
   return response.blob();
 }
