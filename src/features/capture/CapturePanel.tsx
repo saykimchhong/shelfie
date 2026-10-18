@@ -95,6 +95,8 @@ function Capture({ store, products }: { store: Store; products: Product[] }) {
   const [provider, setProvider] = useState<ExtractionResponse["provider"] | null>(null);
   // Each agent's progress while the video is read, for the activity feed.
   const [steps, setSteps] = useState<AgentEvent[]>([]);
+  // 0–1 while a video over the upload cap is made smaller first; null otherwise.
+  const [shrinking, setShrinking] = useState<number | null>(null);
   const [framesReady, setFramesReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -140,6 +142,7 @@ function Capture({ store, products }: { store: Store; products: Product[] }) {
     setFramesReady(false);
     setError(null);
     setSteps([]);
+    setShrinking(null);
 
     const controller = new AbortController();
     abortRef.current = controller;
@@ -153,6 +156,7 @@ function Capture({ store, products }: { store: Store; products: Product[] }) {
         idToken: await getIdToken(),
         signal: controller.signal,
         onStep: (event) => setSteps((current) => [...current, event]),
+        onShrink: setShrinking,
       });
       const merge = mergeShelf(result.products, shelfProducts, {
         restock,
@@ -284,7 +288,7 @@ function Capture({ store, products }: { store: Store; products: Product[] }) {
             <PickVideo products={products} target={target} onTarget={setTarget} onFile={handleFile} />
           ) : null}
 
-          {phase === "reading" && previewUrl ? <Reading previewUrl={previewUrl} steps={steps} /> : null}
+          {phase === "reading" && previewUrl ? <Reading previewUrl={previewUrl} steps={steps} shrinking={shrinking} /> : null}
 
           {phase === "review" && nothingSeen ? (
             <EmptyState
@@ -498,7 +502,15 @@ function Tip({ icon, text }: { icon: ReactNode; text: string }) {
 }
 
 // While the video is read: the clip, and each agent's progress as it streams in.
-function Reading({ previewUrl, steps }: { previewUrl: string; steps: AgentEvent[] }) {
+function Reading({
+  previewUrl,
+  steps,
+  shrinking,
+}: {
+  previewUrl: string;
+  steps: AgentEvent[];
+  shrinking: number | null;
+}) {
   return (
     <div className={styles.reading}>
       <div className={styles.preview}>
@@ -509,7 +521,12 @@ function Reading({ previewUrl, steps }: { previewUrl: string; steps: AgentEvent[
         <Stack direction="row" gap={2} align="center">
           {/* Until the first agent starts (e.g. while the video uploads). */}
           {steps.length === 0 ? <Spinner /> : null}
-          <Text weight={600}>Finding products and prices…</Text>
+          <Text weight={600}>
+            {/* A big phone video is made smaller before it's sent. */}
+            {shrinking !== null && steps.length === 0
+              ? `Making your video smaller… ${Math.round(shrinking * 100)}%`
+              : "Finding products and prices…"}
+          </Text>
         </Stack>
         <AgentActivityFeed steps={steps} />
       </Stack>
