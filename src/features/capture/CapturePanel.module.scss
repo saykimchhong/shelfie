@@ -178,7 +178,7 @@
 
   .preview {
     width: auto;
-    height: min(34dvh, 300px);
+    height: min(28dvh, 240px);
   }
 
   @include up(md) {
