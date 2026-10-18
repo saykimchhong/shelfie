@@ -53,7 +53,9 @@ service cloud.firestore {
         && validFulfillment(data)
         && (!('description' in data) || (data.description is string && data.description.size() <= 500))
         // Logo may be an inline data URL for now, like product photos.
-        && (!('logoUrl' in data) || (data.logoUrl is string && data.logoUrl.size() <= 250000));
+        && (!('logoUrl' in data) || (data.logoUrl is string && data.logoUrl.size() <= 250000))
+        // Payment QR image: same cap as the logo.
+        && (!('paymentQrUrl' in data) || (data.paymentQrUrl is string && data.paymentQrUrl.size() <= 250000));
     }
 
     function validProduct(data) {

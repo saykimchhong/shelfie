@@ -2,10 +2,12 @@
 
 import { Store, Trash2, Truck } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
+import Image from "next/image";
 import { Badge, Button, Segmented, Sheet, Text, TextField, Thumb } from "@/components/ui";
 import {
   DEFAULT_FULFILLMENT,
   DELIVERY_ADDRESS_MAX,
+  PAYMENT_QR_NAME,
   type FulfillmentMethod,
   type PublicStore,
 } from "@/domain/store";
@@ -91,7 +93,27 @@ export function CartSheet({
         </Button>
       </div>
       <Fulfillment store={store} method={summary.method} choice={choice} onChange={onChoiceChange} />
+      {store.paymentQrUrl ? <PaymentQr store={store} url={store.paymentQrUrl} /> : null}
     </Sheet>
+  );
+}
+
+// The seller's own PromptPay / LankaQR / KHQR code. On a phone the customer
+// can't scan their own screen, so a tap opens it full size to save.
+function PaymentQr({ store, url }: { store: PublicStore; url: string }) {
+  const scheme = PAYMENT_QR_NAME[store.currency];
+  return (
+    <div className={styles.payment}>
+      <a href={url} target="_blank" rel="noreferrer" className={styles.qr} aria-label={`Open the ${scheme} code full size`}>
+        <Image src={url} alt={`${scheme} code for ${store.name}`} fill sizes="132px" unoptimized className={styles.qrImage} />
+      </a>
+      <div>
+        <Text weight={700}>Pay with {scheme}</Text>
+        <Text size="sm" tone="muted">
+          Tap to save it. Pay once the shop confirms your order.
+        </Text>
+      </div>
+    </div>
   );
 }
 

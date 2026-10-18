@@ -54,3 +54,28 @@
 .offer {
   align-self: flex-start;
 }
+
+.payment {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-top: var(--space-5);
+  padding: var(--space-3);
+  border-radius: var(--radius-lg);
+  background: var(--surface-1);
+}
+
+// QR codes need a white background to scan, in dark mode too.
+.qr {
+  position: relative;
+  flex-shrink: 0;
+  width: 132px;
+  height: 132px;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  background: #fff;
+}
+
+.qrImage {
+  object-fit: contain;
+}
