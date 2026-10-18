@@ -18,7 +18,8 @@ import { AnimatePresence, motion } from "motion/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type ChangeEvent, type ReactNode } from "react";
 import { Reveal } from "@/components/motion/Reveal";
-import { Badge, Button, ButtonLink, EmptyState, Spinner, Stack, Text } from "@/components/ui";
+import { Badge, Button, ButtonLink, EmptyState, Spinner, Stack, Surface, Text } from "@/components/ui";
+import type { AgentEvent } from "@/domain/agents";
 import type { ExtractionResponse } from "@/domain/extraction";
 import type { Product } from "@/domain/product";
 import { canonicalShelf, productsOnShelf, shelvesOf, UNSORTED } from "@/domain/shelf";
@@ -33,6 +34,7 @@ import {
   useRefreshStorefront,
   type ProductUpdate,
 } from "@/features/seller/data";
+import { AgentActivityFeed } from "./AgentActivityFeed";
 import { requestExtraction } from "./api";
 import { isSavable, toProductInput, toProductUpdate, type Draft } from "./drafts";
 import { mergeShelf, toKnownProducts, type Missing } from "./merge";
@@ -91,6 +93,8 @@ function Capture({ store, products }: { store: Store; products: Product[] }) {
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [missing, setMissing] = useState<Missing[]>([]);
   const [provider, setProvider] = useState<ExtractionResponse["provider"] | null>(null);
+  // Each agent's progress while the video is read, for the activity feed.
+  const [steps, setSteps] = useState<AgentEvent[]>([]);
   const [framesReady, setFramesReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -135,6 +139,7 @@ function Capture({ store, products }: { store: Store; products: Product[] }) {
     setPhase("reading");
     setFramesReady(false);
     setError(null);
+    setSteps([]);
 
     const controller = new AbortController();
     abortRef.current = controller;
@@ -147,6 +152,7 @@ function Capture({ store, products }: { store: Store; products: Product[] }) {
         known: toKnownProducts(shelfProducts),
         idToken: await getIdToken(),
         signal: controller.signal,
+        onStep: (event) => setSteps((current) => [...current, event]),
       });
       const merge = mergeShelf(result.products, shelfProducts, {
         restock,
@@ -278,7 +284,7 @@ function Capture({ store, products }: { store: Store; products: Product[] }) {
             <PickVideo products={products} target={target} onTarget={setTarget} onFile={handleFile} />
           ) : null}
 
-          {phase === "reading" && previewUrl ? <Reading previewUrl={previewUrl} /> : null}
+          {phase === "reading" && previewUrl ? <Reading previewUrl={previewUrl} steps={steps} /> : null}
 
           {phase === "review" && nothingSeen ? (
             <EmptyState
@@ -316,6 +322,12 @@ function Capture({ store, products }: { store: Store; products: Product[] }) {
                   </Badge>
                 )}
               </Stack>
+
+              {steps.length > 0 ? (
+                <Surface tone="tint" padding="sm" radius="xl">
+                  <AgentActivityFeed steps={steps} variant="recap" />
+                </Surface>
+              ) : null}
 
               <MergeReview
                 drafts={drafts}
@@ -485,17 +497,22 @@ function Tip({ icon, text }: { icon: ReactNode; text: string }) {
   );
 }
 
-function Reading({ previewUrl }: { previewUrl: string }) {
+// While the video is read: the clip, and each agent's progress as it streams in.
+function Reading({ previewUrl, steps }: { previewUrl: string; steps: AgentEvent[] }) {
   return (
-    <Stack gap={5} align="center">
+    <div className={styles.reading}>
       <div className={styles.preview}>
         <video src={previewUrl} autoPlay muted loop playsInline />
         <span className={styles.scan} aria-hidden />
       </div>
-      <Stack direction="row" gap={2} align="center">
-        <Spinner />
-        <Text weight={600}>Finding products and prices…</Text>
+      <Stack gap={4} className={styles.progress}>
+        <Stack direction="row" gap={2} align="center">
+          {/* Until the first agent starts (e.g. while the video uploads). */}
+          {steps.length === 0 ? <Spinner /> : null}
+          <Text weight={600}>Finding products and prices…</Text>
+        </Stack>
+        <AgentActivityFeed steps={steps} />
       </Stack>
-    </Stack>
+    </div>
   );
 }

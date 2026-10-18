@@ -14,10 +14,10 @@ runConfig:
   memoryMiB: 1024
 
 env:
-  # "mock" = sample products, no AI calls. Switch to "gemini" when ready and
-  # add the GEMINI_API_KEY secret below.
+  # "gemini" = real video reading; needs the GEMINI_API_KEY secret below.
+  # "mock" = sample products, no AI calls.
   - variable: SHELFIE_AI
-    value: mock
+    value: gemini
     availability:
       - RUNTIME
 
@@ -27,8 +27,10 @@ env:
   # - variable: NEXT_PUBLIC_SITE_URL
   #   value: https://<backend>--<project>.<region>.hosted.app
 
-  # Real AI: create the secret once with
+  # Gemini key, from Cloud Secret Manager. Create it before the first rollout
+  # that reads it, or the rollout fails:
   #   npx firebase-tools apphosting:secrets:set geminiApiKey
-  # then uncomment:
-  # - variable: GEMINI_API_KEY
-  #   secret: geminiApiKey
+  - variable: GEMINI_API_KEY
+    secret: geminiApiKey
+    availability:
+      - RUNTIME

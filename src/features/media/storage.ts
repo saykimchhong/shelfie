@@ -1,13 +1,13 @@
 import { deleteObject, getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import type { Store } from "@/domain/store";
 import { clientStorage } from "@/lib/firebase/client";
-import { blobToDataUrl, squarePhoto } from "./image";
+import { blobToDataUrl, fitPhoto, squarePhoto } from "./image";
 
 // Where photos are kept. Each function returns the URL to save on the doc.
 //
 // Firebase Storage, under the seller's uid so storage.rules can check
 // ownership without reading Firestore:
-//   sellers/{uid}/stores/{slug}/{products|logo}/{random}.webp
+//   sellers/{uid}/stores/{slug}/{products|logo|payment}/{random}.webp
 // The download URL is public, like the store it belongs to.
 //
 // Without a Storage bucket in the env, photos fall back to small inline data
@@ -15,13 +15,18 @@ import { blobToDataUrl, squarePhoto } from "./image";
 
 export type PhotoOwner = Pick<Store, "slug" | "ownerId">;
 
-type Folder = "products" | "logo";
+type Folder = "products" | "logo" | "payment";
 
-// Square sizes. Product cards show photos at up to ~300px CSS on 2x screens.
-const SIZES: Record<Folder, number> = { products: 720, logo: 320 };
+// Longest side. Product cards show photos at up to ~300px CSS on 2x screens.
+const SIZES: Record<Folder, number> = { products: 720, logo: 320, payment: 1024 };
 
 const MAX_INLINE_BYTES = 140_000; // keep in sync with the size caps in firestore.rules
-const INLINE_SIZES: Record<Folder, number> = { products: 560, logo: 320 };
+const INLINE_SIZES: Record<Folder, number> = { products: 560, logo: 320, payment: 720 };
+
+// Photos are square-cropped; a payment QR is kept whole so it still scans.
+function resize(folder: Folder, image: Blob, size: number): Promise<Blob> {
+  return folder === "payment" ? fitPhoto(image, size) : squarePhoto(image, size);
+}
 
 // Photos never change once uploaded (a new photo gets a new name).
 const CACHE_CONTROL = "public, max-age=31536000, immutable";
@@ -32,7 +37,7 @@ async function save(owner: PhotoOwner, folder: Folder, image: Blob): Promise<str
   const storage = clientStorage();
   if (!storage) return saveInline(folder, image);
 
-  const photo = await squarePhoto(image, SIZES[folder]);
+  const photo = await resize(folder, image, SIZES[folder]);
   const extension = photo.type === "image/webp" ? "webp" : "jpg";
   const object = ref(storage, `sellers/${owner.ownerId}/stores/${owner.slug}/${folder}/${crypto.randomUUID()}.${extension}`);
   await uploadBytes(object, photo, { contentType: photo.type, cacheControl: CACHE_CONTROL });
@@ -41,8 +46,8 @@ async function save(owner: PhotoOwner, folder: Folder, image: Blob): Promise<str
 
 async function saveInline(folder: Folder, image: Blob): Promise<string> {
   const size = INLINE_SIZES[folder];
-  let photo = await squarePhoto(image, size);
-  if (photo.size > MAX_INLINE_BYTES) photo = await squarePhoto(image, Math.round(size * 0.68));
+  let photo = await resize(folder, image, size);
+  if (photo.size > MAX_INLINE_BYTES) photo = await resize(folder, image, Math.round(size * 0.68));
   return blobToDataUrl(photo);
 }
 
@@ -53,6 +58,11 @@ export function saveProductImage(owner: PhotoOwner, image: Blob): Promise<string
 // The round shop avatar is small on screen, so it's stored smaller too.
 export function saveStoreLogo(owner: PhotoOwner, image: Blob): Promise<string> {
   return save(owner, "logo", image);
+}
+
+// The seller's own PromptPay / LankaQR / KHQR code, shown to customers in the cart.
+export function saveStorePaymentQr(owner: PhotoOwner, image: Blob): Promise<string> {
+  return save(owner, "payment", image);
 }
 
 // Deletes a photo that's no longer used (replaced, removed, or its product

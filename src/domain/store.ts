@@ -8,6 +8,14 @@ export const CURRENCIES = ["USD", "KHR", "LKR", "THB"] as const;
 export const currencySchema = z.enum(CURRENCIES);
 export type Currency = z.infer<typeof currencySchema>;
 
+// The local QR payment scheme for each currency, for "Pay with …" labels.
+export const PAYMENT_QR_NAME: Record<Currency, string> = {
+  USD: "QR",
+  KHR: "KHQR",
+  LKR: "LankaQR",
+  THB: "PromptPay",
+};
+
 // Main language printed on the seller's labels — steers Gemini's localName.
 export const LABEL_LANGUAGES = ["en", "km", "si", "ta", "th"] as const;
 export const labelLanguageSchema = z.enum(LABEL_LANGUAGES);
@@ -22,6 +30,19 @@ export const MISSING_PRODUCT_ACTIONS = ["soldOut", "keep"] as const;
 export const restockSettingsSchema = z.object({ missing: z.enum(MISSING_PRODUCT_ACTIONS) });
 export type RestockSettings = z.infer<typeof restockSettingsSchema>;
 export const DEFAULT_RESTOCK: RestockSettings = { missing: "soldOut" };
+
+// How customers get their order. The seller offers pickup, delivery or both;
+// with both, the customer picks one in the cart. Keep in sync with
+// validFulfillment() in firestore.rules.
+export const FULFILLMENT_OFFERS = ["pickup", "delivery", "both"] as const;
+export const fulfillmentOfferSchema = z.enum(FULFILLMENT_OFFERS);
+export type FulfillmentOffer = z.infer<typeof fulfillmentOfferSchema>;
+// Small shops always let people collect, so that's the default.
+export const DEFAULT_FULFILLMENT: FulfillmentOffer = "pickup";
+
+// What one order uses: the offer itself, or the customer's pick when it's "both".
+export type FulfillmentMethod = Exclude<FulfillmentOffer, "both">;
+export const DELIVERY_ADDRESS_MAX = 200;
 
 export const contactSchema = z.object({
   whatsapp: z
@@ -47,6 +68,8 @@ export const storeSchema = z.object({
   theme: themeSchema.optional(),
   // Missing on stores created before restock existed → DEFAULT_RESTOCK.
   restock: restockSettingsSchema.optional(),
+  // Missing on stores created before pickup/delivery existed → DEFAULT_FULFILLMENT.
+  fulfillment: fulfillmentOfferSchema.optional(),
   paymentQrUrl: z.url().optional(),
   published: z.boolean(),
   createdAt: z.number(),

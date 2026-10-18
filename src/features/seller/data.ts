@@ -146,6 +146,7 @@ export type StorePatch = Partial<
     | "labelLanguage"
     | "theme"
     | "restock"
+    | "fulfillment"
     | "published"
     | "paymentQrUrl"
   >

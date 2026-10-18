@@ -1,11 +1,38 @@
 import clsx from "clsx";
 import { MessageCircle } from "lucide-react";
-import { ButtonLink } from "@/components/ui";
+import { Button, ButtonLink } from "@/components/ui";
 import type { OrderSummary } from "./order";
 import styles from "./OrderButtons.module.scss";
 
 // WhatsApp / LINE in their own brand colors: recognisable without extra words.
-export function OrderButtons({ summary, block }: { summary: OrderSummary; block?: boolean }) {
+// With `onChoose`, they open the cart (where the customer picks pickup or
+// delivery) instead of sending straight away.
+export function OrderButtons({
+  summary,
+  block,
+  onChoose,
+}: {
+  summary: OrderSummary;
+  block?: boolean;
+  onChoose?: () => void;
+}) {
+  if (onChoose) {
+    return (
+      <div className={clsx(styles.buttons, block && styles.block)}>
+        {summary.lineHref ? (
+          <Button className={styles.line} aria-label="Order on LINE" aria-haspopup="dialog" onClick={onChoose}>
+            LINE
+          </Button>
+        ) : null}
+        {summary.whatsappHref ? (
+          <Button icon={<MessageCircle />} className={styles.whatsapp} aria-haspopup="dialog" onClick={onChoose}>
+            Order
+          </Button>
+        ) : null}
+      </div>
+    );
+  }
+
   return (
     <div className={clsx(styles.buttons, block && styles.block)}>
       {summary.lineHref ? (

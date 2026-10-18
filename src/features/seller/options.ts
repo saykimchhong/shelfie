@@ -1,5 +1,5 @@
 import type { SegmentedOption } from "@/components/ui";
-import type { Currency, LabelLanguage, RestockSettings } from "@/domain/store";
+import type { Currency, FulfillmentOffer, LabelLanguage, RestockSettings } from "@/domain/store";
 
 // Symbols and script samples instead of words: less text in the UI.
 // (No flag emojis: Windows renders them as plain letters.)
@@ -22,6 +22,13 @@ export const LABEL_LANGUAGE_OPTIONS: readonly SegmentedOption<LabelLanguage>[] =
 export const MISSING_PRODUCT_OPTIONS: readonly SegmentedOption<RestockSettings["missing"]>[] = [
   { value: "soldOut", label: "Mark sold out" },
   { value: "keep", label: "Keep in stock" },
+];
+
+// How customers can get their order.
+export const FULFILLMENT_OPTIONS: readonly SegmentedOption<FulfillmentOffer>[] = [
+  { value: "pickup", label: "Pickup" },
+  { value: "delivery", label: "Delivery" },
+  { value: "both", label: "Both" },
 ];
 
 // Example number for the WhatsApp field, matched to the chosen currency.

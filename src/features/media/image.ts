@@ -41,6 +41,17 @@ export async function squarePhoto(source: Blob, size = 640): Promise<Blob> {
   return canvasToBlob(canvas);
 }
 
+// Shrinks a photo to fit within maxSide, keeping all of it (no crop) and its
+// shape. For images that must stay whole, like a payment QR screenshot.
+export async function fitPhoto(source: Blob, maxSide = 1024, quality = 0.92): Promise<Blob> {
+  const bitmap = await createImageBitmap(source);
+  const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+  const [canvas, context] = createCanvas(Math.round(bitmap.width * scale), Math.round(bitmap.height * scale));
+  context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  bitmap.close();
+  return canvasToBlob(canvas, quality);
+}
+
 export function blobToDataUrl(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
