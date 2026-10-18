@@ -36,6 +36,11 @@ service cloud.firestore {
         || (data.restock is map && data.restock.missing in ['soldOut', 'keep']);
     }
 
+    // Optional pickup / delivery offer (src/domain/store.ts).
+    function validFulfillment(data) {
+      return !('fulfillment' in data) || data.fulfillment in ['pickup', 'delivery', 'both'];
+    }
+
     function validStore(data) {
       return data.keys().hasAll(['slug', 'ownerId', 'name', 'currency', 'labelLanguage', 'contact', 'published'])
         && data.name is string && data.name.size() > 0 && data.name.size() <= 80
@@ -45,6 +50,7 @@ service cloud.firestore {
         && data.published is bool
         && validTheme(data)
         && validRestock(data)
+        && validFulfillment(data)
         && (!('description' in data) || (data.description is string && data.description.size() <= 500))
         // Logo may be an inline data URL for now, like product photos.
         && (!('logoUrl' in data) || (data.logoUrl is string && data.logoUrl.size() <= 250000));

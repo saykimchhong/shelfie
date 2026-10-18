@@ -20,11 +20,13 @@ import {
 } from "@/components/ui";
 import { sampleStorefront } from "@/domain/samples";
 import {
+  DEFAULT_FULFILLMENT,
   DEFAULT_RESTOCK,
   STORE_DESCRIPTION_MAX,
   storeInputSchema,
   storeSchema,
   type Currency,
+  type FulfillmentOffer,
   type LabelLanguage,
   type PublicStore,
   type RestockSettings,
@@ -37,7 +39,13 @@ import { StorefrontView } from "@/features/storefront";
 import { PhonePreview, ThemePicker } from "@/features/theme";
 import { initials } from "@/lib/format";
 import { updateStore, useMyStore, useProducts, useRefreshStorefront } from "./data";
-import { CURRENCY_OPTIONS, LABEL_LANGUAGE_OPTIONS, MISSING_PRODUCT_OPTIONS, PHONE_PLACEHOLDER } from "./options";
+import {
+  CURRENCY_OPTIONS,
+  FULFILLMENT_OPTIONS,
+  LABEL_LANGUAGE_OPTIONS,
+  MISSING_PRODUCT_OPTIONS,
+  PHONE_PLACEHOLDER,
+} from "./options";
 import { DashboardSkeleton } from "./SellerHome";
 import styles from "./StoreEditor.module.scss";
 
@@ -67,6 +75,7 @@ type Form = {
   labelLanguage: LabelLanguage;
   theme: Theme;
   restock: RestockSettings;
+  fulfillment: FulfillmentOffer;
 };
 
 // The logo is a file, so it's tracked apart from the text fields.
@@ -83,6 +92,7 @@ function toForm(store: Store): Form {
     labelLanguage: store.labelLanguage,
     theme: store.theme ?? DEFAULT_THEME,
     restock: store.restock ?? DEFAULT_RESTOCK,
+    fulfillment: store.fulfillment ?? DEFAULT_FULFILLMENT,
   };
 }
 
@@ -126,6 +136,7 @@ function StoreEditor({ store }: { store: Store }) {
     labelLanguage: form.labelLanguage,
     contact: { whatsapp: form.whatsapp || undefined, line: form.line || undefined },
     theme: form.theme,
+    fulfillment: form.fulfillment,
     published: store.published,
     createdAt: store.createdAt,
     updatedAt: store.updatedAt,
@@ -170,6 +181,7 @@ function StoreEditor({ store }: { store: Store }) {
         description: parsed.data.description,
         theme: form.theme,
         restock: form.restock,
+        fulfillment: form.fulfillment,
         ...logoPatch,
       });
       if (logo.kind !== "kept") removeImage(store.logoUrl);
@@ -286,6 +298,12 @@ function StoreEditor({ store }: { store: Store }) {
               onChange={(e) => set("line", e.target.value)}
               error={errors.line}
               autoCapitalize="none"
+            />
+            <Segmented
+              label="Customers get orders by"
+              options={FULFILLMENT_OPTIONS}
+              value={form.fulfillment}
+              onChange={(v) => set("fulfillment", v)}
             />
           </Section>
         </Reveal>

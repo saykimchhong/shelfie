@@ -1,11 +1,16 @@
 "use client";
 
-import { Trash2 } from "lucide-react";
+import { Store, Trash2, Truck } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { Button, Sheet, Text, Thumb } from "@/components/ui";
-import type { PublicStore } from "@/domain/store";
+import { Badge, Button, Segmented, Sheet, Text, TextField, Thumb } from "@/components/ui";
+import {
+  DEFAULT_FULFILLMENT,
+  DELIVERY_ADDRESS_MAX,
+  type FulfillmentMethod,
+  type PublicStore,
+} from "@/domain/store";
 import { formatPrice } from "@/lib/format";
-import type { CartLine, OrderSummary } from "./order";
+import type { CartLine, FulfillmentChoice, OrderSummary } from "./order";
 import { OrderButtons } from "./OrderButtons";
 import { QuantityControl } from "./QuantityControl";
 import styles from "./CartSheet.module.scss";
@@ -18,6 +23,8 @@ export function CartSheet({
   store,
   lines,
   summary,
+  choice,
+  onChoiceChange,
   onQuantityChange,
   onClear,
 }: {
@@ -26,6 +33,8 @@ export function CartSheet({
   store: PublicStore;
   lines: CartLine[];
   summary: OrderSummary;
+  choice: FulfillmentChoice;
+  onChoiceChange: (choice: FulfillmentChoice) => void;
   onQuantityChange: (productId: string, quantity: number) => void;
   onClear: () => void;
 }) {
@@ -81,6 +90,54 @@ export function CartSheet({
           Clear all
         </Button>
       </div>
+      <Fulfillment store={store} method={summary.method} choice={choice} onChange={onChoiceChange} />
     </Sheet>
+  );
+}
+
+const METHOD_OPTIONS = [
+  { value: "pickup", label: "Pickup" },
+  { value: "delivery", label: "Delivery" },
+] as const;
+
+// Pickup or delivery: a choice when the shop offers both, otherwise just shown.
+// Delivery asks where, optionally; it goes into the order message.
+function Fulfillment({
+  store,
+  method,
+  choice,
+  onChange,
+}: {
+  store: PublicStore;
+  method: FulfillmentMethod;
+  choice: FulfillmentChoice;
+  onChange: (choice: FulfillmentChoice) => void;
+}) {
+  const offer = store.fulfillment ?? DEFAULT_FULFILLMENT;
+  return (
+    <div className={styles.fulfillment}>
+      {offer === "both" ? (
+        <Segmented
+          label="How do you want it?"
+          options={METHOD_OPTIONS}
+          value={choice.method}
+          onChange={(next) => onChange({ ...choice, method: next })}
+        />
+      ) : (
+        <Badge className={styles.offer} icon={offer === "pickup" ? <Store /> : <Truck />}>
+          {offer === "pickup" ? "Pickup only" : "Delivery only"}
+        </Badge>
+      )}
+      {method === "delivery" ? (
+        <TextField
+          label="Delivery address or area"
+          hint="Optional · you can also send it in the chat"
+          autoComplete="street-address"
+          maxLength={DELIVERY_ADDRESS_MAX}
+          value={choice.address}
+          onChange={(event) => onChange({ ...choice, address: event.target.value })}
+        />
+      ) : null}
+    </div>
   );
 }
