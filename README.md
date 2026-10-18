@@ -219,7 +219,7 @@ App Hosting builds the app from GitHub on every push to `main`. No Firebase keys
 
 **Rules don't deploy with the app.** A push to `main` rolls out the code only. After changing `firestore.rules` or `storage.rules`, run `npm run deploy:rules -- --project <project-id>`.
 
-**Real AI in production:** set `SHELFIE_AI` to `gemini` in `apphosting.yaml` and add the `GEMINI_API_KEY` secret (the lines are there, commented out, with the command to create it).
+**Real AI in production:** `apphosting.yaml` sets `SHELFIE_AI=gemini` and reads `GEMINI_API_KEY` from the `geminiApiKey` secret. Create the secret with `npx firebase-tools apphosting:secrets:set geminiApiKey` before the first rollout, or the rollout fails. To go back to mock, set `SHELFIE_AI` to `mock`.
 
 **Check before pushing:** `NEXT_PRIVATE_STANDALONE=true npm run build`, then copy `.next/static` into `.next/standalone/.next/` and run `node .next/standalone/server.js`. That's the same server App Hosting runs.
 
