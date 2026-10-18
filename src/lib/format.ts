@@ -1,3 +1,4 @@
+import type { PriceUnit } from "@/domain/product";
 import type { Currency } from "@/domain/store";
 
 const CURRENCY_LOCALE: Record<Currency, string> = {
@@ -15,6 +16,19 @@ export function formatPrice(amount: number, currency: Currency): string {
     currencyDisplay: "narrowSymbol",
     maximumFractionDigits: Number.isInteger(amount) ? 0 : 2,
   }).format(amount);
+}
+
+// After a price on a product: "" for each (as before), " / kg", " / bunch".
+export function perUnit(unit: PriceUnit): string {
+  return unit === "each" ? "" : ` / ${unit}`;
+}
+
+const UNIT_PLURAL: Record<PriceUnit, string> = { each: "", kg: "kg", bunch: "bunches", pack: "packs" };
+
+// How much of a product is ordered: "2" for items, "2 kg", "1 bunch", "3 packs".
+export function quantityWithUnit(quantity: number, unit: PriceUnit): string {
+  if (unit === "each") return String(quantity);
+  return `${quantity} ${quantity === 1 ? unit : UNIT_PLURAL[unit]}`;
 }
 
 // "1 product" · "18 products"

@@ -1,4 +1,5 @@
 import type { SegmentedOption } from "@/components/ui";
+import type { PriceUnit } from "@/domain/product";
 import type { Currency, FulfillmentOffer, LabelLanguage, RestockSettings } from "@/domain/store";
 
 // Symbols and script samples instead of words: less text in the UI.
@@ -29,6 +30,14 @@ export const FULFILLMENT_OPTIONS: readonly SegmentedOption<FulfillmentOffer>[] =
   { value: "pickup", label: "Pickup" },
   { value: "delivery", label: "Delivery" },
   { value: "both", label: "Both" },
+];
+
+// What a price is for. "Item" reads better than "each" as a choice.
+export const PRICE_UNIT_OPTIONS: readonly SegmentedOption<PriceUnit>[] = [
+  { value: "each", label: "Item" },
+  { value: "kg", label: "kg" },
+  { value: "bunch", label: "Bunch" },
+  { value: "pack", label: "Pack" },
 ];
 
 // Example number for the WhatsApp field, matched to the chosen currency.

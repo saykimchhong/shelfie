@@ -41,6 +41,11 @@ service cloud.firestore {
       return !('fulfillment' in data) || data.fulfillment in ['pickup', 'delivery', 'both'];
     }
 
+    // Optional price units (src/domain/product.ts PRICE_UNITS).
+    function validUnit(data, field) {
+      return !(field in data) || data[field] in ['each', 'kg', 'bunch', 'pack'];
+    }
+
     function validStore(data) {
       return data.keys().hasAll(['slug', 'ownerId', 'name', 'currency', 'labelLanguage', 'contact', 'published'])
         && data.name is string && data.name.size() > 0 && data.name.size() <= 80
@@ -51,6 +56,7 @@ service cloud.firestore {
         && validTheme(data)
         && validRestock(data)
         && validFulfillment(data)
+        && validUnit(data, 'priceUnit')
         && (!('description' in data) || (data.description is string && data.description.size() <= 500))
         // Logo may be an inline data URL for now, like product photos.
         && (!('logoUrl' in data) || (data.logoUrl is string && data.logoUrl.size() <= 250000))
@@ -64,6 +70,7 @@ service cloud.firestore {
         && (data.price == null || (data.price is number && data.price >= 0))
         && data.inStock is bool
         && data.position is number
+        && validUnit(data, 'unit')
         && (!('shelf' in data) || (data.shelf is string && data.shelf.size() <= 40))
         // Photos may be inline data URLs for now (src/features/media/storage.ts):
         // cap them so a product doc stays far below Firestore's 1 MB limit.

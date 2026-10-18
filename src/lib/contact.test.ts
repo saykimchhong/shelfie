@@ -27,3 +27,19 @@ describe("orderMessage", () => {
     expect(message).toMatch(/\nPlease deliver it\. I'll send the address\.$/);
   });
 });
+
+describe("orderMessage units", () => {
+  it("says the weight for per-kg items and keeps plain counts for the rest", () => {
+    const message = orderMessage({
+      ...base,
+      lines: [
+        { name: "Mango", quantity: 2, unit: "kg", lineTotal: 1200 },
+        { name: "Bananas", quantity: 1, unit: "bunch", lineTotal: 200 },
+        { name: "Rice 5kg", quantity: 2, lineTotal: 500 },
+      ],
+    });
+    expect(message).toContain("• 2 kg × Mango (Rs 1200)");
+    expect(message).toContain("• 1 bunch × Bananas (Rs 200)");
+    expect(message).toContain("• 2 × Rice 5kg (Rs 500)");
+  });
+});

@@ -10,7 +10,7 @@ import { LogoMark } from "@/components/brand/Logo";
 import { ScrollStagger } from "@/components/motion/ScrollStagger";
 import { ThemeScope } from "@/components/theme/ThemeScope";
 import { Container, EmptyState, Text } from "@/components/ui";
-import type { Product } from "@/domain/product";
+import { unitOf, type Product } from "@/domain/product";
 import type { PublicStore } from "@/domain/store";
 import { DEFAULT_THEME } from "@/domain/theme";
 import { initials } from "@/lib/format";
@@ -55,6 +55,7 @@ export function StorefrontView({ store, products, embedded }: StorefrontViewProp
   const itemProps = (product: Product) => ({
     product,
     currency: store.currency,
+    unit: unitOf(product, store.priceUnit),
     quantity: cart[product.id] ?? 0,
     onQuantityChange: canOrder ? (quantity: number) => setQuantity(product.id, quantity) : undefined,
   });

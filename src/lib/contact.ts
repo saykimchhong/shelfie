@@ -1,5 +1,7 @@
 // Ordering happens in the chat apps sellers already use. We never touch payments.
+import type { PriceUnit } from "@/domain/product";
 import type { FulfillmentMethod } from "@/domain/store";
+import { quantityWithUnit } from "./format";
 
 export function whatsappLink(phone: string, text?: string): string {
   const digits = phone.replace(/\D/g, "");
@@ -16,7 +18,8 @@ export function lineLink(lineId: string, text?: string): string {
   return `https://line.me/ti/p/~${encodeURIComponent(id)}`;
 }
 
-export type OrderLine = { name: string; quantity: number; lineTotal: number | null };
+// unit: what the quantity counts ("2 kg × Mango"); items when missing.
+export type OrderLine = { name: string; quantity: number; unit?: PriceUnit; lineTotal: number | null };
 
 // How the customer gets the order. The address is optional free text.
 export type OrderFulfillment = { method: FulfillmentMethod; address?: string };
@@ -30,7 +33,7 @@ export function orderMessage(input: {
 }): string {
   const items = input.lines.map((line) => {
     const price = line.lineTotal === null ? "" : ` (${input.formatLineTotal(line.lineTotal)})`;
-    return `• ${line.quantity} × ${line.name}${price}`;
+    return `• ${quantityWithUnit(line.quantity, line.unit ?? "each")} × ${line.name}${price}`;
   });
   return [
     `Hi ${input.storeName}! I'd like to order:`,

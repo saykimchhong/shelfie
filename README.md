@@ -159,10 +159,12 @@ stores/{slug}                       slug = document id = public URL
   currency (USD|KHR|LKR|THB), labelLanguage (en|km|si|ta|th),
   contact { whatsapp?, line? }, theme? { template (grid|list|showcase), accent (#rrggbb) },
   restock? { missing (soldOut|keep) }, fulfillment? (pickup|delivery|both, missing = pickup),
+  priceUnit? (each|kg|bunch|pack, missing = each: what prices are usually for),
   paymentQrUrl?, published, createdAt, updatedAt
 
 stores/{slug}/products/{id}
-  name, localName?, price (number | null = "Ask"), category?, shelf? (≤40),
+  name, localName?, price (number | null = "Ask"), unit? (each|kg|bunch|pack, missing = the store's priceUnit),
+  category?, shelf? (≤40),
   inStock, imageUrl?, position, createdAt, updatedAt
 ```
 

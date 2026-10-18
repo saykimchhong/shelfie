@@ -18,6 +18,7 @@ import {
   TextArea,
   TextField,
 } from "@/components/ui";
+import { DEFAULT_PRICE_UNIT, type PriceUnit } from "@/domain/product";
 import { sampleStorefront } from "@/domain/samples";
 import {
   DEFAULT_FULFILLMENT,
@@ -46,6 +47,7 @@ import {
   LABEL_LANGUAGE_OPTIONS,
   MISSING_PRODUCT_OPTIONS,
   PHONE_PLACEHOLDER,
+  PRICE_UNIT_OPTIONS,
 } from "./options";
 import { DashboardSkeleton } from "./SellerHome";
 import styles from "./StoreEditor.module.scss";
@@ -77,6 +79,7 @@ type Form = {
   theme: Theme;
   restock: RestockSettings;
   fulfillment: FulfillmentOffer;
+  priceUnit: PriceUnit;
 };
 
 // The logo and payment QR are files, so they're tracked apart from the text fields.
@@ -94,6 +97,7 @@ function toForm(store: Store): Form {
     theme: store.theme ?? DEFAULT_THEME,
     restock: store.restock ?? DEFAULT_RESTOCK,
     fulfillment: store.fulfillment ?? DEFAULT_FULFILLMENT,
+    priceUnit: store.priceUnit ?? DEFAULT_PRICE_UNIT,
   };
 }
 
@@ -145,6 +149,7 @@ function StoreEditor({ store }: { store: Store }) {
     contact: { whatsapp: form.whatsapp || undefined, line: form.line || undefined },
     theme: form.theme,
     fulfillment: form.fulfillment,
+    priceUnit: form.priceUnit,
     paymentQrUrl: qrUrl ?? undefined,
     published: store.published,
     createdAt: store.createdAt,
@@ -197,6 +202,7 @@ function StoreEditor({ store }: { store: Store }) {
         theme: form.theme,
         restock: form.restock,
         fulfillment: form.fulfillment,
+        priceUnit: form.priceUnit,
         ...logoPatch,
         ...qrPatch,
       });
@@ -317,6 +323,17 @@ function StoreEditor({ store }: { store: Store }) {
               error={errors.line}
               autoCapitalize="none"
             />
+            <Stack gap={2}>
+              <Segmented
+                label="Prices are usually per"
+                options={PRICE_UNIT_OPTIONS}
+                value={form.priceUnit}
+                onChange={(v) => set("priceUnit", v)}
+              />
+              <Text size="xs" tone="subtle">
+                e.g. kg for fruit and veg. You can change it for any product.
+              </Text>
+            </Stack>
             <Segmented
               label="Customers get orders by"
               options={FULFILLMENT_OPTIONS}
