@@ -66,7 +66,7 @@ The whole seller flow (film → check → photos → store) runs today without a
 | --- | --- | --- | --- |
 | Video → products | `SHELFIE_AI=mock`: the same agent pipeline, with sample products for the store's language and currency in place of the two Gemini steps | `SHELFIE_AI=gemini` + `GEMINI_API_KEY` | `src/server/extraction/` |
 | Default product photo | Frame grabbed from the seller's own video, in the browser (free) | (already real) | `src/features/media/video.ts` |
-| "AI photo" | Local canvas "studio shot" of that frame | Call Gemini image editing from `generateProductPhoto()` | `src/features/media/generate.ts` |
+| "AI photo" | Mock: local canvas "studio shot" of that frame | Real AI: Gemini image model via `POST /api/photos`. Cleans the frame up, or draws the product from its name when the frame is wrong. Falls back to the local look on failure | `src/server/photos.ts`, `src/features/media/generate.ts` |
 | Photo storage | Firebase Storage, `sellers/{uid}/stores/{slug}/…` (inline data URL only when no bucket is configured) | (already real) | `src/features/media/storage.ts` |
 
 The review screen shows a **Mock AI** badge when results come from the mock.

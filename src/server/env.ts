@@ -8,6 +8,8 @@ const serverEnvSchema = z
     SHELFIE_AI: z.enum(["mock", "gemini"]).default("mock"),
     GEMINI_API_KEY: z.string().optional(),
     GEMINI_MODEL: z.string().min(1).default("gemini-3-flash-preview"),
+    // Optional: the image model for "AI photo" (src/server/photos.ts has fallbacks).
+    GEMINI_IMAGE_MODEL: z.string().min(1).optional(),
   })
   .refine((env) => env.SHELFIE_AI !== "gemini" || !!env.GEMINI_API_KEY, {
     message: "SHELFIE_AI=gemini needs GEMINI_API_KEY (https://aistudio.google.com/apikey)",
@@ -25,6 +27,7 @@ export function serverEnv(): ServerEnv {
     SHELFIE_AI: process.env.SHELFIE_AI || undefined,
     GEMINI_API_KEY: process.env.GEMINI_API_KEY || undefined,
     GEMINI_MODEL: process.env.GEMINI_MODEL || undefined,
+    GEMINI_IMAGE_MODEL: process.env.GEMINI_IMAGE_MODEL || undefined,
   });
 
   if (!parsed.success) {
