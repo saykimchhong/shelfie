@@ -1,19 +1,41 @@
+import { clientAuth } from "@/lib/firebase/client";
 import { hueFromString, initials } from "@/lib/format";
 import { canvasToBlob, centerSquare, createCanvas } from "./image";
 
 // "AI photo" for a product.
 //
-// MOCK (today): a local canvas "studio shot" built from the video frame (soft
-// blurred backdrop, product centered with a shadow), or a styled tile when
-// there is no frame. Free and instant.
+// REAL: POST /api/photos → Gemini image editing. It cleans the frame up when
+// it shows the product, and draws the product from its name when the frame
+// is wrong (a hand, the next item), so one tap also fixes bad frames.
 //
-// REAL (later): POST the frame to an /api/photos route that calls Gemini image
-// editing and returns the cleaned-up photo. Keep this signature and callers
-// won't change.
+// FALLBACK (mock mode, offline, or Gemini fails): a local canvas "studio shot"
+// of the frame (soft blurred backdrop, product centered with a shadow), or a
+// styled tile when there is no frame. Free and instant.
 export async function generateProductPhoto(input: { name: string; frame: Blob | null }): Promise<Blob> {
-  // Let the UI's "generating" state show, like the real call will.
-  await new Promise((resolve) => setTimeout(resolve, 700));
+  const photo = await geminiPhoto(input);
+  if (photo) return photo;
   return input.frame ? studioShot(input.frame) : illustratedTile(input.name);
+}
+
+async function geminiPhoto({ name, frame }: { name: string; frame: Blob | null }): Promise<Blob | null> {
+  try {
+    const idToken = await clientAuth().currentUser?.getIdToken();
+    if (!idToken) return null;
+    const body = new FormData();
+    body.append("name", name);
+    if (frame) body.append("frame", frame);
+    const response = await fetch("/api/photos", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${idToken}` },
+      body,
+    });
+    if (!response.ok) return null; // 501 in mock mode: use the local look
+    const photo = await response.blob();
+    return photo.type.startsWith("image/") ? photo : null;
+  } catch (error) {
+    console.warn("AI photo fell back to the local look", error);
+    return null;
+  }
 }
 
 const SIZE = 640;
