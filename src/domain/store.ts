@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { priceUnitSchema } from "./product";
 import { isValidSlug } from "./slug";
 import { themeSchema } from "./theme";
 
@@ -70,6 +71,9 @@ export const storeSchema = z.object({
   restock: restockSettingsSchema.optional(),
   // Missing on stores created before pickup/delivery existed → DEFAULT_FULFILLMENT.
   fulfillment: fulfillmentOfferSchema.optional(),
+  // What prices are usually for, e.g. "kg" for a fruit stall. Products can
+  // override it. Missing → "each" (DEFAULT_PRICE_UNIT).
+  priceUnit: priceUnitSchema.optional(),
   paymentQrUrl: z.url().optional(),
   published: z.boolean(),
   createdAt: z.number(),

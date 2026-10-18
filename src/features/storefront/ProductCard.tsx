@@ -2,15 +2,17 @@
 
 import clsx from "clsx";
 import { Badge, Text, Thumb } from "@/components/ui";
-import type { Product } from "@/domain/product";
+import type { PriceUnit, Product } from "@/domain/product";
 import type { Currency } from "@/domain/store";
-import { formatPrice } from "@/lib/format";
+import { formatPrice, perUnit } from "@/lib/format";
 import { QuantityControl } from "./QuantityControl";
 import styles from "./ProductCard.module.scss";
 
 export type ProductCardProps = {
   product: Product;
   currency: Currency;
+  // What the price is for (the product's unit, else the shop's default).
+  unit: PriceUnit;
   quantity: number;
   // Omitted when the store has no way to take orders.
   onQuantityChange?: (quantity: number) => void;
@@ -19,6 +21,7 @@ export type ProductCardProps = {
 export function ProductCard({
   product,
   currency,
+  unit,
   quantity,
   onQuantityChange,
   variant = "grid",
@@ -57,7 +60,7 @@ export function ProductCard({
         ) : null}
         <div className={styles.footer}>
           <Text weight={800} tone={product.price === null ? "subtle" : "brand"}>
-            {product.price === null ? "Ask" : formatPrice(product.price, currency)}
+            {product.price === null ? "Ask" : `${formatPrice(product.price, currency)}${perUnit(unit)}`}
           </Text>
         </div>
       </div>

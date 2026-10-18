@@ -2,13 +2,13 @@
 
 import clsx from "clsx";
 import { Badge, Text, Thumb } from "@/components/ui";
-import { formatPrice } from "@/lib/format";
+import { formatPrice, perUnit } from "@/lib/format";
 import type { ProductCardProps } from "./ProductCard";
 import { QuantityControl } from "./QuantityControl";
 import styles from "./ProductListItem.module.scss";
 
 // Compact row for the "list" template: many small items, fast to scan.
-export function ProductListItem({ product, currency, quantity, onQuantityChange }: ProductCardProps) {
+export function ProductListItem({ product, currency, unit, quantity, onQuantityChange }: ProductCardProps) {
   return (
     <article className={clsx(styles.item, !product.inStock && styles.soldOut, quantity > 0 && styles.inCart)}>
       <Thumb label={product.name} src={product.imageUrl} size={72} className={styles.thumb} />
@@ -22,7 +22,7 @@ export function ProductListItem({ product, currency, quantity, onQuantityChange 
           </Text>
         ) : null}
         <Text weight={800} tone={product.price === null ? "subtle" : "brand"}>
-          {product.price === null ? "Ask" : formatPrice(product.price, currency)}
+          {product.price === null ? "Ask" : `${formatPrice(product.price, currency)}${perUnit(unit)}`}
         </Text>
       </div>
       {!product.inStock ? (

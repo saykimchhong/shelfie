@@ -11,7 +11,8 @@ import {
   type FulfillmentMethod,
   type PublicStore,
 } from "@/domain/store";
-import { formatPrice } from "@/lib/format";
+import { unitOf, type PriceUnit } from "@/domain/product";
+import { formatPrice, perUnit } from "@/lib/format";
 import type { CartLine, FulfillmentChoice, OrderSummary } from "./order";
 import { OrderButtons } from "./OrderButtons";
 import { QuantityControl } from "./QuantityControl";
@@ -75,7 +76,7 @@ export function CartSheet({
                   {product.name}
                 </Text>
                 <Text size="sm" tone="muted">
-                  {product.price === null ? "Price on request" : `${formatPrice(product.price, store.currency)} each`}
+                  {product.price === null ? "Price on request" : unitPrice(product.price, store, unitOf(product, store.priceUnit))}
                 </Text>
               </div>
               <QuantityControl
@@ -96,6 +97,12 @@ export function CartSheet({
       {store.paymentQrUrl ? <PaymentQr store={store} url={store.paymentQrUrl} /> : null}
     </Sheet>
   );
+}
+
+// "Rs 600 each" for items, "Rs 600 / kg" otherwise.
+function unitPrice(amount: number, store: PublicStore, unit: PriceUnit): string {
+  const price = formatPrice(amount, store.currency);
+  return unit === "each" ? `${price} each` : `${price}${perUnit(unit)}`;
 }
 
 // The seller's own PromptPay / LankaQR / KHQR code. On a phone the customer

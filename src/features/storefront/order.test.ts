@@ -54,3 +54,10 @@ describe("summarizeOrder", () => {
     expect(message(summary.whatsappHref)).not.toContain("Colombo 3");
   });
 });
+
+describe("summarizeOrder units", () => {
+  it("uses the shop's default unit in the message", () => {
+    const summary = summarizeOrder({ ...store, priceUnit: "kg" }, [{ product: rice, quantity: 2 }]);
+    expect(message(summary.whatsappHref)).toContain("• 2 kg × Rice");
+  });
+});

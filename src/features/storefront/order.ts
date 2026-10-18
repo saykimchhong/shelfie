@@ -1,4 +1,4 @@
-import type { Product } from "@/domain/product";
+import { unitOf, type Product } from "@/domain/product";
 import {
   DEFAULT_FULFILLMENT,
   DELIVERY_ADDRESS_MAX,
@@ -49,6 +49,7 @@ export function summarizeOrder(
     lines: lines.map((line) => ({
       name: line.product.name,
       quantity: line.quantity,
+      unit: unitOf(line.product, store.priceUnit),
       lineTotal: line.product.price === null ? null : line.product.price * line.quantity,
     })),
     total,

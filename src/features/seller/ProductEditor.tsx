@@ -2,12 +2,13 @@
 
 import { ImageOff, ImagePlus, Sparkles, Trash2 } from "lucide-react";
 import { useId, useState, type FormEvent } from "react";
-import { Button, Sheet, Spinner, Switch, TextField, Thumb } from "@/components/ui";
-import { SHELF_NAME_MAX, type Product, type ProductInput } from "@/domain/product";
+import { Button, Segmented, Sheet, Spinner, Switch, TextField, Thumb } from "@/components/ui";
+import { SHELF_NAME_MAX, unitOf, type PriceUnit, type Product, type ProductInput } from "@/domain/product";
 import { canonicalShelf } from "@/domain/shelf";
 import type { Store } from "@/domain/store";
 import { generateProductPhoto, removeImage, saveProductImage, urlToBlob, useObjectUrl } from "@/features/media";
 import { addProducts, deleteProduct, updateProduct, useRefreshStorefront } from "./data";
+import { PRICE_UNIT_OPTIONS } from "./options";
 import styles from "./ProductEditor.module.scss";
 
 // `product === null` → adding a new product by hand.
@@ -56,6 +57,7 @@ function EditorForm({
   const [name, setName] = useState(product?.name ?? "");
   const [localName, setLocalName] = useState(product?.localName ?? "");
   const [price, setPrice] = useState(product?.price != null ? String(product.price) : "");
+  const [unit, setUnit] = useState<PriceUnit>(unitOf(product ?? {}, store.priceUnit));
   const [category, setCategory] = useState(product?.category ?? "");
   const [shelf, setShelf] = useState(product?.shelf ?? "");
   const [inStock, setInStock] = useState(product?.inStock ?? true);
@@ -98,6 +100,8 @@ function EditorForm({
         name: name.trim(),
         localName: localName.trim() || undefined,
         price: amount,
+        // Same as the shop's default → follow it (so changing the default moves it too).
+        unit: unit === unitOf({}, store.priceUnit) ? undefined : unit,
         category: category.trim() || undefined,
         shelf: canonicalShelf(shelf, shelves) || undefined,
         inStock,
@@ -185,6 +189,7 @@ function EditorForm({
         />
         <TextField label="Category" value={category} onChange={(event) => setCategory(event.target.value)} />
       </div>
+      <Segmented label="Price per" options={PRICE_UNIT_OPTIONS} value={unit} onChange={setUnit} />
       <TextField
         label="Shelf"
         placeholder="e.g. Drinks"

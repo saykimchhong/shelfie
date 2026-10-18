@@ -16,7 +16,7 @@ import {
   Switch,
   Text,
 } from "@/components/ui";
-import type { Product } from "@/domain/product";
+import { unitOf, type Product } from "@/domain/product";
 import { shelvesOf } from "@/domain/shelf";
 import type { Store } from "@/domain/store";
 import { removeImage } from "@/features/media";
@@ -156,6 +156,7 @@ export function StoreOverview({ store }: { store: Store }) {
                   key={product.id}
                   product={product}
                   currency={store.currency}
+                  unit={unitOf(product, store.priceUnit)}
                   onOpen={() => setEditing({ product })}
                   onToggleStock={(inStock) => setInStock(product, inStock)}
                 />
