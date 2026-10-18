@@ -1,7 +1,7 @@
 rules_version = '2';
 
 // Shelfie photos (src/features/media/storage.ts):
-//   sellers/{uid}/stores/{slug}/{products|logo}/{file}
+//   sellers/{uid}/stores/{slug}/{products|logo|payment}/{file}
 // - Anyone can read: photos appear on public stores.
 // - Only the signed-in seller can write under their own uid: small images only.
 // Everything else in the bucket is closed.
@@ -16,7 +16,7 @@ service firebase.storage {
       allow read: if true;
 
       allow create, update: if isOwner()
-        && folder in ['products', 'logo']
+        && folder in ['products', 'logo', 'payment']
         && request.resource.size < 2 * 1024 * 1024
         && request.resource.contentType.matches('image/(webp|jpeg|png)');
 

@@ -6,7 +6,7 @@
   gap: var(--space-6);
 }
 
-// Phone: profile → look → preview → details → restock.
+// Phone: profile → look → preview → details → payment → restock.
 // Desktop: settings on the left, sticky live preview on the right.
 .layout {
   display: grid;
@@ -15,16 +15,18 @@
     "look"
     "preview"
     "details"
+    "payment"
     "restock";
   gap: var(--space-6);
 
   @include up(lg) {
     grid-template-columns: minmax(0, 1fr) 340px;
-    grid-template-rows: auto auto auto 1fr;
+    grid-template-rows: auto auto auto auto 1fr;
     grid-template-areas:
       "profile preview"
       "look preview"
       "details preview"
+      "payment preview"
       "restock preview";
     align-items: start;
   }
@@ -40,6 +42,10 @@
 
 .details {
   grid-area: details;
+}
+
+.payment {
+  grid-area: payment;
 }
 
 .restock {
@@ -91,6 +97,39 @@
 
 .logoImage {
   object-fit: cover;
+}
+
+.qrRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.qr {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 120px;
+  height: 120px;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+  color: var(--fg-subtle);
+
+  svg {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+// QR codes need a white background to scan, in dark mode too.
+.qrFilled {
+  background: #fff;
+}
+
+.qrImage {
+  object-fit: contain;
 }
 
 .upload {

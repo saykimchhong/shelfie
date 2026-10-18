@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Check, ImageOff, ImagePlus, TriangleAlert } from "lucide-react";
+import { ArrowLeft, Check, ImageOff, ImagePlus, QrCode, TriangleAlert } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
@@ -22,6 +22,7 @@ import { sampleStorefront } from "@/domain/samples";
 import {
   DEFAULT_FULFILLMENT,
   DEFAULT_RESTOCK,
+  PAYMENT_QR_NAME,
   STORE_DESCRIPTION_MAX,
   storeInputSchema,
   storeSchema,
@@ -34,7 +35,7 @@ import {
 } from "@/domain/store";
 import { DEFAULT_THEME, type Theme } from "@/domain/theme";
 import { useSignedInUser } from "@/features/auth";
-import { removeImage, saveStoreLogo, useObjectUrl } from "@/features/media";
+import { removeImage, saveStoreLogo, saveStorePaymentQr, useObjectUrl } from "@/features/media";
 import { StorefrontView } from "@/features/storefront";
 import { PhonePreview, ThemePicker } from "@/features/theme";
 import { initials } from "@/lib/format";
@@ -78,8 +79,8 @@ type Form = {
   fulfillment: FulfillmentOffer;
 };
 
-// The logo is a file, so it's tracked apart from the text fields.
-type Logo = { kind: "kept" } | { kind: "new"; blob: Blob } | { kind: "removed" };
+// The logo and payment QR are files, so they're tracked apart from the text fields.
+type ImageChange = { kind: "kept" } | { kind: "new"; blob: Blob } | { kind: "removed" };
 
 function toForm(store: Store): Form {
   return {
@@ -107,21 +108,28 @@ function StoreEditor({ store }: { store: Store }) {
   const refreshStorefront = useRefreshStorefront();
   const [saved, setSaved] = useState(() => toForm(store));
   const [form, setForm] = useState(saved);
-  const [logo, setLogo] = useState<Logo>({ kind: "kept" });
+  const [logo, setLogo] = useState<ImageChange>({ kind: "kept" });
+  const [qr, setQr] = useState<ImageChange>({ kind: "kept" });
   const [errors, setErrors] = useState<Errors>({});
   const [saving, setSaving] = useState(false);
   const [justSaved, setJustSaved] = useState(false);
 
   const newLogoUrl = useObjectUrl(logo.kind === "new" ? logo.blob : null);
   const logoUrl = logo.kind === "new" ? newLogoUrl : logo.kind === "kept" ? store.logoUrl : undefined;
+  const newQrUrl = useObjectUrl(qr.kind === "new" ? qr.blob : null);
+  const qrUrl = qr.kind === "new" ? newQrUrl : qr.kind === "kept" ? store.paymentQrUrl : undefined;
 
-  const dirty = logo.kind !== "kept" || JSON.stringify(form) !== JSON.stringify(saved);
+  const dirty = logo.kind !== "kept" || qr.kind !== "kept" || JSON.stringify(form) !== JSON.stringify(saved);
   const set = <K extends keyof Form>(key: K, value: Form[K]) => {
     setForm((current) => ({ ...current, [key]: value }));
     setJustSaved(false);
   };
-  const changeLogo = (next: Logo) => {
+  const changeLogo = (next: ImageChange) => {
     setLogo(next);
+    setJustSaved(false);
+  };
+  const changeQr = (next: ImageChange) => {
+    setQr(next);
     setJustSaved(false);
   };
 
@@ -137,6 +145,7 @@ function StoreEditor({ store }: { store: Store }) {
     contact: { whatsapp: form.whatsapp || undefined, line: form.line || undefined },
     theme: form.theme,
     fulfillment: form.fulfillment,
+    paymentQrUrl: qrUrl ?? undefined,
     published: store.published,
     createdAt: store.createdAt,
     updatedAt: store.updatedAt,
@@ -174,6 +183,12 @@ function StoreEditor({ store }: { store: Store }) {
           : logo.kind === "removed"
             ? { logoUrl: undefined } // removes it
             : {};
+      const qrPatch =
+        qr.kind === "new"
+          ? { paymentQrUrl: await saveStorePaymentQr(store, qr.blob) }
+          : qr.kind === "removed"
+            ? { paymentQrUrl: undefined } // removes it
+            : {};
       // tagline/description are always sent: undefined removes them.
       await updateStore(store.slug, {
         ...parsed.data,
@@ -183,11 +198,14 @@ function StoreEditor({ store }: { store: Store }) {
         restock: form.restock,
         fulfillment: form.fulfillment,
         ...logoPatch,
+        ...qrPatch,
       });
       if (logo.kind !== "kept") removeImage(store.logoUrl);
+      if (qr.kind !== "kept") removeImage(store.paymentQrUrl);
       await refreshStorefront(store.slug);
       setSaved(form);
       setLogo({ kind: "kept" });
+      setQr({ kind: "kept" });
       setJustSaved(true);
     } catch (cause) {
       console.error(cause);
@@ -305,6 +323,43 @@ function StoreEditor({ store }: { store: Store }) {
               value={form.fulfillment}
               onChange={(v) => set("fulfillment", v)}
             />
+          </Section>
+        </Reveal>
+
+        <Reveal delay={0.16} className={styles.payment}>
+          <Section title="Payment">
+            <div className={styles.qrRow}>
+              <span className={`${styles.qr} ${qrUrl ? styles.qrFilled : ""}`}>
+                {qrUrl ? (
+                  <Image src={qrUrl} alt="Your payment QR" fill sizes="120px" unoptimized className={styles.qrImage} />
+                ) : (
+                  <QrCode aria-hidden />
+                )}
+              </span>
+              <Stack gap={2} align="start">
+                <label className={styles.upload}>
+                  <ImagePlus aria-hidden />
+                  {qrUrl ? "Change QR" : `Add ${PAYMENT_QR_NAME[form.currency]}`}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      if (file) changeQr({ kind: "new", blob: file });
+                      event.target.value = "";
+                    }}
+                  />
+                </label>
+                {qrUrl ? (
+                  <Button variant="ghost" size="sm" icon={<ImageOff />} onClick={() => changeQr({ kind: "removed" })}>
+                    Remove
+                  </Button>
+                ) : null}
+                <Text size="xs" tone="subtle">
+                  Optional · customers see it in their cart. Shelfie never takes payments.
+                </Text>
+              </Stack>
+            </div>
           </Section>
         </Reveal>
 

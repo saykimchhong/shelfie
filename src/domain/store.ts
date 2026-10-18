@@ -8,6 +8,14 @@ export const CURRENCIES = ["USD", "KHR", "LKR", "THB"] as const;
 export const currencySchema = z.enum(CURRENCIES);
 export type Currency = z.infer<typeof currencySchema>;
 
+// The local QR payment scheme for each currency, for "Pay with …" labels.
+export const PAYMENT_QR_NAME: Record<Currency, string> = {
+  USD: "QR",
+  KHR: "KHQR",
+  LKR: "LankaQR",
+  THB: "PromptPay",
+};
+
 // Main language printed on the seller's labels — steers Gemini's localName.
 export const LABEL_LANGUAGES = ["en", "km", "si", "ta", "th"] as const;
 export const labelLanguageSchema = z.enum(LABEL_LANGUAGES);
