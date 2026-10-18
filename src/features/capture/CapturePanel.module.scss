@@ -167,3 +167,32 @@
   flex: 1;
   max-width: 320px;
 }
+
+// Reading screen: on phones the clip shrinks so every agent row fits on screen;
+// from md up, the clip and the feed sit side by side.
+.reading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-5);
+
+  .preview {
+    width: auto;
+    height: min(34dvh, 300px);
+  }
+
+  @include up(md) {
+    flex-direction: row;
+    justify-content: center;
+    gap: var(--space-8);
+
+    .preview {
+      height: min(60dvh, 560px);
+    }
+  }
+}
+
+.progress {
+  width: 100%;
+  max-width: 420px;
+}

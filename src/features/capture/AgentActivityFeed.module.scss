@@ -1,0 +1,168 @@
+@use "styles" as *;
+
+.feed {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-lg);
+  background: var(--surface-1);
+}
+
+// The step at work stands out; the ones still to come step back.
+.live .running {
+  background: var(--bg-raised);
+  @include elevation(1);
+}
+
+.icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  animation: pop 0.35s var(--ease-spring) backwards;
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  // Swapping icons is feedback, so keep it (tier 2) as a short fade.
+  @include reduced-motion {
+    animation: fade 0.2s ease-out backwards;
+  }
+}
+
+.waiting .icon {
+  background: var(--surface-2);
+  animation: none;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--fg-subtle);
+}
+
+.running .icon {
+  background: var(--brand-soft);
+  color: var(--brand-text);
+}
+
+.done .icon {
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+// Skipped is on purpose (a new shelf), so it reads calm, not as a problem.
+.skipped .icon {
+  background: var(--surface-2);
+  color: var(--fg-muted);
+}
+
+.failed .icon {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.label {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--fg);
+
+  .waiting & {
+    color: var(--fg-muted);
+  }
+}
+
+.line {
+  font-size: var(--text-sm);
+  color: var(--fg-muted);
+  animation: rise 0.3s var(--ease-out) backwards;
+
+  .waiting & {
+    color: var(--fg-subtle);
+    animation: none;
+  }
+
+  .done & {
+    color: var(--fg);
+  }
+
+  @include reduced-motion {
+    animation-name: fade;
+  }
+}
+
+// On the review screen: the finished run, tighter, two columns when there's room.
+.recap {
+  display: grid;
+  gap: var(--space-1) var(--space-4);
+
+  @include up(sm) {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .row {
+    padding: var(--space-2) 0;
+    background: none;
+  }
+
+  .icon {
+    width: 28px;
+    height: 28px;
+    animation: none;
+
+    svg {
+      width: 16px;
+      height: 16px;
+    }
+  }
+
+  .line {
+    animation: none;
+  }
+}
+
+.srOnly {
+  @include visually-hidden;
+}
+
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 4px, 0);
+  }
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
