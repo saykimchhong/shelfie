@@ -2,6 +2,19 @@
 
 **Film your shelf. Get a store.** A small seller records one walk-through video of their shop, saying prices out loud. Gemini turns it into a product list with prices and Khmer/Sinhala/Tamil/Thai labels. The seller checks it, and gets a shareable store at `shelfie.app/<shop>`. Customers order through WhatsApp or LINE. Shelfie never handles payments.
 
+**Who it's for:** small shops in Sri Lanka, Thailand and Cambodia that already sell through WhatsApp, Facebook, Instagram or LINE. Their pain is posting products one by one and answering "price?" and "do you have this?" all day. Shelfie gives them a catalog link to share anywhere. Orders arrive as a pre-filled WhatsApp/LINE message (with pickup or delivery), and the seller takes payment the way they already do, e.g. their own PromptPay or LankaQR code shown in the cart.
+
+## Architecture
+
+| Piece | What we use |
+| --- | --- |
+| App | Next.js 16 (App Router), one deployment for every store |
+| Hosting | Firebase App Hosting, which builds from GitHub and runs on Cloud Run |
+| AI | A Google ADK agent pipeline on Gemini: Watcher → Price matcher → Shelf matcher → Checker (see [AI agents](#ai-agents)). The seller watches each agent's progress live while the video is read |
+| Data | Firestore (stores and products), with security rules as the access control |
+| Photos | Firebase Storage (product photos, logos, payment QR codes) |
+| Sign-in | Firebase Auth with Google |
+
 ## Run it
 
 ```bash
@@ -15,10 +28,23 @@ npm run dev                  # http://localhost:3000
 | `npm run dev` | Dev server (Turbopack) |
 | `npm run build` / `start` | Production build / serve |
 | `npm run typecheck` | Generate route types + `tsc` |
-| `npm test` | Unit tests (Vitest): shelves, restock merge, AI agents, mock AI |
+| `npm test` | Unit tests (Vitest): shelves, restock merge, AI agents, mock AI, activity feed, order messages |
 | `npm run record:watch -- <video>` | Read a video with the real Watcher once and save it as a test fixture (see [AI agents](#ai-agents)) |
 | `npm run lint` | ESLint |
 | `npm run deploy:rules` | Push `firestore.rules`, indexes and `storage.rules` to Firebase |
+
+### Environment variables
+
+Local values go in `.env.local` (never committed). On App Hosting, the Firebase config is injected automatically, and the rest is set in `apphosting.yaml`.
+
+| Variable | Needed for | Notes |
+| --- | --- | --- |
+| `NEXT_PUBLIC_FIREBASE_API_KEY`, `_AUTH_DOMAIN`, `_PROJECT_ID`, `_APP_ID` | Sign-in, Firestore | Firebase console → Project settings → Your apps → Web. Public by design |
+| `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` | Photo uploads | Without it, photos are saved inline in Firestore (fine for local demos) |
+| `NEXT_PUBLIC_SITE_URL` | Share links, metadata | Defaults to `http://localhost:3000` |
+| `SHELFIE_AI` | Reading videos | `mock` (default: sample products, no AI cost) or `gemini` |
+| `GEMINI_API_KEY` | `SHELFIE_AI=gemini` | Server only. <https://aistudio.google.com/apikey> |
+| `GEMINI_MODEL` | Optional | Defaults to `gemini-3-flash-preview` |
 
 ### One-time Firebase setup
 
@@ -131,7 +157,8 @@ stores/{slug}                       slug = document id = public URL
   ownerId, name, tagline?, description? (≤500, line breaks kept), logoUrl?,
   currency (USD|KHR|LKR|THB), labelLanguage (en|km|si|ta|th),
   contact { whatsapp?, line? }, theme? { template (grid|list|showcase), accent (#rrggbb) },
-  restock? { missing (soldOut|keep) }, paymentQrUrl?, published, createdAt, updatedAt
+  restock? { missing (soldOut|keep) }, fulfillment? (pickup|delivery|both, missing = pickup),
+  paymentQrUrl?, published, createdAt, updatedAt
 
 stores/{slug}/products/{id}
   name, localName?, price (number | null = "Ask"), category?, shelf? (≤40),
@@ -145,7 +172,7 @@ The schemas live in `src/domain/`. If you add a required field, update `validSto
 ## Security model
 
 - **Firestore rules are the boundary.** Anyone can read a store and its products once `published == true`. Only the owner (`ownerId == auth.uid`) can read drafts or write anything.
-- **Photos** sit in Storage under the seller's uid, so `storage.rules` checks ownership without reading Firestore. Anyone can read them, like the store they're on.
+- **Photos** (`products/`, `logo/`, `payment/`) sit in Storage under the seller's uid, so `storage.rules` checks ownership without reading Firestore. Anyone can read them, like the store they're on.
 - **The server reads as the public.** `server/storefront.ts` uses `firebase/firestore/lite` without credentials, so the rules apply to it too. It cannot leak a draft store even by mistake.
 - **API routes and server actions verify the Firebase ID token** (`server/auth.ts`). This only needs the project ID.
 - `<AuthGate>` is a UX redirect, not a security check.
@@ -189,6 +216,10 @@ App Hosting builds the app from GitHub on every push to `main`. No Firebase keys
    - Add that domain under **Authentication → Settings → Authorized domains**, or Google sign-in will fail.
    - Set `NEXT_PUBLIC_SITE_URL` to the URL, in `apphosting.yaml` or the backend's Environment settings, and push.
    - Deploy the rules with `npm run deploy:rules -- --project <project-id>`.
+
+**Rules don't deploy with the app.** A push to `main` rolls out the code only. After changing `firestore.rules` or `storage.rules`, run `npm run deploy:rules -- --project <project-id>`.
+
+**Real AI in production:** set `SHELFIE_AI` to `gemini` in `apphosting.yaml` and add the `GEMINI_API_KEY` secret (the lines are there, commented out, with the command to create it).
 
 **Check before pushing:** `NEXT_PRIVATE_STANDALONE=true npm run build`, then copy `.next/static` into `.next/standalone/.next/` and run `node .next/standalone/server.js`. That's the same server App Hosting runs.
 
