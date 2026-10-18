@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { AgentEvent } from "@/domain/agents";
 import { extractStreamMessageSchema, type ExtractionResponse, type KnownProduct } from "@/domain/extraction";
 import type { Currency, LabelLanguage } from "@/domain/store";
+import { shrinkVideo } from "@/features/media/shrink";
 import { readNdjson } from "@/lib/ndjson";
 
 const configSchema = z.object({
@@ -26,20 +27,27 @@ export async function requestExtraction(input: {
   signal?: AbortSignal;
   // Each agent's progress while the video is read, for the activity feed.
   onStep?: (event: AgentEvent) => void;
+  // 0–1 while a video over the upload cap is made smaller on the phone.
+  onShrink?: (progress: number) => void;
 }): Promise<ExtractionResponse> {
   // The mock doesn't need the video (photos are grabbed from it right here in
   // the browser), so it's only uploaded when the real AI is on — and only if
   // it fits under the hosting platform's request limit.
   const config = await extractionConfig(input.signal);
-  if (config.needsVideo && input.video.size > config.maxVideoBytes) {
+  let video = input.video;
+  if (config.needsVideo && video.size > config.maxVideoBytes) {
+    input.onShrink?.(0);
+    video = (await shrinkVideo(video, { maxBytes: config.maxVideoBytes, onProgress: input.onShrink, signal: input.signal })) ?? video;
+  }
+  if (config.needsVideo && video.size > config.maxVideoBytes) {
     const mb = (bytes: number) => Math.round(bytes / (1024 * 1024));
     throw new Error(
-      `This video is ${mb(input.video.size)} MB; the limit is ${mb(config.maxVideoBytes)} MB. Try a shorter clip or record in 720p.`,
+      `This video is ${mb(video.size)} MB; the limit is ${mb(config.maxVideoBytes)} MB. Try a shorter clip or record in 720p.`,
     );
   }
 
   const body = new FormData();
-  if (config.needsVideo) body.append("video", input.video);
+  if (config.needsVideo) body.append("video", video);
   body.append("currency", input.currency);
   body.append("labelLanguage", input.labelLanguage);
   if (input.durationSeconds) body.append("durationSeconds", String(input.durationSeconds));
