@@ -43,3 +43,14 @@
   align-items: baseline;
   justify-content: space-between;
 }
+
+.fulfillment {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+}
+
+.offer {
+  align-self: flex-start;
+}

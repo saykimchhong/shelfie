@@ -23,6 +23,19 @@ export const restockSettingsSchema = z.object({ missing: z.enum(MISSING_PRODUCT_
 export type RestockSettings = z.infer<typeof restockSettingsSchema>;
 export const DEFAULT_RESTOCK: RestockSettings = { missing: "soldOut" };
 
+// How customers get their order. The seller offers pickup, delivery or both;
+// with both, the customer picks one in the cart. Keep in sync with
+// validFulfillment() in firestore.rules.
+export const FULFILLMENT_OFFERS = ["pickup", "delivery", "both"] as const;
+export const fulfillmentOfferSchema = z.enum(FULFILLMENT_OFFERS);
+export type FulfillmentOffer = z.infer<typeof fulfillmentOfferSchema>;
+// Small shops always let people collect, so that's the default.
+export const DEFAULT_FULFILLMENT: FulfillmentOffer = "pickup";
+
+// What one order uses: the offer itself, or the customer's pick when it's "both".
+export type FulfillmentMethod = Exclude<FulfillmentOffer, "both">;
+export const DELIVERY_ADDRESS_MAX = 200;
+
 export const contactSchema = z.object({
   whatsapp: z
     .string()
@@ -47,6 +60,8 @@ export const storeSchema = z.object({
   theme: themeSchema.optional(),
   // Missing on stores created before restock existed → DEFAULT_RESTOCK.
   restock: restockSettingsSchema.optional(),
+  // Missing on stores created before pickup/delivery existed → DEFAULT_FULFILLMENT.
+  fulfillment: fulfillmentOfferSchema.optional(),
   paymentQrUrl: z.url().optional(),
   published: z.boolean(),
   createdAt: z.number(),

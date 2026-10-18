@@ -3,9 +3,9 @@
 import { ChevronUp, ShoppingBag } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
-import type { PublicStore } from "@/domain/store";
+import { DEFAULT_FULFILLMENT, type PublicStore } from "@/domain/store";
 import { CartSheet } from "./CartSheet";
-import { summarizeOrder, type CartLine } from "./order";
+import { DEFAULT_CHOICE, summarizeOrder, type CartLine, type FulfillmentChoice } from "./order";
 import { OrderButtons } from "./OrderButtons";
 import styles from "./OrderBar.module.scss";
 
@@ -25,7 +25,10 @@ export function OrderBar({
   onClear: () => void;
 }) {
   const [cartOpen, setCartOpen] = useState(false);
-  const summary = summarizeOrder(store, lines);
+  const [choice, setChoice] = useState<FulfillmentChoice>(DEFAULT_CHOICE);
+  const summary = summarizeOrder(store, lines, choice);
+  // With both on offer, the customer picks in the cart before sending.
+  const mustChoose = (store.fulfillment ?? DEFAULT_FULFILLMENT) === "both";
 
   function changeQuantity(productId: string, quantity: number) {
     // Removing the last item closes the cart instead of leaving it empty.
@@ -71,7 +74,7 @@ export function OrderBar({
               {summary.total ? <strong className={styles.total}>{summary.total}</strong> : null}
               <ChevronUp aria-hidden className={styles.chevron} />
             </button>
-            <OrderButtons summary={summary} />
+            <OrderButtons summary={summary} onChoose={mustChoose ? () => setCartOpen(true) : undefined} />
           </motion.div>
         ) : null}
       </AnimatePresence>
@@ -82,6 +85,8 @@ export function OrderBar({
         store={store}
         lines={lines}
         summary={summary}
+        choice={choice}
+        onChoiceChange={setChoice}
         onQuantityChange={changeQuantity}
         onClear={clear}
       />
