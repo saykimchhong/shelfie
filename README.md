@@ -1,6 +1,6 @@
 # Shelfie
 
-**Film your shelf. Get a store.** A small seller records one walk-through video of their shop, saying prices out loud. Gemini turns it into a product list with prices and Khmer/Sinhala/Tamil/Thai labels. The seller checks it, and gets a shareable store at `shelfie.app/<shop>`. Customers order through WhatsApp or LINE. Shelfie never handles payments.
+**Film your shelf. Get a store.** A small seller records one walk-through video of their shop, saying prices out loud (or snaps a few photos, or types a list). Gemini turns it into a product list with prices and Khmer/Sinhala/Tamil/Thai labels. The seller checks it, and gets a shareable store at `shelfie.app/<shop>`. Customers order through WhatsApp or LINE. Shelfie never handles payments.
 
 **Who it's for:** small shops in Sri Lanka, Thailand and Cambodia that already sell through WhatsApp, Facebook, Instagram or LINE. Their pain is posting products one by one and answering "price?" and "do you have this?" all day. Shelfie gives them a catalog link to share anywhere. Orders arrive as a pre-filled WhatsApp/LINE message (with pickup or delivery), and the seller takes payment the way they already do, e.g. their own PromptPay or LankaQR code shown in the cart.
 
@@ -66,7 +66,7 @@ The whole seller flow (film → check → photos → store) runs today without a
 
 | Piece | Today | Go live by | Where |
 | --- | --- | --- | --- |
-| Video → products | `SHELFIE_AI=mock`: the same agent pipeline, with sample products for the store's language and currency in place of the two Gemini steps | `SHELFIE_AI=gemini` + `GEMINI_API_KEY` | `src/server/extraction/` |
+| Video, photos or list → products | `SHELFIE_AI=mock`: the same agent pipeline, with sample products for the store's language and currency in place of the two Gemini steps (a typed list is read line by line) | `SHELFIE_AI=gemini` + `GEMINI_API_KEY` | `src/server/extraction/` |
 | Default product photo | Frame grabbed from the seller's own video, in the browser (free) | (already real) | `src/features/media/video.ts` |
 | "Tell AI" updates | Mock: a few English patterns ("Milo 30", "rice sold out", "add eggs 4 each"); voice needs the real AI | `SHELFIE_AI=gemini`: the Update reader reads typed or spoken messages in any shop language | `src/server/updates/` |
 | "AI photo" | Mock: local canvas "studio shot" of that frame | Real AI: Gemini image model via `POST /api/photos`. Cleans the frame up, or draws the product from its name when the frame is wrong. Retries once when busy; on failure the seller keeps their photo and can try again | `src/server/photos.ts`, `src/features/media/generate.ts` |
@@ -81,13 +81,14 @@ Reading a shelf video is a [Google ADK](https://github.com/google/adk-js) workfl
 | Step | What it does | How |
 | --- | --- | --- |
 | **Watcher** | Lists every product (name, label text, when and where it's on screen) and every price said, with its time | Gemini: video + audio, one call |
+| **Photo reader** / **List reader** | Stand in for the Watcher when the seller sends photos (shelves, a menu board, a price list) or types a list. They return the Watcher's shape, with written prices tied to their product and a photo's number in place of a time, so every later step is the same | Gemini: up to 10 images, or text, one call |
 | **Price matcher** | Ties each price to its product by time | Code |
 | **Shelf matcher** | Restock only: finds the products the shop already sells. If it fails, the review still matches by name | Gemini: text only |
 | **Checker** | Writes the "double-check" notes: no price, two prices, a 3× price jump, duplicates, low confidence | Code |
 | **Update reader** | Separate from the video: turns a typed message or voice note ("Coke is 25 now, Milo sold out, add eggs 4 each") into price, name and stock changes, new products and removals. Only real differences to listed products are kept | Gemini: text or audio, one call |
 | **Photo finder** | After the read, in the background: picks each new product's sharpest still (3 per product) and boxes it there, so its photo is cropped to the right item. If it fails, the photo uses the Watcher's box | Gemini: images, 6 products per call |
 
-- `POST /api/extract` streams each step's progress (`AgentEvent` in `src/domain/agents.ts`), then the result, for the activity feed.
+- `POST /api/extract` takes `source` = `video`, `photos` (`photo` × 1–10, shrunk to about 1600 px on the phone) or `text`. It streams each step's progress (`AgentEvent` in `src/domain/agents.ts`), then the result, for the activity feed.
 - `POST /api/updates` runs the Update reader (`src/domain/updates.ts`). The phone records voice as 16 kHz WAV, so every browser sends the same format. The seller ticks which changes to keep, and the browser saves them.
 - `POST /api/photos/find` runs the Photo finder (`src/domain/photos.ts`); the phone crops the picked frame from the original video.
 - Agents only propose. Nothing is saved until the seller confirms, and no step invents a price.
@@ -130,7 +131,7 @@ src/
     (seller)/           Route group: the only place Firebase Auth loads
       login/            Google sign-in
       dashboard/        Overview, capture/ (film → check → photos), edit/ (look + details)
-    api/extract/        Video → products (mock or Gemini)
+    api/extract/        Video, photos or a typed list → products (mock or Gemini)
     api/updates/        Typed or spoken message → product changes
   components/
     ui/                 Design-system primitives (Button, Surface, Stack, Text, Sheet…). No business logic.
@@ -140,7 +141,7 @@ src/
   features/             One folder per product area; owns its components + client data hooks
     auth/               AuthProvider, AuthGate, GoogleSignInButton
     seller/             Dashboard, store editor, product editor, Firestore hooks (data.ts)
-    capture/            Record/upload → review list → photo step
+    capture/            Video, photos or list → review list → photo step
     updates/            "Tell AI what changed": text or voice → check the changes → save
     media/              Browser-only: video frames, photo compression, AI photos, photo storage
     theme/              ThemePicker (layout + color) and PhonePreview

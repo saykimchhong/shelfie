@@ -1,6 +1,6 @@
 import "server-only";
 import { FunctionNode } from "@google/adk";
-import { LOW_CONFIDENCE, type Extraction, type KnownProduct } from "@/domain/extraction";
+import { LOW_CONFIDENCE, type CaptureSource, type Extraction, type KnownProduct } from "@/domain/extraction";
 import type { Currency } from "@/domain/store";
 import { formatPrice } from "@/lib/format";
 import type { PricedProduct, Pricing } from "./price-matcher";
@@ -12,9 +12,15 @@ const PRICE_JUMP = 3;
 
 export type CheckInput = { pricing: Pricing; matchIds: (string | null)[] };
 
-export type CheckContext = { currency: Currency; known: readonly KnownProduct[] };
+export type CheckContext = { currency: Currency; known: readonly KnownProduct[]; source?: CaptureSource };
 
-export function checkProducts({ pricing, matchIds }: CheckInput, { currency, known }: CheckContext): Extraction {
+const NO_PRICE: Record<CaptureSource, string> = {
+  video: "Price not said",
+  photos: "No price seen",
+  text: "No price given",
+};
+
+export function checkProducts({ pricing, matchIds }: CheckInput, { currency, known, source }: CheckContext): Extraction {
   const knownById = new Map(known.map((product) => [product.id, product]));
   const nameCounts = new Map<string, number>();
   for (const product of pricing.products) {
@@ -36,7 +42,7 @@ export function checkProducts({ pricing, matchIds }: CheckInput, { currency, kno
         priceSaidAt: product.priceSaidAt,
         confidence: product.confidence,
         matchId: match?.id ?? null,
-        note: noteFor(product, match, repeated, currency),
+        note: noteFor(product, match, repeated, currency, NO_PRICE[source ?? "video"]),
       };
     }),
   };
@@ -48,8 +54,9 @@ function noteFor(
   match: KnownProduct | null,
   repeated: boolean,
   currency: Currency,
+  noPrice: string,
 ): string | null {
-  if (product.price === null && !match) return "Price not said";
+  if (product.price === null && !match) return noPrice;
   if (product.priceIssue === "several") return "Two prices said";
   if (product.priceIssue === "offscreen") return "Check price";
   if (product.price !== null && match?.price && isPriceJump(product.price, match.price)) {

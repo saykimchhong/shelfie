@@ -1,9 +1,11 @@
 import "server-only";
+import type { ThinkingLevel } from "@google/genai";
 import type { Extraction } from "@/domain/extraction";
 import type { ShotPick, ShotProduct } from "@/domain/photos";
 import { geminiThinkingLevel } from "../adk";
 import { serverEnv } from "../env";
 import { findShots, type ShotFrame } from "./agents/photo-finder";
+import { createListReader, createPhotoReader } from "./agents/readers";
 import { createShelfMatcher } from "./agents/shelf-matcher";
 import { createWatcher, type WatcherOptions } from "./agents/watcher";
 import { mockAgents } from "./mock";
@@ -30,15 +32,21 @@ export async function extractProducts(
 }
 
 function geminiAgents(input: ExtractInput, onTiming: WatcherOptions["onTiming"]): ShelfAgents {
+  const thinkingLevel = geminiThinkingLevel();
+  return { watcher: readerFor(input, thinkingLevel, onTiming), shelfMatcher: createShelfMatcher({ thinkingLevel }) };
+}
+
+function readerFor(input: ExtractInput, thinkingLevel: ThinkingLevel | undefined, onTiming: WatcherOptions["onTiming"]) {
+  if (input.source === "photos") {
+    if (!input.photos?.length) throw new Error("The real AI needs the photos");
+    return createPhotoReader(input, input.photos, { thinkingLevel });
+  }
+  if (input.source === "text") {
+    if (!input.text) throw new Error("The real AI needs the list");
+    return createListReader(input, input.text, { thinkingLevel });
+  }
   if (!input.video) throw new Error("The real AI needs the video");
-  return {
-    watcher: createWatcher(
-      input,
-      { blob: input.video, mimeType: input.mimeType },
-      { thinkingLevel: geminiThinkingLevel(), onTiming },
-    ),
-    shelfMatcher: createShelfMatcher({ thinkingLevel: geminiThinkingLevel() }),
-  };
+  return createWatcher(input, { blob: input.video, mimeType: input.mimeType }, { thinkingLevel, onTiming });
 }
 
 export function findProductShots(products: readonly ShotProduct[], frames: readonly ShotFrame[]): Promise<ShotPick[]> {

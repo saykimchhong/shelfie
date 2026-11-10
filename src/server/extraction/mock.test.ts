@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { AgentEvent } from "@/domain/agents";
 import { extractionSchema, type KnownProduct } from "@/domain/extraction";
-import { mockAgents } from "./mock";
+import { listItems, mockAgents } from "./mock";
 import { readShelf } from "./pipeline";
 import type { ExtractInput } from "./types";
 
@@ -61,5 +61,15 @@ describe("mock agents through the pipeline", () => {
     const times = products.map((item) => item.seenAtSeconds);
     expect(times).toEqual([...times].sort((a, b) => a - b));
     expect(Math.max(...times)).toBeLessThan(12);
+  });
+});
+
+describe("mock list reading", () => {
+  it("takes the last number on a line as its price", () => {
+    expect(listItems("Coke 1.5L - 25\nMilo 400g 95 baht, Toothpaste;  ").map(({ name, price }) => [name, price])).toEqual([
+      ["Coke 1.5L", 25],
+      ["Milo 400g", 95],
+      ["Toothpaste", null],
+    ]);
   });
 });

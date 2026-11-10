@@ -88,7 +88,8 @@
 
 .sources {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-auto-columns: 1fr;
+  grid-auto-flow: column;
   gap: var(--space-1);
   padding: 3px;
   border-radius: var(--radius-full);

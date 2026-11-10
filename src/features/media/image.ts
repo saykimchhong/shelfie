@@ -1,3 +1,6 @@
+import type { FrameBox } from "@/domain/extraction";
+import { squareAround } from "./crop";
+
 // Browser image helpers. Everything runs on the seller's phone: no upload or
 // server cost until we actually store the final, compressed photo.
 
@@ -36,6 +39,16 @@ export async function squarePhoto(source: Blob, size = 640): Promise<Blob> {
   const bitmap = await createImageBitmap(source);
   const { sx, sy, side } = centerSquare(bitmap.width, bitmap.height);
   const [canvas, context] = createCanvas(Math.min(size, side));
+  context.drawImage(bitmap, sx, sy, side, side, 0, 0, canvas.width, canvas.height);
+  bitmap.close();
+  return canvasToBlob(canvas);
+}
+
+// A product's square from a whole photo: around its box, else the center.
+export async function cropSquare(source: Blob, box: FrameBox | null, size = 640): Promise<Blob> {
+  const bitmap = await createImageBitmap(source);
+  const { sx, sy, side } = box ? squareAround(bitmap.width, bitmap.height, box) : centerSquare(bitmap.width, bitmap.height);
+  const [canvas, context] = createCanvas(Math.round(Math.min(size, side)));
   context.drawImage(bitmap, sx, sy, side, side, 0, 0, canvas.width, canvas.height);
   bitmap.close();
   return canvasToBlob(canvas);

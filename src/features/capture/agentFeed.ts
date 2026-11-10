@@ -1,4 +1,5 @@
 import { AGENT_STEPS, type AgentEvent, type AgentStatus, type AgentStep } from "@/domain/agents";
+import type { CaptureSource } from "@/domain/extraction";
 
 // A step that hasn't reported yet is still waiting its turn.
 export type FeedStatus = AgentStatus | "waiting";
@@ -41,14 +42,21 @@ const COPY: Record<AgentStep, StepCopy> = {
   },
 };
 
+// The first step reads whatever the seller gave it.
+const READER_COPY: Record<CaptureSource, Pick<StepCopy, "label" | "doing" | "failed">> = {
+  video: { label: COPY.watcher.label, doing: COPY.watcher.doing, failed: COPY.watcher.failed },
+  photos: { label: "Reading your photos", doing: "Spotting products and prices", failed: "Couldn't read the photos" },
+  text: { label: "Reading your list", doing: "Finding products and prices", failed: "Couldn't read the list" },
+};
+
 // One row per pipeline step, in the order they run, from the events so far.
 // Each step reports more than once (running, then done), so the latest wins.
-export function feedRows(events: readonly AgentEvent[]): FeedRow[] {
+export function feedRows(events: readonly AgentEvent[], source: CaptureSource = "video"): FeedRow[] {
   const latest = new Map<AgentStep, AgentEvent>();
   for (const event of events) latest.set(event.step, event);
 
   return AGENT_STEPS.map((step) => {
-    const copy = COPY[step];
+    const copy = step === "watcher" ? { ...COPY.watcher, ...READER_COPY[source] } : COPY[step];
     const event = latest.get(step);
     const status: FeedStatus = event?.status ?? "waiting";
     const line =

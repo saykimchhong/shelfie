@@ -72,3 +72,14 @@ export const knownProductsSchema = z.array(knownProductSchema).max(MAX_KNOWN_PRO
 
 // Below this, the review screen should flag the item for the seller to check.
 export const LOW_CONFIDENCE = 0.6;
+
+// What the seller gives the AI: a shelf video, photos (shelves, a menu board,
+// a price list) or a typed list.
+export const CAPTURE_SOURCES = ["video", "photos", "text"] as const;
+export const captureSourceSchema = z.enum(CAPTURE_SOURCES);
+export type CaptureSource = z.infer<typeof captureSourceSchema>;
+
+export const MAX_CAPTURE_PHOTOS = 10;
+// Photos are shrunk on the phone first (to about 1600 px).
+export const MAX_CAPTURE_PHOTO_BYTES = 2 * 1024 * 1024;
+export const MAX_CAPTURE_TEXT = 4000;

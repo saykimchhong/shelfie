@@ -1,31 +1,26 @@
 "use client";
 
-import {
-  ArrowLeft,
-  ArrowRight,
-  Camera,
-  Check,
-  FlaskConical,
-  Mic,
-  RotateCcw,
-  Sparkles,
-  Sun,
-  Timer,
-  TriangleAlert,
-  Upload,
-} from "lucide-react";
+import clsx from "clsx";
+import { ArrowLeft, ArrowRight, Check, FlaskConical, RotateCcw, Sparkles, TriangleAlert } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, type ChangeEvent, type ReactNode } from "react";
-import { Reveal } from "@/components/motion/Reveal";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Badge, Button, ButtonLink, EmptyState, Spinner, Stack, Surface, Text } from "@/components/ui";
 import type { AgentEvent } from "@/domain/agents";
-import type { ExtractionResponse } from "@/domain/extraction";
+import { MAX_CAPTURE_PHOTOS, type CaptureSource, type ExtractionResponse } from "@/domain/extraction";
 import type { Product } from "@/domain/product";
 import { canonicalShelf, productsOnShelf, shelvesOf, UNSORTED } from "@/domain/shelf";
 import { DEFAULT_RESTOCK, type Store } from "@/domain/store";
 import { useAuth, useSignedInUser } from "@/features/auth";
-import { captureFrames, generateProductPhoto, pickShots, saveProductImage, videoDuration } from "@/features/media";
+import {
+  captureFrames,
+  cropSquare,
+  fitPhoto,
+  generateProductPhoto,
+  pickShots,
+  saveProductImage,
+  videoDuration,
+} from "@/features/media";
 import { DashboardSkeleton } from "@/features/seller";
 import {
   saveProductChanges,
@@ -34,13 +29,15 @@ import {
   useRefreshStorefront,
   type ProductUpdate,
 } from "@/features/seller/data";
+import { pluralize } from "@/lib/format";
 import { AgentActivityFeed } from "./AgentActivityFeed";
-import { requestExtraction } from "./api";
+import { requestExtraction, type CaptureInput } from "./api";
 import { isSavable, toProductInput, toProductUpdate, type Draft } from "./drafts";
 import { mergeShelf, toKnownProducts, type Missing } from "./merge";
 import { MergeReview } from "./MergeReview";
 import { PhotoStep, type PhotoActions } from "./PhotoStep";
-import { ShelfPicker, type CaptureTarget } from "./ShelfPicker";
+import type { CaptureTarget } from "./ShelfPicker";
+import { SourcePicker } from "./SourcePicker";
 import { Stepper } from "./Stepper";
 import styles from "./CapturePanel.module.scss";
 
@@ -80,6 +77,27 @@ type Shelf = { name: string; restock: boolean; products: ReadonlyMap<string, Pro
 
 const EMPTY_SHELF: Shelf = { name: UNSORTED, restock: false, products: new Map() };
 
+// What the AI is reading, shown while it works. New products' photos come
+// from the video, or are cropped from the full-size photos.
+type Preview =
+  | { source: "video"; url: string }
+  | { source: "photos"; urls: string[]; originals: Blob[] }
+  | { source: "text"; text: string };
+
+function revokePreview(preview: Preview | null) {
+  if (preview?.source === "video") URL.revokeObjectURL(preview.url);
+  if (preview?.source === "photos") preview.urls.forEach((url) => URL.revokeObjectURL(url));
+}
+
+// Photos go up at this size: plenty to read labels and prices.
+const UPLOAD_PHOTO_SIDE = 1600;
+
+const RETRY_HINT: Record<CaptureSource, string> = {
+  video: "Try again a little slower, with the labels facing the camera.",
+  photos: "Try closer photos, with the labels facing the camera.",
+  text: "Put one product per line, with its price after the name.",
+};
+
 // Film → Check (new products, updates, missing ones) → Photos (new ones) → saved.
 function Capture({ store, products }: { store: Store; products: Product[] }) {
   const { getIdToken } = useAuth();
@@ -89,7 +107,8 @@ function Capture({ store, products }: { store: Store; products: Product[] }) {
   const [phase, setPhase] = useState<Phase>("pick");
   const [target, setTarget] = useState<CaptureTarget>({ mode: "add", shelf: UNSORTED });
   const [shelf, setShelf] = useState<Shelf>(EMPTY_SHELF);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [source, setSource] = useState<CaptureSource>("video");
+  const [preview, setPreview] = useState<Preview | null>(null);
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [missing, setMissing] = useState<Missing[]>([]);
   const [provider, setProvider] = useState<ExtractionResponse["provider"] | null>(null);
@@ -100,11 +119,12 @@ function Capture({ store, products }: { store: Store; products: Product[] }) {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
-  const photosForRef = useRef<string | null>(null);
+  // Bumped per read, so a stale read's photos never land on a newer one.
+  const runRef = useRef(0);
 
-  // Cancel any in-flight request on leave; free the video when it changes.
+  // Cancel any in-flight request on leave; free the video or photos when they change.
   useEffect(() => () => abortRef.current?.abort(), []);
-  useEffect(() => () => void (previewUrl && URL.revokeObjectURL(previewUrl)), [previewUrl]);
+  useEffect(() => () => revokePreview(preview), [preview]);
 
   const newDrafts = drafts.filter((draft) => draft.group === "new");
   const updateDrafts = drafts.filter((draft) => draft.group === "update");
@@ -127,30 +147,55 @@ function Capture({ store, products }: { store: Store; products: Product[] }) {
     setDrafts((current) => current.map((draft) => (draft.key === key ? { ...draft, ...change } : draft)));
   }
 
-  async function handleFile(event: ChangeEvent<HTMLInputElement>) {
-    const video = event.target.files?.[0];
-    event.target.value = ""; // allow picking the same file again
-    if (!video) return;
-
-    const name = canonicalShelf(target.shelf, shelvesOf(products));
-    const shelfProducts = productsOnShelf(products, name);
-    const restock = target.mode === "restock";
-
-    const url = URL.createObjectURL(video);
-    setPreviewUrl(url);
+  function show(next: Preview) {
+    setPreview(next);
     setPhase("reading");
     setError(null);
     setSteps([]);
     setShrinking(null);
+  }
+
+  async function readVideo(video: File) {
+    const next: Preview = { source: "video", url: URL.createObjectURL(video) };
+    show(next);
+    await read({ source: "video", video, durationSeconds: await videoDuration(next.url) }, next);
+  }
+
+  async function readPhotos(files: File[]) {
+    const originals = files.slice(0, MAX_CAPTURE_PHOTOS);
+    const next: Preview = { source: "photos", urls: originals.map((photo) => URL.createObjectURL(photo)), originals };
+    show(next);
+    let photos: Blob[];
+    try {
+      photos = await Promise.all(originals.map((photo) => fitPhoto(photo, UPLOAD_PHOTO_SIDE, 0.85)));
+    } catch (cause) {
+      console.error(cause);
+      setError("Couldn't open those photos. Try JPG or PNG photos.");
+      setPhase("error");
+      return;
+    }
+    await read({ source: "photos", photos }, next);
+  }
+
+  function readText(text: string) {
+    const next: Preview = { source: "text", text };
+    show(next);
+    void read({ source: "text", text }, next);
+  }
+
+  async function read(capture: CaptureInput, next: Preview) {
+    const name = canonicalShelf(target.shelf, shelvesOf(products));
+    const shelfProducts = productsOnShelf(products, name);
+    const restock = target.mode === "restock";
+    const run = ++runRef.current;
 
     const controller = new AbortController();
     abortRef.current = controller;
     try {
       const result = await requestExtraction({
-        video,
+        capture,
         currency: store.currency,
         labelLanguage: store.labelLanguage,
-        durationSeconds: await videoDuration(url),
         known: toKnownProducts(shelfProducts),
         idToken: await getIdToken(),
         signal: controller.signal,
@@ -166,7 +211,7 @@ function Capture({ store, products }: { store: Store; products: Product[] }) {
       setDrafts(merge.drafts);
       setMissing(merge.missing);
       setPhase("review");
-      void preparePhotos(url, merge.drafts, result.provider);
+      void preparePhotos(run, next, merge.drafts, result.provider);
     } catch (cause) {
       if (controller.signal.aborted) return;
       setError(cause instanceof Error ? cause.message : "Something went wrong");
@@ -174,23 +219,17 @@ function Capture({ store, products }: { store: Store; products: Product[] }) {
     }
   }
 
-  // New products' photos, made in the background during review.
-  async function preparePhotos(url: string, all: Draft[], ai: ExtractionResponse["provider"]) {
-    photosForRef.current = url;
+  // New products' photos, made in the background during review. A typed list
+  // has none: the seller picks AI photos or uploads on the next step.
+  async function preparePhotos(run: number, from: Preview, all: Draft[], ai: ExtractionResponse["provider"]) {
     const fresh = all.filter((draft) => draft.group === "new");
-    if (fresh.length === 0) return;
+    if (fresh.length === 0 || from.source === "text") return;
     const freshKeys = new Set(fresh.map((draft) => draft.key));
     setDrafts((current) => current.map((draft) => (freshKeys.has(draft.key) ? { ...draft, photoBusy: true } : draft)));
 
-    const targets = fresh.map((draft) => ({
-      name: draft.name,
-      localName: draft.localName,
-      seconds: draft.seenAtSeconds ?? 0,
-      box: draft.box,
-    }));
-    const requests = ai === "gemini" ? await pickShots(url, targets) : targets.map(({ seconds, box }) => ({ seconds, box }));
-    const frames = await captureFrames(url, requests);
-    if (photosForRef.current !== url) return;
+    const frames =
+      from.source === "video" ? await videoFrames(from.url, fresh, ai) : await photoFrames(from.originals, fresh);
+    if (runRef.current !== run) return;
 
     const frameByKey = new Map(fresh.map((draft, index) => [draft.key, frames[index] ?? null]));
     setDrafts((current) =>
@@ -243,8 +282,8 @@ function Capture({ store, products }: { store: Store; products: Product[] }) {
 
   function reset() {
     abortRef.current?.abort();
-    photosForRef.current = null;
-    setPreviewUrl(null);
+    runRef.current++;
+    setPreview(null);
     setDrafts([]);
     setMissing([]);
     setShelf(EMPTY_SHELF);
@@ -273,12 +312,13 @@ function Capture({ store, products }: { store: Store; products: Product[] }) {
     }
   }
 
+  const shown: CaptureSource = preview?.source ?? source;
   const nothingSeen = drafts.length === 0 && missing.length === 0;
   const upToDate = !nothingSeen && newDrafts.length === 0 && updateDrafts.length === 0 && missing.length === 0;
 
   return (
     <>
-      {phase !== "error" ? <Stepper current={STEP_INDEX[phase]} /> : null}
+      {phase !== "error" ? <Stepper current={STEP_INDEX[phase]} source={shown} /> : null}
 
       <AnimatePresence mode="wait" initial={false}>
         <motion.div
@@ -289,18 +329,27 @@ function Capture({ store, products }: { store: Store; products: Product[] }) {
           transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
         >
           {phase === "pick" ? (
-            <PickVideo products={products} target={target} onTarget={setTarget} onFile={handleFile} />
+            <SourcePicker
+              products={products}
+              target={target}
+              onTarget={setTarget}
+              source={source}
+              onSource={setSource}
+              onVideo={readVideo}
+              onPhotos={readPhotos}
+              onText={readText}
+            />
           ) : null}
 
-          {phase === "reading" && previewUrl ? <Reading previewUrl={previewUrl} steps={steps} shrinking={shrinking} /> : null}
+          {phase === "reading" && preview ? <Reading preview={preview} steps={steps} shrinking={shrinking} /> : null}
 
           {phase === "review" && nothingSeen ? (
             <EmptyState
               tone="sun"
               icon={<Sparkles />}
               title="No products spotted"
-              description="Try again a little slower, with the labels facing the camera."
-              action={<Button icon={<RotateCcw />} onClick={reset}>Film again</Button>}
+              description={RETRY_HINT[shown]}
+              action={<Button icon={<RotateCcw />} onClick={reset}>Try again</Button>}
             />
           ) : null}
 
@@ -333,7 +382,7 @@ function Capture({ store, products }: { store: Store; products: Product[] }) {
 
               {steps.length > 0 ? (
                 <Surface tone="tint" padding="sm" radius="xl">
-                  <AgentActivityFeed steps={steps} variant="recap" />
+                  <AgentActivityFeed steps={steps} variant="recap" source={shown} />
                 </Surface>
               ) : null}
 
@@ -341,6 +390,7 @@ function Capture({ store, products }: { store: Store; products: Product[] }) {
                 drafts={drafts}
                 missing={missing}
                 known={shelf.products}
+                source={shown}
                 currency={store.currency}
                 onChange={patch}
                 onToggleMissing={(id, soldOut) =>
@@ -382,7 +432,7 @@ function Capture({ store, products }: { store: Store; products: Product[] }) {
               <Text as="h1" size="2xl">
                 Photos
               </Text>
-              <PhotoStep drafts={adding} actions={photoActions} />
+              <PhotoStep drafts={adding} actions={photoActions} source={shown} />
               {error ? (
                 <Text role="alert" size="sm" tone="danger" align="center">
                   {error}
@@ -431,99 +481,28 @@ function ActionBar({ children }: { children: ReactNode }) {
   return <div className={styles.actions}>{children}</div>;
 }
 
-function PickVideo({
-  products,
-  target,
-  onTarget,
-  onFile,
-}: {
-  products: Product[];
-  target: CaptureTarget;
-  onTarget: (target: CaptureTarget) => void;
-  onFile: (event: ChangeEvent<HTMLInputElement>) => void;
-}) {
-  return (
-    <Stack gap={6}>
-      <Reveal>
-        <Text as="h1" size="3xl">
-          {target.mode === "restock" ? "Re-film a shelf" : "Film your shelf"}
-        </Text>
-      </Reveal>
-
-      <Reveal delay={0.04}>
-        <ShelfPicker products={products} target={target} onChange={onTarget} />
-      </Reveal>
-
-      <Reveal delay={0.08} className={styles.sources}>
-        <VideoSource icon={<Camera />} label="Record" tone="brand" capture onFile={onFile} />
-        <VideoSource icon={<Upload />} label="Upload" tone="tint" onFile={onFile} />
-      </Reveal>
-
-      <Reveal delay={0.12} className={styles.tips}>
-        <Tip icon={<Sun />} text="Bright light" />
-        <Tip icon={<Mic />} text={target.mode === "restock" ? "Say new prices" : "Say each price"} />
-        <Tip icon={<Timer />} text="Under 2 min" />
-      </Reveal>
-    </Stack>
-  );
-}
-
-function VideoSource({
-  icon,
-  label,
-  tone,
-  capture,
-  onFile,
-}: {
-  icon: ReactNode;
-  label: string;
-  tone: "brand" | "tint";
-  capture?: boolean;
-  onFile: (event: ChangeEvent<HTMLInputElement>) => void;
-}) {
-  return (
-    <label className={`${styles.source} ${styles[tone]}`}>
-      <input
-        type="file"
-        accept="video/*"
-        capture={capture ? "environment" : undefined}
-        className={styles.fileInput}
-        onChange={onFile}
-      />
-      <span className={styles.sourceIcon}>{icon}</span>
-      <span className={styles.sourceLabel}>{label}</span>
-    </label>
-  );
-}
-
-function Tip({ icon, text }: { icon: ReactNode; text: string }) {
-  return (
-    <span className={styles.tip}>
-      {icon}
-      {text}
-    </span>
-  );
-}
-
-// While the video is read: the clip, and each agent's progress as it streams in.
-function Reading({
-  previewUrl,
-  steps,
-  shrinking,
-}: {
-  previewUrl: string;
-  steps: AgentEvent[];
-  shrinking: number | null;
-}) {
+// While the AI reads: what it's reading, and each agent's progress as it streams in.
+function Reading({ preview, steps, shrinking }: { preview: Preview; steps: AgentEvent[]; shrinking: number | null }) {
   return (
     <div className={styles.reading}>
-      <div className={styles.preview}>
-        <video src={previewUrl} autoPlay muted loop playsInline />
+      <div className={clsx(styles.preview, preview.source === "text" && styles.listPreview)}>
+        {preview.source === "video" ? <video src={preview.url} autoPlay muted loop playsInline /> : null}
+        {preview.source === "photos" ? (
+          <>
+            {/* A local object URL: next/image can't optimize it. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={preview.urls[0]} alt="" />
+            {preview.urls.length > 1 ? (
+              <span className={styles.count}>{pluralize(preview.urls.length, "photo")}</span>
+            ) : null}
+          </>
+        ) : null}
+        {preview.source === "text" ? <p className={styles.listText}>{preview.text}</p> : null}
         <span className={styles.scan} aria-hidden />
       </div>
       <Stack gap={4} className={styles.progress}>
         <Stack direction="row" gap={2} align="center">
-          {/* Until the first agent starts (e.g. while the video uploads). */}
+          {/* Until the first agent starts (e.g. while the upload runs). */}
           {steps.length === 0 ? <Spinner /> : null}
           <Text weight={600}>
             {/* A big phone video is made smaller before it's sent. */}
@@ -532,8 +511,31 @@ function Reading({
               : "Finding products and prices…"}
           </Text>
         </Stack>
-        <AgentActivityFeed steps={steps} />
+        <AgentActivityFeed steps={steps} source={preview.source} />
       </Stack>
     </div>
+  );
+}
+
+async function videoFrames(url: string, drafts: readonly Draft[], ai: ExtractionResponse["provider"]) {
+  const targets = drafts.map((draft) => ({
+    name: draft.name,
+    localName: draft.localName,
+    seconds: draft.seenAtSeconds ?? 0,
+    box: draft.box,
+  }));
+  const requests =
+    ai === "gemini" ? await pickShots(url, targets) : targets.map(({ seconds, box }) => ({ seconds, box }));
+  return captureFrames(url, requests);
+}
+
+// Each product's square from the full-size photo it's in. A line on a price
+// list has no box, so no photo: the seller picks one on the next step.
+function photoFrames(originals: readonly Blob[], drafts: readonly Draft[]): Promise<(Blob | null)[]> {
+  return Promise.all(
+    drafts.map((draft) => {
+      const photo = originals[draft.seenAtSeconds ?? 0];
+      return photo && draft.box ? cropSquare(photo, draft.box).catch(() => null) : Promise.resolve(null);
+    }),
   );
 }

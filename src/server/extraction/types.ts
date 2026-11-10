@@ -1,10 +1,16 @@
-import type { KnownProduct } from "@/domain/extraction";
+import type { CaptureSource, KnownProduct } from "@/domain/extraction";
 import type { Currency, LabelLanguage } from "@/domain/store";
 
 export type ExtractInput = {
+  // Missing = "video".
+  source?: CaptureSource;
   // Only the real AI needs the bytes; the mock never uploads the video.
   video: Blob | null;
   mimeType: string;
+  // source "photos": the shrunk photos, in order.
+  photos?: Blob[];
+  // source "text": the seller's list.
+  text?: string;
   currency: Currency;
   labelLanguage: LabelLanguage;
   // Measured in the browser; lets the mock spread timestamps over the video.

@@ -2,6 +2,7 @@ import clsx from "clsx";
 import { Check, Minus, TriangleAlert } from "lucide-react";
 import { Spinner } from "@/components/ui";
 import type { AgentEvent } from "@/domain/agents";
+import type { CaptureSource } from "@/domain/extraction";
 import { feedRows, type FeedStatus } from "./agentFeed";
 import styles from "./AgentActivityFeed.module.scss";
 
@@ -18,11 +19,12 @@ export type AgentActivityFeedProps = {
   steps: readonly AgentEvent[];
   // "live" while the video is read; "recap" shows the finished run on the review.
   variant?: "live" | "recap";
+  source?: CaptureSource;
   className?: string;
 };
 
 // The shelf-reading agents, one row each: what they're doing, then what they found.
-export function AgentActivityFeed({ steps, variant = "live", className }: AgentActivityFeedProps) {
+export function AgentActivityFeed({ steps, variant = "live", source, className }: AgentActivityFeedProps) {
   const live = variant === "live";
   return (
     <ol
@@ -30,7 +32,7 @@ export function AgentActivityFeed({ steps, variant = "live", className }: AgentA
       aria-label="AI agents"
       aria-live={live ? "polite" : undefined}
     >
-      {feedRows(steps).map((row) => (
+      {feedRows(steps, source).map((row) => (
         <li key={row.step} className={clsx(styles.row, styles[row.status])}>
           {/* Keyed by status so the new icon pops in when the step moves on. */}
           <span key={row.status} className={styles.icon} aria-hidden>

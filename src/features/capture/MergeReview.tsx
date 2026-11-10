@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { Badge, Stack, Text } from "@/components/ui";
+import type { CaptureSource } from "@/domain/extraction";
 import type { Product } from "@/domain/product";
 import type { Currency } from "@/domain/store";
 import type { Draft } from "./drafts";
@@ -11,10 +12,17 @@ import styles from "./MergeReview.module.scss";
 
 // The "Check" step, grouped by what saving will do. A new shelf has only new
 // products, so it shows a single untitled list.
+const MISSING_TITLE: Record<CaptureSource, string> = {
+  video: "Not in this video",
+  photos: "Not in these photos",
+  text: "Not in this list",
+};
+
 export function MergeReview({
   drafts,
   missing,
   known,
+  source = "video",
   currency,
   onChange,
   onToggleMissing,
@@ -23,6 +31,7 @@ export function MergeReview({
   missing: Missing[];
   // The filmed shelf's products, by id. Empty for a new shelf.
   known: ReadonlyMap<string, Product>;
+  source?: CaptureSource;
   currency: Currency;
   onChange: (key: string, patch: Partial<Draft>) => void;
   onToggleMissing: (productId: string, soldOut: boolean) => void;
@@ -47,7 +56,7 @@ export function MergeReview({
       ) : null}
 
       {missing.length > 0 ? (
-        <Group title="Not in this video" count={missing.length}>
+        <Group title={MISSING_TITLE[source]} count={missing.length}>
           <MissingList missing={missing} currency={currency} onToggle={onToggleMissing} />
         </Group>
       ) : null}

@@ -1,10 +1,11 @@
 "use client";
 
 import clsx from "clsx";
-import { Film, ImageOff, ImagePlus, Images, Sparkles } from "lucide-react";
+import { Camera, Film, ImageOff, ImagePlus, Images, Sparkles } from "lucide-react";
 import type { ChangeEvent, ReactNode } from "react";
 import { Stagger } from "@/components/motion/Reveal";
 import { Badge, Button, Spinner, Text, Thumb } from "@/components/ui";
+import type { CaptureSource } from "@/domain/extraction";
 import { useObjectUrl } from "@/features/media";
 import type { Draft, PhotoSource } from "./drafts";
 import styles from "./PhotoStep.module.scss";
@@ -16,7 +17,16 @@ export type PhotoActions = {
   uploadMany: (files: File[]) => void;
 };
 
-export function PhotoStep({ drafts, actions }: { drafts: Draft[]; actions: PhotoActions }) {
+export function PhotoStep({
+  drafts,
+  actions,
+  source = "video",
+}: {
+  drafts: Draft[];
+  actions: PhotoActions;
+  // Where "From video" photos came from; a typed list has none.
+  source?: CaptureSource;
+}) {
   const busy = drafts.some((draft) => draft.photoBusy);
 
   return (
@@ -42,14 +52,14 @@ export function PhotoStep({ drafts, actions }: { drafts: Draft[]; actions: Photo
 
       <Stagger as="ul" className={styles.grid} interval={0.04}>
         {drafts.map((draft) => (
-          <PhotoCard key={draft.key} draft={draft} actions={actions} />
+          <PhotoCard key={draft.key} draft={draft} actions={actions} source={source} />
         ))}
       </Stagger>
     </div>
   );
 }
 
-function PhotoCard({ draft, actions }: { draft: Draft; actions: PhotoActions }) {
+function PhotoCard({ draft, actions, source }: { draft: Draft; actions: PhotoActions; source: CaptureSource }) {
   const url = useObjectUrl(draft.photo);
 
   function onUpload(event: ChangeEvent<HTMLInputElement>) {
@@ -84,13 +94,15 @@ function PhotoCard({ draft, actions }: { draft: Draft; actions: PhotoActions }) 
       </Text>
 
       <div className={styles.sources} role="group" aria-label={`Photo for ${draft.name}`}>
-        <Source
-          label="From video"
-          icon={<Film />}
-          active={draft.photoSource === "video"}
-          disabled={!draft.frame || draft.photoBusy}
-          onClick={() => actions.choose(draft.key, "video")}
-        />
+        {source !== "text" ? (
+          <Source
+            label={source === "photos" ? "From photo" : "From video"}
+            icon={source === "photos" ? <Camera /> : <Film />}
+            active={draft.photoSource === "video"}
+            disabled={!draft.frame || draft.photoBusy}
+            onClick={() => actions.choose(draft.key, "video")}
+          />
+        ) : null}
         <Source
           label="AI photo"
           icon={<Sparkles />}

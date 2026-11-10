@@ -1,7 +1,7 @@
 import "server-only";
 import type { RunnableNode } from "@google/adk";
 import type { AgentEvent, AgentStep } from "@/domain/agents";
-import type { Extraction, KnownProduct } from "@/domain/extraction";
+import type { CaptureSource, Extraction, KnownProduct } from "@/domain/extraction";
 import type { Currency } from "@/domain/store";
 import { pluralize } from "@/lib/format";
 import { runWorkflow, type RunNode } from "@/server/adk";
@@ -15,7 +15,7 @@ export type ReportStep = (event: AgentEvent) => void;
 // The two AI steps. Mock mode and tests swap them for function nodes.
 export type ShelfAgents = { watcher: RunnableNode; shelfMatcher: RunnableNode };
 
-export type ShelfContext = { currency: Currency; known: KnownProduct[] };
+export type ShelfContext = { currency: Currency; known: KnownProduct[]; source?: CaptureSource };
 
 type MatchIds = (string | null)[];
 
@@ -25,7 +25,7 @@ export function readShelf(agents: ShelfAgents, context: ShelfContext, report: Re
 
   return runWorkflow("shelfReader", async (run) => {
     const watch = await step("watcher", async () => watchSchema.parse(await run(agents.watcher)), {
-      summarize: summarizeWatch,
+      summarize: (output) => summarizeWatch(output, context.source),
     });
 
     const pricing = await step("priceMatcher", () => run<Pricing>(createPriceMatcher(), watch), {
@@ -79,8 +79,9 @@ function stepper(report: ReportStep) {
   };
 }
 
-function summarizeWatch(watch: Watch): string {
-  return `Found ${pluralize(watch.products.length, "product")}, heard ${pluralize(watch.prices.length, "price")}`;
+function summarizeWatch(watch: Watch, source: ShelfContext["source"]): string {
+  const verb = !source || source === "video" ? "heard" : "read";
+  return `Found ${pluralize(watch.products.length, "product")}, ${verb} ${pluralize(watch.prices.length, "price")}`;
 }
 
 function summarizePricing(pricing: Pricing): string {

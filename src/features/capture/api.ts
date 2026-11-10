@@ -16,11 +16,16 @@ async function extractionConfig(signal?: AbortSignal) {
   return configSchema.parse(await response.json());
 }
 
+// What the seller gave the AI. Photos are already shrunk for upload.
+export type CaptureInput =
+  | { source: "video"; video: File; durationSeconds?: number }
+  | { source: "photos"; photos: Blob[] }
+  | { source: "text"; text: string };
+
 export async function requestExtraction(input: {
-  video: File;
+  capture: CaptureInput;
   currency: Currency;
   labelLanguage: LabelLanguage;
-  durationSeconds?: number;
   // The filmed shelf's current products; empty for a new shelf.
   known: KnownProduct[];
   idToken: string;
@@ -34,24 +39,20 @@ export async function requestExtraction(input: {
   // the browser), so it's only uploaded when the real AI is on — and only if
   // it fits under the hosting platform's request limit.
   const started = performance.now();
-  const config = await extractionConfig(input.signal);
-  let video = input.video;
-  if (config.needsVideo && video.size > config.maxVideoBytes) {
-    input.onShrink?.(0);
-    video = (await shrinkVideo(video, { maxBytes: config.maxVideoBytes, onProgress: input.onShrink, signal: input.signal })) ?? video;
-  }
-  if (config.needsVideo && video.size > config.maxVideoBytes) {
-    const mb = (bytes: number) => Math.round(bytes / (1024 * 1024));
-    throw new Error(
-      `This video is ${mb(video.size)} MB; the limit is ${mb(config.maxVideoBytes)} MB. Try a shorter clip or record in 720p.`,
-    );
-  }
-
+  const { capture } = input;
   const body = new FormData();
-  if (config.needsVideo) body.append("video", video);
+  body.append("source", capture.source);
+  if (capture.source === "video") {
+    const video = await videoForUpload(capture.video, input);
+    if (video) body.append("video", video);
+    if (capture.durationSeconds) body.append("durationSeconds", String(capture.durationSeconds));
+  } else if (capture.source === "photos") {
+    capture.photos.forEach((photo, index) => body.append("photo", photo, `photo-${index + 1}`));
+  } else {
+    body.append("text", capture.text);
+  }
   body.append("currency", input.currency);
   body.append("labelLanguage", input.labelLanguage);
-  if (input.durationSeconds) body.append("durationSeconds", String(input.durationSeconds));
   if (input.known.length > 0) body.append("known", JSON.stringify(input.known));
 
   const response = await fetch("/api/extract", {
@@ -76,12 +77,33 @@ export async function requestExtraction(input: {
     else {
       // Before the first agent: prep, shrinking and upload.
       console.info("[capture] timings", {
+        source: capture.source,
         beforeAgentsMs: Math.round((firstStepAt ?? started) - started),
         totalMs: Math.round(performance.now() - started),
-        videoBytes: video.size,
       });
       return message.result;
     }
   }
   throw new Error("The connection closed before the products arrived. Try again.");
+}
+
+// The video to upload: none in mock mode, shrunk on the phone when it's over the cap.
+async function videoForUpload(
+  original: File,
+  { signal, onShrink }: { signal?: AbortSignal; onShrink?: (progress: number) => void },
+): Promise<Blob | null> {
+  const config = await extractionConfig(signal);
+  if (!config.needsVideo) return null;
+  let video: Blob = original;
+  if (video.size > config.maxVideoBytes) {
+    onShrink?.(0);
+    video = (await shrinkVideo(original, { maxBytes: config.maxVideoBytes, onProgress: onShrink, signal })) ?? original;
+  }
+  if (video.size > config.maxVideoBytes) {
+    const mb = (bytes: number) => Math.round(bytes / (1024 * 1024));
+    throw new Error(
+      `This video is ${mb(video.size)} MB; the limit is ${mb(config.maxVideoBytes)} MB. Try a shorter clip or record in 720p.`,
+    );
+  }
+  return video;
 }

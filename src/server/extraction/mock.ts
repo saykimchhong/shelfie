@@ -42,22 +42,34 @@ export function mockAgents(input: ExtractInput, delays: MockDelays = DEFAULT_DEL
 }
 
 function mockWatch(input: ExtractInput): Watch {
-  const items = input.known.length > 0 ? restockItems(input) : newShelfItems(input);
+  const items =
+    input.source === "text" ? listItems(input.text ?? "") : input.known.length > 0 ? restockItems(input) : newShelfItems(input);
   const duration = input.durationSeconds && input.durationSeconds > 1 ? input.durationSeconds : 20;
   const slot = duration / items.length;
   const at = (seconds: number) => Math.round(seconds * 10) / 10;
+  // Photos and lists use positions: the photo's index, or the line's.
+  const photoCount = input.photos?.length || 1;
+  const place = (index: number) =>
+    input.source === "photos"
+      ? { first: index % photoCount, last: index % photoCount, clearest: index % photoCount }
+      : input.source === "text"
+        ? { first: index, last: index, clearest: index }
+        : { first: at(index * slot), last: at((index + 1) * slot), clearest: at((index + 0.5) * slot) };
 
-  const products = items.map((item, index) => ({
-    name: item.name,
-    localName: item.localName,
-    category: item.category,
-    firstSeenSeconds: at(index * slot),
-    lastSeenSeconds: at((index + 1) * slot),
-    clearestSeconds: at((index + 0.5) * slot),
-    box: MOCK_BOX,
-    confidence: item.note ? 0.45 : 0.82 + (index % 3) * 0.06,
-    note: item.note,
-  }));
+  const products = items.map((item, index) => {
+    const { first, last, clearest } = place(index);
+    return {
+      name: item.name,
+      localName: item.localName,
+      category: item.category,
+      firstSeenSeconds: first,
+      lastSeenSeconds: last,
+      clearestSeconds: clearest,
+      box: input.source === "text" ? null : MOCK_BOX,
+      confidence: item.note ? 0.45 : 0.82 + (index % 3) * 0.06,
+      note: item.note,
+    };
+  });
 
   const prices = items.flatMap((item, index) =>
     item.price === null
@@ -66,6 +78,18 @@ function mockWatch(input: ExtractInput): Watch {
   );
 
   return { products, prices };
+}
+
+// One product per line or comma; the last number on it is the price.
+export function listItems(text: string): MockItem[] {
+  return text.split(/[\n,;]+/).flatMap((line) => {
+    const price = line.match(/(\d+(?:\.\d+)?)(?!.*\d)/);
+    const name = (price ? line.slice(0, price.index) + line.slice(price.index! + price[0].length) : line)
+      .replace(/[-–:=@$฿៛]|\b(baht|riel|rs|usd)\b/gi, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+    return name ? [{ name, localName: null, category: null, price: price ? Number(price[1]) : null, note: null }] : [];
+  });
 }
 
 function newShelfItems(input: ExtractInput): MockItem[] {

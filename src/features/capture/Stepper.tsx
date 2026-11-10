@@ -1,19 +1,25 @@
 import clsx from "clsx";
-import { Check, Image as ImageIcon, ScanLine, Video } from "lucide-react";
-import { Fragment } from "react";
+import { Camera, Check, Image as ImageIcon, ScanLine, Type, Video } from "lucide-react";
+import { Fragment, type ReactNode } from "react";
+import type { CaptureSource } from "@/domain/extraction";
 import styles from "./Stepper.module.scss";
 
-const STEPS = [
-  { label: "Film", icon: <Video /> },
+const FIRST_STEP: Record<CaptureSource, { label: string; icon: ReactNode }> = {
+  video: { label: "Film", icon: <Video /> },
+  photos: { label: "Snap", icon: <Camera /> },
+  text: { label: "List", icon: <Type /> },
+};
+
+const LATER_STEPS = [
   { label: "Check", icon: <ScanLine /> },
   { label: "Photos", icon: <ImageIcon /> },
 ];
 
 // Where the seller is in the flow, mostly as icons.
-export function Stepper({ current }: { current: 0 | 1 | 2 }) {
+export function Stepper({ current, source = "video" }: { current: 0 | 1 | 2; source?: CaptureSource }) {
   return (
     <ol className={styles.stepper} aria-label="Progress">
-      {STEPS.map((step, index) => (
+      {[FIRST_STEP[source], ...LATER_STEPS].map((step, index) => (
         <Fragment key={step.label}>
           {index > 0 ? <li aria-hidden className={clsx(styles.line, index <= current && styles.lineDone)} /> : null}
           <li

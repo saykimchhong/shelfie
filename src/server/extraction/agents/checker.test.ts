@@ -73,4 +73,13 @@ describe("checkProducts", () => {
     ).products;
     expect(product.matchId).toBeNull();
   });
+
+  it("says why a price is missing in the source's own words", () => {
+    const check = (source: "video" | "photos" | "text") =>
+      checkProducts(
+        { pricing: { products: [priced("Rice", { price: null, priceSaidAt: null })], unpaired: [] }, matchIds: [null] },
+        { currency: "USD", known: [], source },
+      ).products[0].note;
+    expect([check("video"), check("photos"), check("text")]).toEqual(["Price not said", "No price seen", "No price given"]);
+  });
 });

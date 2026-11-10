@@ -154,7 +154,7 @@ export function StoreOverview({ store }: { store: Store }) {
             <EmptyState
               icon={<Video />}
               title="No products yet"
-              description="Film your shelf and say the prices — we'll list everything for you."
+              description="Film your shelf, snap photos or type a list. We'll list everything for you."
             />
           ) : (
             <Stagger as="ul" className={styles.list}>

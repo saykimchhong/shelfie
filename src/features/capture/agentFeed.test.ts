@@ -45,6 +45,14 @@ describe("feedRows", () => {
   });
 });
 
+describe("feedRows by source", () => {
+  it("names the first step after what the AI reads", () => {
+    const labels = (["video", "photos", "text"] as const).map((source) => feedRows([], source)[0].label);
+    expect(labels).toEqual(["Watching your video", "Reading your photos", "Reading your list"]);
+    expect(feedRows([{ step: "watcher", status: "failed" }], "text")[0].line).toBe("Couldn't read the list");
+  });
+});
+
 describe("formatDuration", () => {
   it("uses milliseconds under a second and seconds above", () => {
     expect(formatDuration(3)).toBe("3 ms");
