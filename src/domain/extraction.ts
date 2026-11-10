@@ -55,7 +55,7 @@ export const extractStreamMessageSchema = z.discriminatedUnion("type", [
 
 export type ExtractStreamMessage = z.infer<typeof extractStreamMessageSchema>;
 
-// Products the shop already has on the filmed shelf, sent with the video so the
+// Products the shop already has on the shelf, sent with the video, photos or list so the
 // AI can recognise them (matchId) instead of listing them again as new.
 export const knownProductSchema = z.object({
   id: z.string().min(1),

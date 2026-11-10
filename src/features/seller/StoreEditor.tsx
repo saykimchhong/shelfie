@@ -384,7 +384,7 @@ function StoreEditor({ store }: { store: Store }) {
           <Section title="Restock">
             <Stack gap={2}>
               <Segmented
-                label="Products missing from a re-filmed shelf"
+                label="Products missing when you restock a shelf"
                 options={MISSING_PRODUCT_OPTIONS}
                 value={form.restock.missing}
                 onChange={(missing) => set("restock", { missing })}

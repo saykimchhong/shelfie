@@ -2,7 +2,7 @@ import { MAX_KNOWN_PRODUCTS, type ExtractedProduct, type KnownProduct } from "@/
 import type { Product } from "@/domain/product";
 import { toDraft, type Draft } from "./drafts";
 
-// What the AI is told about the filmed shelf's current products.
+// What the AI is told about the shelf's current products.
 export function toKnownProducts(products: readonly Product[]): KnownProduct[] {
   return products
     .slice(0, MAX_KNOWN_PRODUCTS)

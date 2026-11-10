@@ -19,7 +19,7 @@ export const LABEL_LANGUAGE_OPTIONS: readonly SegmentedOption<LabelLanguage>[] =
   { value: "th", label: "ไทย", ariaLabel: "Thai" },
 ];
 
-// Default for a re-filmed shelf's products that aren't in the new video.
+// Default for a restocked shelf's products that aren't in the new video, photos or list.
 export const MISSING_PRODUCT_OPTIONS: readonly SegmentedOption<RestockSettings["missing"]>[] = [
   { value: "soldOut", label: "Mark sold out" },
   { value: "keep", label: "Keep in stock" },

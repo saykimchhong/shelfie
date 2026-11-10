@@ -29,7 +29,7 @@ export function MergeReview({
 }: {
   drafts: Draft[];
   missing: Missing[];
-  // The filmed shelf's products, by id. Empty for a new shelf.
+  // The shelf's current products, by id. Empty for a new shelf.
   known: ReadonlyMap<string, Product>;
   source?: CaptureSource;
   currency: Currency;

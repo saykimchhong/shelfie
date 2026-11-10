@@ -1,6 +1,6 @@
 "use client";
 
-import { ExternalLink, ListX, Palette, Plus, Trash2, Video } from "lucide-react";
+import { ExternalLink, ListX, PackagePlus, Palette, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Reveal, Stagger } from "@/components/motion/Reveal";
 import {
@@ -106,8 +106,8 @@ export function StoreOverview({ store }: { store: Store }) {
       </Reveal>
 
       <Reveal delay={0.08}>
-        <ButtonLink href="/dashboard/capture" size="lg" block icon={<Video />} className={styles.film}>
-          Film your shelf
+        <ButtonLink href="/dashboard/capture" size="lg" block icon={<PackagePlus />} className={styles.addProducts}>
+          Add or restock products
         </ButtonLink>
       </Reveal>
 
@@ -152,9 +152,9 @@ export function StoreOverview({ store }: { store: Store }) {
             </Stack>
           ) : products.data.length === 0 ? (
             <EmptyState
-              icon={<Video />}
+              icon={<PackagePlus />}
               title="No products yet"
-              description="Film your shelf, snap photos or type a list. We'll list everything for you."
+              description="Use a video, photos or a typed list. We'll list everything for you."
             />
           ) : (
             <Stagger as="ul" className={styles.list}>

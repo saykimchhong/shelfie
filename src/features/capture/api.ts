@@ -26,7 +26,7 @@ export async function requestExtraction(input: {
   capture: CaptureInput;
   currency: Currency;
   labelLanguage: LabelLanguage;
-  // The filmed shelf's current products; empty for a new shelf.
+  // The shelf's current products; empty for a new shelf.
   known: KnownProduct[];
   idToken: string;
   signal?: AbortSignal;

@@ -7,9 +7,9 @@ import { SHELF_NAME_MAX, type Product } from "@/domain/product";
 import { productsOnShelf, shelvesOf, UNSORTED } from "@/domain/shelf";
 import styles from "./ShelfPicker.module.scss";
 
-// What the next video is for:
+// What the next video, photos or list is for:
 // - add:     products for a shelf, new or existing (nothing gets marked sold out)
-// - restock: re-film one existing shelf; its products missing from the video
+// - restock: re-read one existing shelf; its products missing from the new read
 //            are suggested as sold out
 export type CaptureTarget = { mode: "add" | "restock"; shelf: string };
 
@@ -35,7 +35,7 @@ export function ShelfPicker({
     <div className={styles.picker}>
       {products.length > 0 ? (
         <Segmented
-          label="What are you filming?"
+          label="What is this for?"
           options={MODE_OPTIONS}
           value={target.mode}
           onChange={(mode) => onChange({ mode, shelf: mode === "restock" ? restockable[0] : UNSORTED })}
