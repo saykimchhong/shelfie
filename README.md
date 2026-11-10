@@ -28,7 +28,7 @@ npm run dev                  # http://localhost:3000
 | `npm run dev` | Dev server (Turbopack) |
 | `npm run build` / `start` | Production build / serve |
 | `npm run typecheck` | Generate route types + `tsc` |
-| `npm test` | Unit tests (Vitest): shelves, restock merge, AI agents, mock AI, activity feed, order messages |
+| `npm test` | Unit tests (Vitest): shelves, restock merge, AI agents, mock AI, /api/extract → activity feed, store docs → order messages, rules ↔ schema sync |
 | `npm run record:watch -- <video>` | Read a video with the real Watcher once and save it as a test fixture (see [AI agents](#ai-agents)) |
 | `npm run lint` | ESLint |
 | `npm run deploy:rules` | Push `firestore.rules`, indexes and `storage.rules` to Firebase |
