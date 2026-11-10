@@ -50,16 +50,17 @@ export function ProductCard({
         ) : null}
       </div>
       <div className={styles.body}>
-        <Text weight={600} clamp={2} className={styles.name}>
+        {/* Two text lines at most, so cards in a row stay the same height. */}
+        <Text weight={600} clamp={product.localName ? 1 : 2} className={styles.name}>
           {product.name}
         </Text>
         {product.localName ? (
-          <Text size="sm" tone="muted" clamp={1}>
+          <Text tone="muted" clamp={1} className={styles.localName}>
             {product.localName}
           </Text>
         ) : null}
         <div className={styles.footer}>
-          <Text weight={800} tone={product.price === null ? "subtle" : "brand"}>
+          <Text weight={800} tone={product.price === null ? "subtle" : "brand"} className={styles.price}>
             {product.price === null ? "Ask" : `${formatPrice(product.price, currency)}${perUnit(unit)}`}
           </Text>
         </div>

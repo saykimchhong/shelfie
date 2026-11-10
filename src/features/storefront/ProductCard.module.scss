@@ -57,15 +57,22 @@
   @include elevation(1);
 }
 
+// Kept short so the photo stays the biggest part of the card.
 .body {
   display: flex;
   flex: 1;
   flex-direction: column;
   gap: 2px;
-  padding: var(--space-3);
+  padding: var(--space-2) var(--space-3) var(--space-3);
 }
 
 .name {
+  font-size: var(--text-sm);
+  line-height: var(--leading-snug);
+}
+
+.localName {
+  font-size: var(--text-xs);
   line-height: var(--leading-snug);
 }
 
@@ -74,6 +81,10 @@
   align-items: center;
   margin-top: auto;
   padding-top: var(--space-1);
+}
+
+.price {
+  line-height: var(--leading-snug);
 }
 
 // Badge stays crisp; photo, name and price fade (same as the list template).
@@ -90,10 +101,18 @@
   border-radius: var(--radius-xl);
 
   .body {
-    padding: var(--space-4) var(--space-5) var(--space-5);
+    padding: var(--space-3) var(--space-4) var(--space-4);
   }
 
   .name {
+    font-size: var(--text-md);
+  }
+
+  .localName {
+    font-size: var(--text-sm);
+  }
+
+  .price {
     font-size: var(--text-lg);
   }
 }
