@@ -252,7 +252,9 @@ function StoreEditor({ store }: { store: Store }) {
   return (
     <div className={styles.page}>
       <Stack direction="row" align="center" gap={2}>
-        <ButtonLink href="/dashboard" variant="ghost" size="sm" iconOnly icon={<ArrowLeft />} aria-label="Back" />
+        <ButtonLink href="/dashboard" variant="ghost" size="sm" icon={<ArrowLeft />}>
+          Back
+        </ButtonLink>
         <Text as="h1" size="2xl">
           Edit store
         </Text>

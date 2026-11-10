@@ -8,12 +8,12 @@
   padding-bottom: calc(var(--space-20) + env(safe-area-inset-bottom));
 }
 
-// Banner glow in the store's own color.
+// A soft wash of the store's color at the top; how strong depends on the shop type.
 .banner {
+  --wash: 16%;
   padding-top: var(--space-12);
   background:
-    radial-gradient(120% 90% at 10% 0%, color-mix(in oklab, var(--brand) 42%, transparent), transparent 62%),
-    radial-gradient(90% 80% at 95% 10%, color-mix(in oklab, var(--sun) 32%, transparent), transparent 60%),
+    linear-gradient(180deg, color-mix(in oklab, var(--brand) var(--wash), transparent), transparent 85%),
     var(--bg);
 
   @include container-up(md) {
@@ -52,12 +52,11 @@
   width: 88px;
   height: 88px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--brand), color-mix(in oklab, var(--brand) 55%, var(--sun)));
-  color: #fff;
+  background: var(--brand-solid);
+  color: var(--on-brand);
   font-size: 2rem;
   font-weight: 800;
   letter-spacing: -0.03em;
-  text-shadow: 0 1px 2px rgb(0 0 0 / 25%);
   box-shadow: 0 0 0 5px var(--bg);
 }
 
@@ -227,27 +226,14 @@
 // The banner and shapes follow what the shop sells, on top of any layout.
 // Tokens only, no images: the seller's own photos stay the focus.
 
-// Food: a warm, appetising glow.
-.page[data-style="food"] .banner {
-  background:
-    radial-gradient(110% 90% at 0% 0%, color-mix(in oklab, var(--brand) 55%, transparent), transparent 60%),
-    radial-gradient(90% 75% at 100% 0%, color-mix(in oklab, var(--sun) 48%, transparent), transparent 62%),
-    var(--bg);
-}
-
-// Grocery: clean and bright, a light wash instead of a glow.
-.page[data-style="grocery"] .banner {
-  background:
-    linear-gradient(180deg, color-mix(in oklab, var(--brand) 18%, transparent), transparent 75%),
-    var(--bg);
-}
-
-// Fresh market: leafy greens from the top.
+// Food and fresh markets: a stronger wash; groceries: a lighter one.
+.page[data-style="food"] .banner,
 .page[data-style="market"] .banner {
-  background:
-    radial-gradient(120% 80% at 50% 0%, color-mix(in oklab, var(--brand) 40%, transparent), transparent 65%),
-    radial-gradient(70% 60% at 100% 10%, color-mix(in oklab, var(--accent) 30%, transparent), transparent 60%),
-    var(--bg);
+  --wash: 24%;
+}
+
+.page[data-style="grocery"] .banner {
+  --wash: 10%;
 }
 
 // Bakery: soft pastels and rounder shapes.
@@ -257,10 +243,7 @@
   --radius-xl: 34px;
 
   .banner {
-    background:
-      radial-gradient(100% 90% at 20% 0%, color-mix(in oklab, var(--brand) 28%, transparent), transparent 65%),
-      radial-gradient(80% 70% at 90% 5%, color-mix(in oklab, var(--sun) 26%, transparent), transparent 60%),
-      var(--bg);
+    --wash: 20%;
   }
 }
 
@@ -272,9 +255,7 @@
   --radius-xl: 12px;
 
   .banner {
-    background:
-      linear-gradient(180deg, color-mix(in oklab, var(--fg) 6%, transparent), transparent 80%),
-      var(--bg);
+    background: var(--bg);
   }
 
   .avatar {

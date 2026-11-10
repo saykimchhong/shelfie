@@ -1,68 +1,7 @@
 @use "styles" as *;
 
 .page {
-  position: relative;
   min-height: 100dvh;
-  overflow: hidden;
-  isolation: isolate;
-}
-
-// Slow-drifting color blobs behind the hero. The softness is baked into each
-// radial gradient (no filter: blur), and only transform animates, so the GPU
-// just moves three pre-rendered layers each frame.
-.blobs {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  overflow: hidden;
-  opacity: 0.6;
-  pointer-events: none;
-
-  span {
-    position: absolute;
-    border-radius: 50%;
-    will-change: transform; // always animating: worth its own layer
-    animation: drift 18s ease-in-out infinite alternate;
-  }
-
-  span:nth-child(1) {
-    top: -20%;
-    left: -20%;
-    width: 65vmax;
-    height: 65vmax;
-    background: radial-gradient(closest-side, var(--brand), transparent);
-  }
-
-  span:nth-child(2) {
-    top: 20%;
-    right: -25%;
-    width: 58vmax;
-    height: 58vmax;
-    background: radial-gradient(closest-side, var(--sun), transparent);
-    animation-delay: -6s;
-  }
-
-  span:nth-child(3) {
-    bottom: -30%;
-    left: 10%;
-    width: 60vmax;
-    height: 60vmax;
-    background: radial-gradient(closest-side, color-mix(in oklab, var(--berry) 70%, transparent), transparent);
-    animation-delay: -12s;
-  }
-
-  // Tier 1 (vestibular): large drifting shapes stop for reduced motion.
-  @include reduced-motion {
-    span {
-      animation: none;
-    }
-  }
-}
-
-@keyframes drift {
-  to {
-    transform: translate3d(6vmax, 4vmax, 0) scale(1.12);
-  }
 }
 
 .nav {
@@ -72,95 +11,118 @@
   height: var(--topbar-h);
 }
 
-.hero {
+.main {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: var(--space-6);
-  padding-block: var(--space-12) var(--space-16);
+  gap: var(--space-16);
+  padding-block: var(--space-8) var(--space-20);
+}
 
-  @include up(md) {
-    padding-block: var(--space-20);
+// Phone: words, then the example shop. Desktop: side by side.
+.hero {
+  display: grid;
+  gap: var(--space-10);
+  align-items: center;
+
+  @include up(lg) {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--space-16);
   }
 }
 
-.title {
-  max-width: 14ch;
+.copy {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
 }
 
-.gradient {
-  background: linear-gradient(100deg, var(--brand-solid), var(--berry) 60%, var(--brand));
-  background-clip: text;
-  -webkit-background-clip: text;
-  color: transparent;
+.title {
+  max-width: 13ch;
+}
+
+.accent {
+  display: block;
+  color: var(--brand-text);
 }
 
 .lead {
-  max-width: 38ch;
+  max-width: 40ch;
 }
 
 .ctas {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
   gap: var(--space-3);
 }
 
 .cta {
-  --btn-h: 60px;
+  --btn-h: 56px;
   padding-inline: var(--space-8);
-  font-size: var(--text-lg);
+}
+
+.preview {
+  display: flex;
+  justify-content: center;
+}
+
+.phone {
+  --zoom: 0.78;
+
+  @include up(lg) {
+    --zoom: 0.86;
+  }
+}
+
+.how {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
 }
 
 .steps {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--space-3);
-  width: min(100%, 560px);
-  margin-top: var(--space-8);
+  gap: var(--space-4);
+  padding: 0;
+  list-style: none;
+
+  @include up(md) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 .step {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-5) var(--space-2);
+  gap: var(--space-2);
+  padding: var(--space-5);
   border-radius: var(--radius-xl);
-  // Mostly opaque instead of backdrop-filter: blurring the moving blobs behind
-  // would be recomputed every frame.
-  background: color-mix(in oklab, var(--bg-raised) 88%, transparent);
-  @include elevation(1);
+  background: var(--surface-1);
 }
 
-.stepIcon {
-  display: grid;
-  place-items: center;
-  width: 52px;
-  height: 52px;
+.drawing {
+  margin-bottom: var(--space-2);
+  padding: var(--space-3);
   border-radius: var(--radius-lg);
+  background: var(--bg);
 
   svg {
-    width: 26px;
-    height: 26px;
-  }
-
-  .brand & {
-    background: var(--brand-soft);
-    color: var(--brand-text);
-  }
-
-  .sun & {
-    background: var(--sun-soft);
-    color: var(--fg);
-  }
-
-  .accent & {
-    background: var(--accent-soft);
-    color: var(--accent);
+    display: block;
+    width: 100%;
+    max-width: 240px;
+    height: auto;
+    margin-inline: auto;
   }
 }
 
-.stepTitle {
-  font-weight: 700;
+.number {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  margin-right: var(--space-2);
+  border-radius: 50%;
+  background: var(--brand-solid);
+  color: var(--on-brand);
+  font-size: var(--text-sm);
+  vertical-align: 2px;
 }

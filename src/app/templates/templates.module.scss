@@ -2,9 +2,7 @@
 
 .page {
   min-height: 100dvh;
-  background:
-    radial-gradient(60% 40% at 50% 0%, color-mix(in oklab, var(--brand) 18%, transparent), transparent 70%),
-    var(--bg);
+  background: var(--bg);
 }
 
 .nav {

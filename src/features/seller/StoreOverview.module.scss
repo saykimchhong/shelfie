@@ -2,24 +2,6 @@
 
 .hero {
   overflow: hidden;
-
-  // A soft blob of color in the corner — decoration, not information.
-  &::after {
-    content: "";
-    position: absolute;
-    top: -60px;
-    right: -60px;
-    width: 200px;
-    height: 200px;
-    border-radius: 50%;
-    background: radial-gradient(circle, color-mix(in oklab, var(--sun) 55%, transparent), transparent 70%);
-    pointer-events: none;
-  }
-
-  > * {
-    position: relative;
-    z-index: 1;
-  }
 }
 
 .link {

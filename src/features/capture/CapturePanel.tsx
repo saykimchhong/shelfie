@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import { ArrowLeft, ArrowRight, Check, FlaskConical, RotateCcw, Sparkles, TriangleAlert } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, FlaskConical, RotateCcw, ScanEye, TriangleAlert } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
@@ -347,7 +347,7 @@ function Capture({ store, products }: { store: Store; products: Product[] }) {
           {phase === "review" && nothingSeen ? (
             <EmptyState
               tone="sun"
-              icon={<Sparkles />}
+              icon={<ScanEye />}
               title="No products spotted"
               description={RETRY_HINT[shown]}
               action={<Button icon={<RotateCcw />} onClick={reset}>Try again</Button>}
@@ -371,14 +371,10 @@ function Capture({ store, products }: { store: Store; products: Product[] }) {
                   {merging ? (shelf.name || "Unsorted") : `Found ${drafts.length}`}
                 </Text>
                 {provider === "mock" ? (
-                  <Badge tone="sun" icon={<FlaskConical />} title="Sample data from the mock AI">
-                    Mock AI
+                  <Badge tone="sun" icon={<FlaskConical />} title="Sample products from the mock AI">
+                    Sample data
                   </Badge>
-                ) : (
-                  <Badge tone="accent" icon={<Sparkles />}>
-                    AI
-                  </Badge>
-                )}
+                ) : null}
               </Stack>
 
               {steps.length > 0 ? (

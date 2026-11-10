@@ -1,6 +1,6 @@
 "use client";
 
-import { ImageOff, ImagePlus, Plus, Sparkles, Trash2 } from "lucide-react";
+import { Brush, ImageOff, ImagePlus, Plus, Trash2 } from "lucide-react";
 import { useId, useState, type FormEvent } from "react";
 import { Button, Segmented, Sheet, Spinner, Switch, TextField, Thumb } from "@/components/ui";
 import {
@@ -176,8 +176,8 @@ function EditorForm({
               }}
             />
           </label>
-          <Button variant="soft" size="sm" icon={<Sparkles />} onClick={makeAiPhoto} disabled={generating}>
-            AI photo
+          <Button variant="soft" size="sm" icon={<Brush />} onClick={makeAiPhoto} disabled={generating}>
+            Clean photo
           </Button>
           {photoUrl ? (
             <Button variant="ghost" size="sm" icon={<ImageOff />} onClick={() => setPhoto({ kind: "removed" })}>

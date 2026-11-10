@@ -54,7 +54,7 @@ Local values go in `.env.local` (never committed). On App Hosting, the Firebase 
 2. **Firestore Database → Create database** in production mode. A region near our users, e.g. `asia-southeast1` (Singapore).
    **Storage → Get started** to create the photo bucket (needs the Blaze plan).
 3. **Deploy the rules:** `npx firebase-tools login`, then `npm run deploy:rules -- --project <project-id>`. Until you do, Firestore denies everything, and creating a store shows a "rules aren't deployed" message. A bucket made in test mode stays open to everyone until `storage.rules` is deployed.
-   **Let the browser read photos back** (the "AI photo" button reloads a saved photo): in Google Cloud Shell, upload `cors.json` and run `gcloud storage buckets update gs://<bucket> --cors-file=cors.json`. Photos are public already, so it allows `GET` from any site.
+   **Let the browser read photos back** (the "Clean photo" button reloads a saved photo): in Google Cloud Shell, upload `cors.json` and run `gcloud storage buckets update gs://<bucket> --cors-file=cors.json`. Photos are public already, so it allows `GET` from any site.
 4. **Authentication → Settings → Authorized domains:** add the deployed domain (localhost is already there).
 5. **Gemini:** create a key at <https://aistudio.google.com/apikey> and put it in `GEMINI_API_KEY`.
 
@@ -68,8 +68,8 @@ The whole seller flow (film → check → photos → store) runs today without a
 | --- | --- | --- | --- |
 | Video, photos or list → products | `SHELFIE_AI=mock`: the same agent pipeline, with sample products for the store's language and currency in place of the two Gemini steps (a typed list is read line by line) | `SHELFIE_AI=gemini` + `GEMINI_API_KEY` | `src/server/extraction/` |
 | Default product photo | Frame grabbed from the seller's own video, in the browser (free) | (already real) | `src/features/media/video.ts` |
-| "Tell AI" updates | Mock: a few English patterns ("Milo 30", "rice sold out", "add eggs 4 each"); voice needs the real AI | `SHELFIE_AI=gemini`: the Update reader reads typed or spoken messages in any shop language | `src/server/updates/` |
-| "AI photo" | Mock: local canvas "studio shot" of that frame | Real AI: Gemini image model via `POST /api/photos`. Cleans the frame up, or draws the product from its name when the frame is wrong. Retries once when busy; on failure the seller keeps their photo and can try again | `src/server/photos.ts`, `src/features/media/generate.ts` |
+| "Quick update" (AI) | Mock: a few English patterns ("Milo 30", "rice sold out", "add eggs 4 each"); voice needs the real AI | `SHELFIE_AI=gemini`: the Update reader reads typed or spoken messages in any shop language | `src/server/updates/` |
+| "Clean photo" (AI photo) | Mock: local canvas "studio shot" of that frame | Real AI: Gemini image model via `POST /api/photos`. Cleans the frame up, or draws the product from its name when the frame is wrong. Retries once when busy; on failure the seller keeps their photo and can try again | `src/server/photos.ts`, `src/features/media/generate.ts` |
 | Photo storage | Firebase Storage, `sellers/{uid}/stores/{slug}/…` (inline data URL only when no bucket is configured) | (already real) | `src/features/media/storage.ts` |
 
 The review screen shows a **Mock AI** badge when results come from the mock.
@@ -147,7 +147,7 @@ src/
     auth/               AuthProvider, AuthGate, GoogleSignInButton
     seller/             Dashboard, store editor, product editor, Firestore hooks (data.ts)
     capture/            Video, photos or list → review list → photo step
-    updates/            "Tell AI what changed": text or voice → check the changes → save
+    updates/            "Quick update": text or voice → check the changes → save
     media/              Browser-only: video frames, photo compression, AI photos, photo storage
     theme/              ThemePicker (layout + color) and PhonePreview
     storefront/         Public store view in 3 templates, cart, order bar
@@ -200,13 +200,14 @@ The schemas live in `src/domain/`. If you add a required field, update `validSto
 
 ## UI conventions
 
-The goal is **less text, more signal**. Color, icons and motion carry the meaning.
+The goal is **plain and clear for people new to apps**. Many sellers are using a web app for the first time.
 
 - **No borders.** Separate things with surface tint (`--surface-1/2`), spacing and soft shadows (`@include elevation(1–3)`).
 - **Tokens only.** Use `var(--brand)`, `var(--space-4)`, `var(--radius-lg)` and so on. Raw hex is reserved for third-party brand colors such as the WhatsApp green. Every module starts with `@use "styles" as *;` to get the mixins and breakpoints.
 - **Light and dark** come for free from the tokens. Check both.
 - **Mobile first:** `@include up(md) { … }`. Sellers and buyers are mostly on phones.
-- **Icons over words** (lucide-react), one short sentence at most in empty states, and visual pickers (`Segmented`) over dropdowns.
+- **Words with icons.** Every action a seller takes says what it does ("Clean photo", "Sign out", "On sale"); icon-only is for the universal few, like × to close. One short sentence at most in empty states, and visual pickers (`Segmented`) over dropdowns.
+- **No decoration that says nothing.** No gradient blobs, glows, gradient text or sparkle icons. AI features are named by what they do for the seller, not "AI". Where a picture helps, draw the real thing (`src/components/illustrations`), flat and in tokens.
 - **Motion:** entrances use CSS (`<Reveal>`, `<Stagger>`), so pages work before JavaScript loads on slow phones. `motion/react` is for interaction: layout, presence and gestures. `<ScrollStagger>` reveals long lists as they enter the screen: an IntersectionObserver flips a data attribute, and a short CSS animation always plays to the end, never stuck half-way.
 - **Entrance fill mode is `backwards`, never `both`.** A finished `both` animation keeps control of `transform`, which freezes hover lifts and press feedback.
 - **60fps rule:** only `transform` and `opacity` may animate.

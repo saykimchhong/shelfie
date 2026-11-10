@@ -21,7 +21,9 @@ export function SellerShell({ children }: { children: ReactNode }) {
           </Link>
           <div className={styles.account}>
             <Avatar name={user.name} src={user.photoURL} size={34} />
-            <Button variant="ghost" size="sm" iconOnly icon={<LogOut />} aria-label="Sign out" onClick={signOut} />
+            <Button variant="ghost" size="sm" icon={<LogOut />} onClick={signOut}>
+              Sign out
+            </Button>
           </div>
         </Container>
       </header>

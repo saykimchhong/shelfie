@@ -35,7 +35,12 @@ export function ProductRow({ product, currency, unit, onOpen, onToggleStock }: P
           {product.price === null ? "—" : `${formatPrice(product.price, currency)}${perUnit(unit)}`}
         </Text>
       </button>
-      <Switch checked={product.inStock} onChange={onToggleStock} label={`${product.name} in stock`} />
+      <div className={styles.stock}>
+        <Switch checked={product.inStock} onChange={onToggleStock} label={`${product.name} in stock`} />
+        <span className={styles.stockText} aria-hidden>
+          {product.inStock ? "On sale" : "Sold out"}
+        </span>
+      </div>
     </li>
   );
 }

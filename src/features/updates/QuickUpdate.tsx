@@ -1,6 +1,6 @@
 "use client";
 
-import { Mic, SendHorizontal, Sparkles, Square } from "lucide-react";
+import { Mic, PenLine, SendHorizontal, Square } from "lucide-react";
 import { useEffect, useRef, useState, useSyncExternalStore, type FormEvent, type KeyboardEvent } from "react";
 import { Button, Surface, Text } from "@/components/ui";
 import type { Product } from "@/domain/product";
@@ -23,7 +23,7 @@ type Review = { id: number; result: UpdatesResponse; open: boolean };
 
 const noSubscribe = () => () => {};
 
-// "Tell AI what changed": type or say it, check the changes, save. No video needed.
+// Quick update: type or say what changed, check the changes, save. No video needed.
 export function QuickUpdate({ store, products }: { store: Store; products: Product[] }) {
   const { getIdToken } = useAuth();
   const refreshStorefront = useRefreshStorefront();
@@ -133,8 +133,8 @@ export function QuickUpdate({ store, products }: { store: Store; products: Produ
     <Surface padding="md" radius="xl" className={styles.box}>
       <form onSubmit={submit} className={styles.form}>
         <label htmlFor="quick-update" className={styles.title}>
-          <Sparkles aria-hidden />
-          Tell AI what changed
+          <PenLine aria-hidden />
+          Quick update
         </label>
 
         <textarea
@@ -143,7 +143,7 @@ export function QuickUpdate({ store, products }: { store: Store; products: Produ
           value={recording ? "" : text}
           onChange={(event) => setText(event.target.value)}
           onKeyDown={onKeyDown}
-          placeholder={recording ? "Listening… say what changed" : "e.g. Coke is 25 now, Milo sold out, add eggs 4 each"}
+          placeholder={recording ? "Listening… say what changed" : "Type or say what changed, e.g. Coke is 25 now, Milo sold out"}
           maxLength={MAX_UPDATE_TEXT}
           rows={2}
           enterKeyHint="send"

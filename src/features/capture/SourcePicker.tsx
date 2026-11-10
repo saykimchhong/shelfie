@@ -1,12 +1,12 @@
 "use client";
 
 import {
+  ArrowRight,
   Camera,
   Images,
   ListChecks,
   Mic,
   ScanText,
-  Sparkles,
   Sun,
   Tag,
   Timer,
@@ -126,7 +126,7 @@ function ListForm({ onSubmit }: { onSubmit: (text: string) => void }) {
         rows={6}
         maxLength={MAX_CAPTURE_TEXT}
       />
-      <Button type="submit" size="lg" icon={<Sparkles />} disabled={!text.trim()}>
+      <Button type="submit" size="lg" iconAfter={<ArrowRight />} disabled={!text.trim()}>
         Read my list
       </Button>
     </form>

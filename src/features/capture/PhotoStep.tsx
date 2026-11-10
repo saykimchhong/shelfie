@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import { Camera, Film, ImageOff, ImagePlus, Images, Sparkles } from "lucide-react";
+import { Brush, Camera, Film, ImageOff, ImagePlus, Images } from "lucide-react";
 import type { ChangeEvent, ReactNode } from "react";
 import { Stagger } from "@/components/motion/Reveal";
 import { Badge, Button, Spinner, Text, Thumb } from "@/components/ui";
@@ -32,8 +32,8 @@ export function PhotoStep({
   return (
     <div className={styles.step}>
       <div className={styles.bulk}>
-        <Button variant="soft" size="sm" icon={<Sparkles />} onClick={actions.aiForAll} disabled={busy}>
-          AI for all
+        <Button variant="soft" size="sm" icon={<Brush />} onClick={actions.aiForAll} disabled={busy}>
+          Clean all photos
         </Button>
         <label className={styles.uploadMany}>
           <Images aria-hidden />
@@ -78,13 +78,13 @@ function PhotoCard({ draft, actions, source }: { draft: Draft; actions: PhotoAct
           </span>
         ) : null}
         {draft.photoSource === "ai" && !draft.photoBusy && !draft.photoFailed ? (
-          <Badge tone="accent" icon={<Sparkles />} className={styles.tag}>
-            AI
+          <Badge tone="accent" className={styles.tag}>
+            Cleaned
           </Badge>
         ) : null}
         {draft.photoFailed && !draft.photoBusy ? (
           <Badge tone="danger" className={styles.tag}>
-            AI photo failed
+            Couldn&apos;t clean it
           </Badge>
         ) : null}
       </div>
@@ -97,6 +97,7 @@ function PhotoCard({ draft, actions, source }: { draft: Draft; actions: PhotoAct
         {source !== "text" ? (
           <Source
             label={source === "photos" ? "From photo" : "From video"}
+            short={source === "photos" ? "Photo" : "Video"}
             icon={source === "photos" ? <Camera /> : <Film />}
             active={draft.photoSource === "video"}
             disabled={!draft.frame || draft.photoBusy}
@@ -104,8 +105,9 @@ function PhotoCard({ draft, actions, source }: { draft: Draft; actions: PhotoAct
           />
         ) : null}
         <Source
-          label="AI photo"
-          icon={<Sparkles />}
+          label="Clean photo"
+          short="Clean"
+          icon={<Brush />}
           active={draft.photoSource === "ai"}
           disabled={draft.photoBusy}
           onClick={() => actions.choose(draft.key, "ai")}
@@ -115,10 +117,12 @@ function PhotoCard({ draft, actions, source }: { draft: Draft; actions: PhotoAct
           title="Upload my photo"
         >
           <ImagePlus aria-hidden />
+          <span className={styles.sourceText}>Upload</span>
           <input type="file" accept="image/*" aria-label="Upload my photo" onChange={onUpload} />
         </label>
         <Source
           label="No photo"
+          short="None"
           icon={<ImageOff />}
           active={draft.photoSource === "none"}
           disabled={draft.photoBusy}
@@ -129,14 +133,17 @@ function PhotoCard({ draft, actions, source }: { draft: Draft; actions: PhotoAct
   );
 }
 
+// Icon plus a word: sellers shouldn't have to guess what a picture means.
 function Source({
   label,
+  short,
   icon,
   active,
   disabled,
   onClick,
 }: {
   label: string;
+  short: string;
   icon: ReactNode;
   active: boolean;
   disabled?: boolean;
@@ -153,6 +160,7 @@ function Source({
       onClick={onClick}
     >
       {icon}
+      <span className={styles.sourceText}>{short}</span>
     </button>
   );
 }

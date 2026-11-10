@@ -128,15 +128,9 @@ export function StoreOverview({ store }: { store: Store }) {
             </Stack>
             <Stack direction="row" gap={2}>
               {products.data.length > 0 ? (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  iconOnly
-                  icon={<ListX />}
-                  aria-label="Clear all products"
-                  title="Clear all products"
-                  onClick={() => setClearing(true)}
-                />
+                <Button variant="ghost" size="sm" icon={<ListX />} onClick={() => setClearing(true)}>
+                  Clear all
+                </Button>
               ) : null}
               <Button variant="soft" size="sm" icon={<Plus />} onClick={() => setEditing({ product: null })}>
                 Add
