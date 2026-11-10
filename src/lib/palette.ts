@@ -34,6 +34,14 @@ function luminance(rgb: Rgb): number {
   return 0.2126 * r + 0.7152 * g + 0.0722 * b;
 }
 
+// Below this, white text reads better than black (the two contrasts meet at ~0.18).
+const DARK_LUMINANCE = 0.18;
+
+// A seller's background: dark ones get light text and the dark brand shades.
+export function isDarkColor(hex: string): boolean {
+  return luminance(hexToRgb(hex)) < DARK_LUMINANCE;
+}
+
 export function contrast(a: Rgb, b: Rgb): number {
   const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
   return (hi + 0.05) / (lo + 0.05);

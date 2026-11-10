@@ -1,3 +1,5 @@
+@use "styles" as *;
+
 // The --t-* values come from derivePalette() as inline styles.
 .scope {
   --brand: var(--t-brand);
@@ -9,7 +11,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .scope {
+  :root:not([data-theme="light"]) .scope:not([data-mode]) {
     --brand-solid: var(--t-solid-dark);
     --on-brand: var(--t-on-dark);
     --brand-soft: var(--t-soft-dark);
@@ -17,9 +19,44 @@
   }
 }
 
-:root[data-theme="dark"] .scope {
+:root[data-theme="dark"] .scope:not([data-mode]) {
   --brand-solid: var(--t-solid-dark);
   --on-brand: var(--t-on-dark);
   --brand-soft: var(--t-soft-dark);
   --brand-text: var(--t-text-dark);
+}
+
+// ── Seller's background ─────────────────────────────────────
+// The same on every device: the whole token set follows the color's
+// lightness, then the seller's accent goes back on top.
+.scope[data-mode="light"] {
+  @include custom-properties($theme-light);
+  color-scheme: light;
+  --bg-raised: color-mix(in oklab, var(--custom-bg) 40%, white);
+  --surface-1: color-mix(in oklab, var(--custom-bg) 95%, black);
+  --surface-2: color-mix(in oklab, var(--custom-bg) 90%, black);
+  --brand-solid: var(--t-solid);
+  --on-brand: var(--t-on);
+  --brand-soft: var(--t-soft);
+  --brand-text: var(--t-text);
+}
+
+.scope[data-mode="dark"] {
+  @include custom-properties($theme-dark);
+  color-scheme: dark;
+  --bg-raised: color-mix(in oklab, var(--custom-bg) 90%, white);
+  --surface-1: color-mix(in oklab, var(--custom-bg) 93%, white);
+  --surface-2: color-mix(in oklab, var(--custom-bg) 86%, white);
+  --brand-solid: var(--t-solid-dark);
+  --on-brand: var(--t-on-dark);
+  --brand-soft: var(--t-soft-dark);
+  --brand-text: var(--t-text-dark);
+}
+
+.scope[data-mode] {
+  --bg: var(--custom-bg);
+  --brand: var(--t-brand);
+  --ring: color-mix(in oklab, var(--t-brand) 45%, transparent);
+  background: var(--bg);
+  color: var(--fg);
 }

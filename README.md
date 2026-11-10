@@ -105,6 +105,7 @@ A store's look is `theme: { template, accent }`:
 - **Search and weights** (`src/features/storefront/search.ts`, `quantity.ts`): a search box appears once a store has 8 products (grocery, fresh market) or 16 (others). It matches name, label name, category and shelf, by substring, so Thai and Khmer work. Per-kg items start at 1 kg and step by 0.5 kg ("1.5 kg × Mango" in the message); the cart counts them as one item.
 - **Opening hours** (`src/domain/hours.ts`): optional for every shop. The storefront shows "Open · until 21:00" or "Closed · opens 07:00", worked out in the seller's time zone, after hydration (the page is cached). While a food or bakery shop is closed, "as soon as possible" becomes "when you open".
 - **Templates:** `grid` (most shops), `list` (many small items), `showcase` (a few special items), `compact` (big catalogs, three across on a phone), `menu` (food and drinks: name ··· price, in sections) and `shelves` (many sections, each a row that scrolls sideways). Menu and shelves group by shelf, or by category when the shop has one shelf or none; their chips jump to a section.
+- **Background** (`theme.background`): optional, any hex color, shown the same on every device. Text, cards and chips follow its lightness (`isDarkColor` in `src/lib/palette.ts`, `[data-mode]` in `ThemeScope.module.scss`). Missing → the original look.
 - **Accent:** any hex color. `src/lib/palette.ts` derives the button, tint and text shades and keeps text readable (WCAG AA) in light and dark mode.
 
 Review every combination with sample shops in each language at **`/templates`**. Sellers change theirs at `/dashboard/edit`, with a live phone preview.
@@ -171,7 +172,7 @@ storage.rules           Photo uploads: sellers write only under their own uid
 stores/{slug}                       slug = document id = public URL
   ownerId, name, tagline?, description? (≤500, line breaks kept), logoUrl?,
   currency (USD|KHR|LKR|THB), labelLanguage (en|km|si|ta|th),
-  contact { whatsapp?, line? }, theme? { template (grid|list|showcase|compact|menu|shelves), accent (#rrggbb) },
+  contact { whatsapp?, line? }, theme? { template (grid|list|showcase|compact|menu|shelves), accent (#rrggbb), background? (#rrggbb) },
   restock? { missing (soldOut|keep) }, fulfillment? (pickup|delivery|both, missing = pickup),
   priceUnit? (each|kg|bunch|pack, missing = each: what prices are usually for),
   shopType? (shop|food|grocery|fashion|market|bakery, missing = shop),

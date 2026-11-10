@@ -27,7 +27,9 @@ service cloud.firestore {
       return !('theme' in data)
         || (data.theme.template in ['grid', 'list', 'showcase', 'compact', 'menu', 'shelves']
             && data.theme.accent is string
-            && data.theme.accent.matches('^#[0-9a-fA-F]{6}$'));
+            && data.theme.accent.matches('^#[0-9a-fA-F]{6}$')
+            && (!('background' in data.theme)
+                || (data.theme.background is string && data.theme.background.matches('^#[0-9a-fA-F]{6}$'))));
     }
 
     // Optional restock settings (src/domain/store.ts).

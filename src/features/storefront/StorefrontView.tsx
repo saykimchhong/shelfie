@@ -108,6 +108,7 @@ export function StorefrontView({ store, products, embedded }: StorefrontViewProp
   return (
     <ThemeScope
       accent={theme.accent}
+      background={theme.background}
       className={clsx(styles.page, styles[`t-${theme.template}`])}
       data-style={store.shopType ?? DEFAULT_SHOP_TYPE}
     >

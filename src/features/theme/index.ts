@@ -1,2 +1,2 @@
 export { PhonePreview } from "./PhonePreview";
-export { ColorPicker, LayoutPicker, ThemePicker } from "./ThemePicker";
+export { BackgroundPicker, ColorPicker, LayoutPicker, ThemePicker } from "./ThemePicker";

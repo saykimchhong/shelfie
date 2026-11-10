@@ -13,7 +13,7 @@ import type { LabelLanguage } from "@/domain/store";
 import { DEFAULT_THEME, TEMPLATE_INFO, TEMPLATES } from "@/domain/theme";
 import { LABEL_LANGUAGE_OPTIONS } from "@/features/seller/options";
 import { StorefrontView } from "@/features/storefront";
-import { ColorPicker, PhonePreview } from "@/features/theme";
+import { BackgroundPicker, ColorPicker, PhonePreview } from "@/features/theme";
 import styles from "./templates.module.scss";
 
 // Every layout side by side, with sample shops in each label language — for
@@ -23,6 +23,7 @@ const SHOP_OPTIONS = SHOP_TYPES.map((value) => ({ value, label: SHOP_TYPE_INFO[v
 export function TemplateGallery() {
   const [shopType, setShopType] = useState<ShopType>(DEFAULT_SHOP_TYPE);
   const [accent, setAccent] = useState(DEFAULT_THEME.accent);
+  const [background, setBackground] = useState<string | undefined>(undefined);
   const [language, setLanguage] = useState<LabelLanguage>("en");
 
   // A shop type brings its own color, as it does for sellers.
@@ -59,13 +60,14 @@ export function TemplateGallery() {
               className={styles.shopType}
             />
             <ColorPicker value={accent} onChange={setAccent} />
+            <BackgroundPicker value={background} onChange={setBackground} />
             <Segmented label="Labels" options={LABEL_LANGUAGE_OPTIONS} value={language} onChange={setLanguage} />
           </Surface>
         </Reveal>
 
         <div className={styles.phones}>
           {TEMPLATES.map((template, index) => {
-            const { store, products } = sampleStorefront(language, { template, accent }, shopType);
+            const { store, products } = sampleStorefront(language, { template, accent, background }, shopType);
             return (
               <Reveal key={template} delay={0.12 + index * 0.06} className={styles.slot}>
                 <PhonePreview className={styles.phone} label={`${TEMPLATE_INFO[template].name} · ${TEMPLATE_INFO[template].bestFor}`}>

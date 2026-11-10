@@ -23,6 +23,8 @@ export const HEX_COLOR = /^#[0-9a-f]{6}$/i;
 export const themeSchema = z.object({
   template: templateSchema,
   accent: z.string().regex(HEX_COLOR, "Use a color like #f26430"),
+  // The page color, the same on every device. Missing → the original look.
+  background: z.string().regex(HEX_COLOR).optional(),
 });
 
 export type Theme = z.infer<typeof themeSchema>;
@@ -38,4 +40,16 @@ export const PALETTE_PRESETS = [
   { name: "Leaf", accent: "#2f9e44" },
   { name: "Indigo", accent: "#4f46e5" },
   { name: "Ink", accent: "#334155" },
+] as const;
+
+export const BACKGROUND_PRESETS = [
+  { name: "White", background: "#ffffff" },
+  { name: "Cream", background: "#fff8f2" },
+  { name: "Sand", background: "#f3eadf" },
+  { name: "Mint", background: "#e8f5ee" },
+  { name: "Sky", background: "#e8f1fb" },
+  { name: "Blush", background: "#fbecf0" },
+  { name: "Charcoal", background: "#25211e" },
+  { name: "Midnight", background: "#111a2e" },
+  { name: "Black", background: "#0b0b0c" },
 ] as const;

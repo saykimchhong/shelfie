@@ -142,7 +142,7 @@ function StoreEditor({ store }: { store: Store }) {
     setForm((current) => ({
       ...current,
       shopType,
-      theme: { template: type.template, accent: type.accent },
+      theme: { ...current.theme, template: type.template, accent: type.accent },
       priceUnit: type.priceUnit,
     }));
     setJustSaved(false);

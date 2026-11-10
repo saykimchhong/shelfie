@@ -1,3 +1,4 @@
+@use "sass:map";
 @use "styles" as *;
 
 .picker {
@@ -179,4 +180,21 @@
   input {
     @include visually-hidden;
   }
+}
+
+// Background swatches: a hairline so white and cream show on any surface.
+.paper {
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--fg) 14%, transparent);
+}
+
+.paper.swatchSelected {
+  box-shadow:
+    inset 0 0 0 1px color-mix(in oklab, var(--fg) 14%, transparent),
+    0 0 0 3px var(--bg),
+    0 0 0 5px var(--brand);
+}
+
+// "Default": the original look, drawn as both of its backgrounds.
+.defaultBg {
+  background: linear-gradient(135deg, map.get($theme-light, bg) 50%, map.get($theme-dark, bg) 50%);
 }
