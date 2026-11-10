@@ -83,12 +83,14 @@ Reading a shelf video is a [Google ADK](https://github.com/google/adk-js) workfl
 | **Price matcher** | Ties each price to its product by time | Code |
 | **Shelf matcher** | Restock only: finds the products the shop already sells. If it fails, the review still matches by name | Gemini: text only |
 | **Checker** | Writes the "double-check" notes: no price, two prices, a 3× price jump, duplicates, low confidence | Code |
+| **Photo finder** | After the read, in the background: picks each new product's sharpest still (3 per product) and boxes it there, so its photo is cropped to the right item. If it fails, the photo uses the Watcher's box | Gemini: images, 6 products per call |
 
 - `POST /api/extract` streams each step's progress (`AgentEvent` in `src/domain/agents.ts`), then the result, for the activity feed.
+- `POST /api/photos/find` runs the Photo finder (`src/domain/photos.ts`); the phone crops the picked frame from the original video.
 - Agents only propose. Nothing is saved until the seller confirms, and no step invents a price.
 - Shared helpers: `src/server/gemini.ts` (client, video upload) and `src/server/adk.ts` (ADK model, `runWorkflow`).
 
-**Test without calling Gemini again.** `npm run record:watch -- sample-vdo/shoes-store.mp4 --currency USD --language en` reads the video with the real Watcher once, saves `src/server/extraction/fixtures/shoes-store.watch.json`, and prints what the rest of the pipeline makes of it. `pipeline.test.ts` replays that file. The script reads the key from `.env.local`.
+**Test without calling Gemini again.** `npm run record:watch -- sample-vdo/shoes-store.mp4 --currency USD --language en` reads the video with the real Watcher once, saves `src/server/extraction/fixtures/shoes-store.watch.json`, and prints what the rest of the pipeline makes of it. `pipeline.test.ts` replays that file. The script reads the key from `.env.local` (or `.env`).
 
 ## Templates and colors
 

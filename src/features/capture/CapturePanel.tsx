@@ -25,7 +25,7 @@ import type { Product } from "@/domain/product";
 import { canonicalShelf, productsOnShelf, shelvesOf, UNSORTED } from "@/domain/shelf";
 import { DEFAULT_RESTOCK, type Store } from "@/domain/store";
 import { useAuth, useSignedInUser } from "@/features/auth";
-import { captureFrames, generateProductPhoto, saveProductImage, videoDuration } from "@/features/media";
+import { captureFrames, generateProductPhoto, pickShots, saveProductImage, videoDuration } from "@/features/media";
 import { DashboardSkeleton } from "@/features/seller";
 import {
   saveProductChanges,
@@ -97,10 +97,10 @@ function Capture({ store, products }: { store: Store; products: Product[] }) {
   const [steps, setSteps] = useState<AgentEvent[]>([]);
   // 0–1 while a video over the upload cap is made smaller first; null otherwise.
   const [shrinking, setShrinking] = useState<number | null>(null);
-  const [framesReady, setFramesReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
+  const photosForRef = useRef<string | null>(null);
 
   // Cancel any in-flight request on leave; free the video when it changes.
   useEffect(() => () => abortRef.current?.abort(), []);
@@ -139,17 +139,12 @@ function Capture({ store, products }: { store: Store; products: Product[] }) {
     const url = URL.createObjectURL(video);
     setPreviewUrl(url);
     setPhase("reading");
-    setFramesReady(false);
     setError(null);
     setSteps([]);
     setShrinking(null);
 
     const controller = new AbortController();
     abortRef.current = controller;
-    // Where the wait went: before the first agent starts is prep, shrinking
-    // and the upload; the agents report their own times.
-    const startedAt = performance.now();
-    let firstStepAt: number | null = null;
     try {
       const result = await requestExtraction({
         video,
@@ -159,16 +154,8 @@ function Capture({ store, products }: { store: Store; products: Product[] }) {
         known: toKnownProducts(shelfProducts),
         idToken: await getIdToken(),
         signal: controller.signal,
-        onStep: (event) => {
-          firstStepAt ??= performance.now();
-          setSteps((current) => [...current, event]);
-        },
+        onStep: (event) => setSteps((current) => [...current, event]),
         onShrink: setShrinking,
-      });
-      console.info("[capture] timings", {
-        beforeAgentsMs: Math.round((firstStepAt ?? startedAt) - startedAt),
-        totalMs: Math.round(performance.now() - startedAt),
-        videoBytes: video.size,
       });
       const merge = mergeShelf(result.products, shelfProducts, {
         restock,
@@ -179,6 +166,7 @@ function Capture({ store, products }: { store: Store; products: Product[] }) {
       setDrafts(merge.drafts);
       setMissing(merge.missing);
       setPhase("review");
+      void preparePhotos(url, merge.drafts, result.provider);
     } catch (cause) {
       if (controller.signal.aborted) return;
       setError(cause instanceof Error ? cause.message : "Something went wrong");
@@ -186,20 +174,24 @@ function Capture({ store, products }: { store: Store; products: Product[] }) {
     }
   }
 
-  // Grab one photo per new product from the video, once: cropped to the
-  // product, from the sharpest frame. They're the default photos (AI can redo
-  // them); known products keep the photo they have.
-  async function goToPhotos() {
-    setPhase("photos");
-    if (framesReady || !previewUrl) return;
-
-    const fresh = drafts.filter((draft) => draft.group === "new");
+  // New products' photos, made in the background during review.
+  async function preparePhotos(url: string, all: Draft[], ai: ExtractionResponse["provider"]) {
+    photosForRef.current = url;
+    const fresh = all.filter((draft) => draft.group === "new");
+    if (fresh.length === 0) return;
     const freshKeys = new Set(fresh.map((draft) => draft.key));
     setDrafts((current) => current.map((draft) => (freshKeys.has(draft.key) ? { ...draft, photoBusy: true } : draft)));
-    const frames = await captureFrames(
-      previewUrl,
-      fresh.map((draft) => ({ seconds: draft.seenAtSeconds ?? 0, box: draft.box })),
-    );
+
+    const targets = fresh.map((draft) => ({
+      name: draft.name,
+      localName: draft.localName,
+      seconds: draft.seenAtSeconds ?? 0,
+      box: draft.box,
+    }));
+    const requests = ai === "gemini" ? await pickShots(url, targets) : targets.map(({ seconds, box }) => ({ seconds, box }));
+    const frames = await captureFrames(url, requests);
+    if (photosForRef.current !== url) return;
+
     const frameByKey = new Map(fresh.map((draft, index) => [draft.key, frames[index] ?? null]));
     setDrafts((current) =>
       current.map((draft) => {
@@ -209,7 +201,6 @@ function Capture({ store, products }: { store: Store; products: Product[] }) {
         return { ...draft, frame, photo: frame, photoSource: frame ? "video" : "none", photoBusy: false };
       }),
     );
-    setFramesReady(true);
   }
 
   async function makeAiPhoto(draft: Draft) {
@@ -252,6 +243,7 @@ function Capture({ store, products }: { store: Store; products: Product[] }) {
 
   function reset() {
     abortRef.current?.abort();
+    photosForRef.current = null;
     setPreviewUrl(null);
     setDrafts([]);
     setMissing([]);
@@ -367,7 +359,7 @@ function Capture({ store, products }: { store: Store; products: Product[] }) {
                   Retake
                 </Button>
                 {adding.length > 0 ? (
-                  <Button size="lg" className={styles.primary} iconAfter={<ArrowRight />} onClick={goToPhotos}>
+                  <Button size="lg" className={styles.primary} iconAfter={<ArrowRight />} onClick={() => setPhase("photos")}>
                     Photos
                   </Button>
                 ) : (

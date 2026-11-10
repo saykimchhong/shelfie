@@ -1,5 +1,6 @@
 // Browser-only media pipeline: frames from video, photo compression, AI photos,
 // and where photos are stored. Swap points are documented in each file.
+export { pickShots } from "./find";
 export { generateProductPhoto } from "./generate";
 export { squarePhoto, urlToBlob } from "./image";
 export { removeImage, saveProductImage, saveStoreLogo, saveStorePaymentQr, type PhotoOwner } from "./storage";

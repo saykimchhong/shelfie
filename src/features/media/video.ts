@@ -51,7 +51,8 @@ export async function videoDuration(url: string): Promise<number | undefined> {
 }
 
 // When a product is clearest, and where it is in that frame when known.
-export type FrameRequest = { seconds: number; box: FrameBox | null };
+// exact: the box belongs to this frame, so don't try nearby ones.
+export type FrameRequest = { seconds: number; box: FrameBox | null; exact?: boolean };
 
 // Free "product photos" from the seller's own video: a square around each
 // product (the centre when its box is unknown), from the sharpest frame around
@@ -63,7 +64,7 @@ export async function captureFrames(url: string, requests: FrameRequest[], size 
     await once(video, "loadeddata", 8000);
     const [, probe] = createCanvas(PROBE_SIZE, PROBE_SIZE, { willReadFrequently: true });
 
-    for (const { seconds, box } of requests) {
+    for (const { seconds, box, exact } of requests) {
       try {
         const square = box
           ? squareAround(video.videoWidth, video.videoHeight, box)
@@ -71,7 +72,7 @@ export async function captureFrames(url: string, requests: FrameRequest[], size 
         const [canvas, context] = createCanvas(Math.round(Math.min(size, square.side)));
         let best = -1;
 
-        for (const time of [seconds, seconds - NEARBY_SECONDS, seconds + NEARBY_SECONDS]) {
+        for (const time of exact ? [seconds] : [seconds, seconds - NEARBY_SECONDS, seconds + NEARBY_SECONDS]) {
           await seek(video, time);
           draw(probe, video, square, PROBE_SIZE);
           const score = sharpness(probe.getImageData(0, 0, PROBE_SIZE, PROBE_SIZE).data, PROBE_SIZE, PROBE_SIZE);
@@ -87,6 +88,32 @@ export async function captureFrames(url: string, requests: FrameRequest[], size 
     }
   } catch {
     while (results.length < requests.length) results.push(null);
+  } finally {
+    video.removeAttribute("src");
+    video.load();
+  }
+  return results;
+}
+
+// Whole frames scaled to maxSide; null where a frame failed.
+export async function captureStills(url: string, seconds: readonly number[], maxSide = 640): Promise<(Blob | null)[]> {
+  const video = openVideo(url);
+  const results: (Blob | null)[] = [];
+  try {
+    await once(video, "loadeddata", 8000);
+    const scale = Math.min(1, maxSide / Math.max(video.videoWidth, video.videoHeight));
+    const [canvas, context] = createCanvas(Math.round(video.videoWidth * scale), Math.round(video.videoHeight * scale));
+    for (const time of seconds) {
+      try {
+        await seek(video, time);
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        results.push(await canvasToBlob(canvas, 0.8));
+      } catch {
+        results.push(null);
+      }
+    }
+  } catch {
+    while (results.length < seconds.length) results.push(null);
   } finally {
     video.removeAttribute("src");
     video.load();

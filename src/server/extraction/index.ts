@@ -1,7 +1,9 @@
 import "server-only";
 import type { Extraction } from "@/domain/extraction";
+import type { ShotPick, ShotProduct } from "@/domain/photos";
 import { geminiThinkingLevel } from "../adk";
 import { serverEnv } from "../env";
+import { findShots, type ShotFrame } from "./agents/photo-finder";
 import { createShelfMatcher } from "./agents/shelf-matcher";
 import { createWatcher, type WatcherOptions } from "./agents/watcher";
 import { mockAgents } from "./mock";
@@ -10,6 +12,7 @@ import type { ExtractInput, ExtractionProvider } from "./types";
 
 export { MAX_VIDEO_BYTES, type ExtractInput, type ExtractionProvider } from "./types";
 export type { ReportStep } from "./pipeline";
+export type { ShotFrame } from "./agents/photo-finder";
 
 // The one switch between mock and real AI: SHELFIE_AI in the environment.
 export function extractionProvider(): ExtractionProvider {
@@ -19,7 +22,6 @@ export function extractionProvider(): ExtractionProvider {
 export async function extractProducts(
   input: ExtractInput,
   report: ReportStep = () => {},
-  // Where the Watcher's time went, for logs. Only the real AI reports it.
   { onWatcherTiming }: { onWatcherTiming?: WatcherOptions["onTiming"] } = {},
 ): Promise<{ provider: ExtractionProvider; extraction: Extraction }> {
   const provider = extractionProvider();
@@ -37,4 +39,8 @@ function geminiAgents(input: ExtractInput, onTiming: WatcherOptions["onTiming"])
     ),
     shelfMatcher: createShelfMatcher({ thinkingLevel: geminiThinkingLevel() }),
   };
+}
+
+export function findProductShots(products: readonly ShotProduct[], frames: readonly ShotFrame[]): Promise<ShotPick[]> {
+  return findShots(products, frames, { thinkingLevel: geminiThinkingLevel() });
 }
