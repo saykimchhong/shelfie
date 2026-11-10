@@ -30,6 +30,7 @@ npm run dev                  # http://localhost:3000
 | `npm run typecheck` | Generate route types + `tsc` |
 | `npm test` | Unit tests (Vitest): shelves, restock merge, AI agents, mock AI, /api/extract → activity feed, store docs → order messages, rules ↔ schema sync |
 | `npm run record:watch -- <video>` | Read a video with the real Watcher once and save it as a test fixture (see [AI agents](#ai-agents)) |
+| `npm run bench:watch -- <video> --levels default,low` | Time the real Watcher at each thinking level and compare each reading with the fixture. `--restock` also times the Shelf matcher |
 | `npm run lint` | ESLint |
 | `npm run deploy:rules` | Push `firestore.rules`, indexes and `storage.rules` to Firebase |
 
@@ -45,6 +46,7 @@ Local values go in `.env.local` (never committed). On App Hosting, the Firebase 
 | `SHELFIE_AI` | Reading videos | `mock` (default: sample products, no AI cost) or `gemini` |
 | `GEMINI_API_KEY` | `SHELFIE_AI=gemini` | Server only. <https://aistudio.google.com/apikey> |
 | `GEMINI_MODEL` | Optional | Defaults to `gemini-3-flash-preview` |
+| `GEMINI_THINKING` | Optional | How much the shelf agents think: `default`, `minimal`, `low` (default, ~5 s a video), `medium` or `high` |
 
 ### One-time Firebase setup
 

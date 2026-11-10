@@ -64,12 +64,14 @@ function stepper(report: ReportStep) {
     }
 
     report({ step: name, status: "running" });
+    const started = performance.now();
+    const elapsed = () => Math.round(performance.now() - started);
     try {
       const output = await work();
-      report({ step: name, status: "done", summary: summarize(output) });
+      report({ step: name, status: "done", summary: summarize(output), ms: elapsed() });
       return output;
     } catch (error) {
-      report({ step: name, status: "failed" });
+      report({ step: name, status: "failed", ms: elapsed() });
       if (!optional) throw error;
       console.error(`Agent step ${name} failed`, error);
       return optional.fallback();

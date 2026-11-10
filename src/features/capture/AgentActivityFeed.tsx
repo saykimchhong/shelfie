@@ -45,6 +45,7 @@ export function AgentActivityFeed({ steps, variant = "live", className }: AgentA
               {row.line}
             </span>
           </span>
+          {row.time ? <span className={styles.time}>{row.time}</span> : null}
         </li>
       ))}
     </ol>

@@ -57,7 +57,7 @@ describe("readShelf on the recorded shoe store", () => {
     expect(products.slice(0, 3).map((product) => product.matchId)).toEqual(["p0", "p1", null]);
     // A known product keeps its price when none is said, so there's nothing to flag.
     expect(products[0].note).not.toBe("Price not said");
-    expect(events).toContainEqual({ step: "shelfMatcher", status: "done", summary: "2 already in your shop" });
+    expect(events).toContainEqual(expect.objectContaining({ step: "shelfMatcher", status: "done", summary: "2 already in your shop" }));
   });
 
   it("carries on without matches when the Shelf matcher fails", async () => {
@@ -75,6 +75,15 @@ describe("readShelf on the recorded shoe store", () => {
       "checker:running",
       "checker:done",
     ]);
+  });
+
+  it("times each step that finishes or fails, for the activity feed and logs", async () => {
+    const known = [{ id: "p0", name: watch.products[0].name, price: 80 }];
+    const { events } = await read({ shelfMatcher: failing }, known);
+
+    const finished = events.filter(({ status }) => status === "done" || status === "failed");
+    expect(finished.every(({ ms }) => typeof ms === "number" && ms >= 0)).toBe(true);
+    expect(events.filter(({ status }) => status === "running").every(({ ms }) => ms === undefined)).toBe(true);
   });
 
   it("fails the run when the Watcher fails", async () => {

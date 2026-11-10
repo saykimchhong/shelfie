@@ -2,11 +2,12 @@
 // fixture, then replays it through the rest of the pipeline.
 //
 //   npm run record:watch -- sample-vdo/shoes-store.mp4 --currency USD --language en
+import { existsSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { parseArgs } from "node:util";
 import { currencySchema, labelLanguageSchema } from "@/domain/store";
-import { runWorkflow } from "@/server/adk";
+import { geminiThinkingLevel, runWorkflow } from "@/server/adk";
 import { createShelfMatcher } from "@/server/extraction/agents/shelf-matcher";
 import { createWatcher, type Watch } from "@/server/extraction/agents/watcher";
 import { readShelf } from "@/server/extraction/pipeline";
@@ -28,7 +29,10 @@ const { values, positionals } = parseArgs({
   },
 });
 
-process.loadEnvFile(".env.local");
+// Local secrets: .env.local when there is one, else .env (both git-ignored).
+const envFile = [".env.local", ".env"].find((file) => existsSync(file));
+if (!envFile) throw new Error("Put GEMINI_API_KEY in .env.local or .env");
+process.loadEnvFile(envFile);
 
 const videoPath = (positionals[0] ?? "sample-vdo/shoes-store.mp4").replaceAll("\\", "/");
 const mimeType = VIDEO_TYPES[path.extname(videoPath).toLowerCase()];
@@ -40,9 +44,11 @@ const settings = {
   labelLanguage: labelLanguageSchema.parse(values.language),
 };
 
-console.log(`Reading ${videoPath} with ${serverEnv().GEMINI_MODEL}…`);
+console.log(`Reading ${videoPath} with ${serverEnv().GEMINI_MODEL} (thinking: ${serverEnv().GEMINI_THINKING})…`);
 const blob = new Blob([await readFile(videoPath)], { type: mimeType });
-const watch = await runWorkflow("recordWatch", (run) => run<Watch>(createWatcher(settings, { blob, mimeType })));
+const watch = await runWorkflow("recordWatch", (run) =>
+  run<Watch>(createWatcher(settings, { blob, mimeType }, { thinkingLevel: geminiThinkingLevel() })),
+);
 
 const recording: WatchRecording = {
   video: videoPath,

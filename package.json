@@ -13,7 +13,8 @@
     "typecheck": "next typegen && tsc --noEmit",
     "deploy:rules": "npx firebase-tools deploy --only firestore,storage",
     "test": "vitest run",
-    "record:watch": "tsx --conditions=react-server scripts/record-watch.mts"
+    "record:watch": "tsx --conditions=react-server scripts/record-watch.mts",
+    "bench:watch": "tsx --conditions=react-server scripts/bench-watch.mts"
   },
   "dependencies": {
     "@google/adk": "^2.3.0",

@@ -1,6 +1,6 @@
 import "server-only";
 import { FunctionNode, LlmAgent } from "@google/adk";
-import { createUserContent } from "@google/genai";
+import { createUserContent, type ThinkingLevel } from "@google/genai";
 import { z } from "zod";
 import type { FrameBox } from "@/domain/extraction";
 import type { Currency, LabelLanguage } from "@/domain/store";
@@ -80,20 +80,36 @@ Prices: list every price the owner says, in ${currency}.
 - Never guess or invent a price. A product with no price said simply has no entry.`;
 }
 
+export type WatcherOptions = {
+  // How much Gemini reasons before it answers. Lower is faster; unset uses the
+  // model's default.
+  thinkingLevel?: ThinkingLevel;
+  // Where the time went: sending the video to Gemini, then Gemini reading it.
+  onTiming?: (timing: { uploadMs: number; modelMs: number }) => void;
+};
+
 // Uploads the video, then asks Gemini to read it.
-export function createWatcher(settings: WatcherSettings, video: VideoInput): FunctionNode<unknown, Watch> {
+export function createWatcher(
+  settings: WatcherSettings,
+  video: VideoInput,
+  { thinkingLevel, onTiming }: WatcherOptions = {},
+): FunctionNode<unknown, Watch> {
   const model = new LlmAgent({
     name: "watcherModel",
     description: "Lists the products in a shelf video and the prices said out loud.",
     model: geminiModel(),
     instruction: instruction(settings),
     outputSchema: watchSchema,
+    generateContentConfig: thinkingLevel ? { thinkingConfig: { thinkingLevel } } : undefined,
   });
 
   return new FunctionNode("watcher", async (ctx) => {
+    const started = performance.now();
     const upload = await uploadVideo(video.blob, video.mimeType);
+    const uploaded = performance.now();
     try {
       const result = await ctx.runNode(model, createUserContent([upload.part, "Catalogue this shelf."]));
+      onTiming?.({ uploadMs: Math.round(uploaded - started), modelMs: Math.round(performance.now() - uploaded) });
       return watchSchema.parse(result.output);
     } finally {
       upload.release();

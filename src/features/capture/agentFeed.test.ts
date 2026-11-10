@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { AGENT_STEPS, type AgentEvent } from "@/domain/agents";
-import { feedRows } from "./agentFeed";
+import { feedRows, formatDuration } from "./agentFeed";
 
 describe("feedRows", () => {
   it("lists every step in pipeline order, waiting before any event", () => {
@@ -33,5 +33,23 @@ describe("feedRows", () => {
 
   it("falls back to a plain line when a done step has no summary", () => {
     expect(feedRows([{ step: "checker", status: "done" }])[3].line).toBe("Done");
+  });
+
+  it("shows how long each finished step took", () => {
+    const [watcher, priceMatcher] = feedRows([
+      { step: "watcher", status: "done", ms: 6140 },
+      { step: "priceMatcher", status: "running" },
+    ]);
+    expect(watcher.time).toBe("6.1 s");
+    expect(priceMatcher.time).toBeNull();
+  });
+});
+
+describe("formatDuration", () => {
+  it("uses milliseconds under a second and seconds above", () => {
+    expect(formatDuration(3)).toBe("3 ms");
+    expect(formatDuration(999)).toBe("999 ms");
+    expect(formatDuration(1000)).toBe("1.0 s");
+    expect(formatDuration(12_480)).toBe("12.5 s");
   });
 });

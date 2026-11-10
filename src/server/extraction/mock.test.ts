@@ -55,7 +55,7 @@ describe("mock agents through the pipeline", () => {
     expect(products[0].price).toBe(275); // ~10% up, whole baht
     expect(products[1].price).toBe(45);
     expect(products.slice(3).every((item) => !known.some((k) => k.name === item.name))).toBe(true);
-    expect(events).toContainEqual({ step: "shelfMatcher", status: "done", summary: "3 already in your shop" });
+    expect(events).toContainEqual(expect.objectContaining({ step: "shelfMatcher", status: "done", summary: "3 already in your shop" }));
 
     // Timestamps stay inside the video, in order.
     const times = products.map((item) => item.seenAtSeconds);

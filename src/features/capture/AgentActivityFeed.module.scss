@@ -94,6 +94,16 @@
   }
 }
 
+// How long the step took, on the right edge.
+.time {
+  flex-shrink: 0;
+  margin-left: auto;
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-subtle);
+  animation: fade 0.2s ease-out backwards;
+}
+
 .line {
   font-size: var(--text-sm);
   color: var(--fg-muted);

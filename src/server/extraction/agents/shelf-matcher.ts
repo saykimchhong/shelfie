@@ -1,5 +1,6 @@
 import "server-only";
 import { LlmAgent } from "@google/adk";
+import type { ThinkingLevel } from "@google/genai";
 import { z } from "zod";
 import type { KnownProduct } from "@/domain/extraction";
 import { geminiModel } from "@/server/adk";
@@ -28,13 +29,15 @@ For every seen product, return its index and the id of the listed product it is,
 - Each listed id matches at most one seen product.
 - When unsure, return null: the seller will add it as a new product.`;
 
-export function createShelfMatcher(): LlmAgent {
+// thinkingLevel: lower is faster; unset uses the model's default.
+export function createShelfMatcher({ thinkingLevel }: { thinkingLevel?: ThinkingLevel } = {}): LlmAgent {
   return new LlmAgent({
     name: "shelfMatcher",
     description: "Recognises products the shop already sells.",
     model: geminiModel(),
     instruction: INSTRUCTION,
     outputSchema: shelfMatchSchema,
+    generateContentConfig: thinkingLevel ? { thinkingConfig: { thinkingLevel } } : undefined,
   });
 }
 

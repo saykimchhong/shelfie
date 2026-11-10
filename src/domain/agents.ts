@@ -15,6 +15,8 @@ export const agentEventSchema = z.object({
   status: agentStatusSchema,
   // What the step found, e.g. "Found 18 products, heard 16 prices".
   summary: z.string().optional(),
+  // How long the step took, once it's done or failed.
+  ms: z.number().nonnegative().optional(),
 });
 
 export type AgentEvent = z.infer<typeof agentEventSchema>;

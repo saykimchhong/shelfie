@@ -146,6 +146,10 @@ function Capture({ store, products }: { store: Store; products: Product[] }) {
 
     const controller = new AbortController();
     abortRef.current = controller;
+    // Where the wait went: before the first agent starts is prep, shrinking
+    // and the upload; the agents report their own times.
+    const startedAt = performance.now();
+    let firstStepAt: number | null = null;
     try {
       const result = await requestExtraction({
         video,
@@ -155,8 +159,16 @@ function Capture({ store, products }: { store: Store; products: Product[] }) {
         known: toKnownProducts(shelfProducts),
         idToken: await getIdToken(),
         signal: controller.signal,
-        onStep: (event) => setSteps((current) => [...current, event]),
+        onStep: (event) => {
+          firstStepAt ??= performance.now();
+          setSteps((current) => [...current, event]);
+        },
         onShrink: setShrinking,
+      });
+      console.info("[capture] timings", {
+        beforeAgentsMs: Math.round((firstStepAt ?? startedAt) - startedAt),
+        totalMs: Math.round(performance.now() - startedAt),
+        videoBytes: video.size,
       });
       const merge = mergeShelf(result.products, shelfProducts, {
         restock,

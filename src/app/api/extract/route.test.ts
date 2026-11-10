@@ -66,6 +66,19 @@ describe("requestExtraction against /api/extract", () => {
     expect(feedRows(steps).map((row) => row.status)).toEqual(["done", "done", "skipped", "done"]);
   });
 
+  it("logs where the time went, once per video", async () => {
+    const info = vi.spyOn(console, "info").mockImplementation(() => {});
+    await read([]);
+
+    const lines = info.mock.calls.map(([line]) => String(line)).filter((line) => line.includes("extract timings"));
+    expect(lines).toHaveLength(1);
+    const timings = JSON.parse(lines[0]);
+    expect(timings).toMatchObject({ provider: "mock", ok: true, products: 7 });
+    expect(Object.keys(timings.steps)).toEqual(["watcher", "priceMatcher", "checker"]);
+    expect(timings.totalMs).toBeGreaterThanOrEqual(timings.receivedMs);
+    info.mockRestore();
+  });
+
   it("shows the shelf matcher's summary when the shelf has products", async () => {
     const { steps } = await read([
       { id: "a", name: "Mama Tom Yum Noodles", price: 7 },

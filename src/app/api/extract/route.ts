@@ -1,4 +1,5 @@
 import { connection } from "next/server";
+import type { AgentStep } from "@/domain/agents";
 import { knownProductsSchema, type ExtractStreamMessage, type KnownProduct } from "@/domain/extraction";
 import { currencySchema, labelLanguageSchema } from "@/domain/store";
 import { NDJSON_CONTENT_TYPE, ndjsonStream } from "@/lib/ndjson";
@@ -24,6 +25,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const started = performance.now();
   try {
     await requireUser(request);
   } catch (error) {
@@ -32,6 +34,8 @@ export async function POST(request: Request) {
   }
 
   const form = await request.formData().catch(() => null);
+  // Mostly the phone's upload: the body is only fully read here.
+  const receivedMs = Math.round(performance.now() - started);
   const video = form?.get("video");
   const currency = currencySchema.safeParse(form?.get("currency"));
   const labelLanguage = labelLanguageSchema.safeParse(form?.get("labelLanguage") ?? "en");
@@ -57,18 +61,44 @@ export async function POST(request: Request) {
     known,
   };
 
+  // One log line per video: where the time went (Cloud Logging reads the JSON).
+  const timings: Timings = { receivedMs, videoBytes: hasVideo ? video.size : 0, steps: {} };
+
   const stream = ndjsonStream<ExtractStreamMessage>(async (send) => {
+    let ok = false;
     try {
-      const { provider, extraction } = await extractProducts(input, (event) => send({ type: "step", event }));
+      const { provider, extraction } = await extractProducts(
+        input,
+        (event) => {
+          if (event.ms !== undefined) timings.steps[event.step] = event.ms;
+          send({ type: "step", event });
+        },
+        { onWatcherTiming: ({ uploadMs, modelMs }) => Object.assign(timings, { geminiUploadMs: uploadMs, modelMs }) },
+      );
       send({ type: "result", result: { provider, ...extraction } });
+      timings.products = extraction.products.length;
+      ok = true;
     } catch (error) {
       console.error("Extraction failed", error);
       send({ type: "error", error: "We couldn't read that video. Try again with steady, well-lit footage." });
+    } finally {
+      const totalMs = Math.round(performance.now() - started);
+      console.info(JSON.stringify({ message: "extract timings", provider: extractionProvider(), ok, ...timings, totalMs }));
     }
   });
 
   return new Response(stream, { headers: { "Content-Type": NDJSON_CONTENT_TYPE, "Cache-Control": "no-store" } });
 }
+
+type Timings = {
+  receivedMs: number;
+  videoBytes: number;
+  // Sending the video on to Gemini, then Gemini reading it (real AI only).
+  geminiUploadMs?: number;
+  modelMs?: number;
+  steps: Partial<Record<AgentStep, number>>;
+  products?: number;
+};
 
 // Absent → no known products (a new shelf). null → present but invalid.
 function parseKnown(value: FormDataEntryValue | null | undefined): KnownProduct[] | null {

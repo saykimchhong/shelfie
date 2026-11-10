@@ -3,7 +3,8 @@ import { AGENT_STEPS, type AgentEvent, type AgentStatus, type AgentStep } from "
 // A step that hasn't reported yet is still waiting its turn.
 export type FeedStatus = AgentStatus | "waiting";
 
-export type FeedRow = { step: AgentStep; label: string; status: FeedStatus; line: string };
+// time: how long a finished step took, e.g. "6.1 s"; null until then.
+export type FeedRow = { step: AgentStep; label: string; status: FeedStatus; line: string; time: string | null };
 
 type StepCopy = { label: string; doing: string; done: string; skipped: string; failed: string };
 
@@ -56,6 +57,11 @@ export function feedRows(events: readonly AgentEvent[]): FeedRow[] {
         : status === "failed"
           ? copy.failed
           : (event?.summary ?? copy[status]);
-    return { step, label: copy.label, status, line };
+    return { step, label: copy.label, status, line, time: event?.ms === undefined ? null : formatDuration(event.ms) };
   });
+}
+
+// Code steps take milliseconds, AI steps seconds: show each in its own unit.
+export function formatDuration(ms: number): string {
+  return ms < 1000 ? `${Math.round(ms)} ms` : `${(ms / 1000).toFixed(1)} s`;
 }
