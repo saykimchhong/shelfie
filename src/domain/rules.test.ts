@@ -4,13 +4,12 @@ import { PRICE_UNITS } from "./product";
 import { CURRENCIES, FULFILLMENT_OFFERS, LABEL_LANGUAGES, MISSING_PRODUCT_ACTIONS } from "./store";
 import { TEMPLATES } from "./theme";
 
-// firestore.rules / storage.rules are the access control, so a value the app
-// can save but the rules don't list fails every save. Keep the lists in sync.
+// A value the app saves but the rules don't list fails every save.
 
 const firestoreRules = readFileSync(new URL("../../firestore.rules", import.meta.url), "utf8");
 const storageRules = readFileSync(new URL("../../storage.rules", import.meta.url), "utf8");
 
-// The quoted values in `<field> in [ ... ]`.
+// Quoted values in `<field> in [ ... ]`.
 function listIn(rules: string, field: string): string[] {
   const escaped = field.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const match = rules.match(new RegExp(`${escaped} in \\[([^\\]]*)\\]`));

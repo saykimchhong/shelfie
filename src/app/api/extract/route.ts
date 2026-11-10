@@ -61,7 +61,7 @@ export async function POST(request: Request) {
     known,
   };
 
-  // One log line per video: where the time went (Cloud Logging reads the JSON).
+  // One JSON log line per video.
   const timings: Timings = { receivedMs, videoBytes: hasVideo ? video.size : 0, steps: {} };
 
   const stream = ndjsonStream<ExtractStreamMessage>(async (send) => {
@@ -93,7 +93,7 @@ export async function POST(request: Request) {
 type Timings = {
   receivedMs: number;
   videoBytes: number;
-  // Sending the video on to Gemini, then Gemini reading it (real AI only).
+  // Real AI only.
   geminiUploadMs?: number;
   modelMs?: number;
   steps: Partial<Record<AgentStep, number>>;

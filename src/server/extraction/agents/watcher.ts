@@ -81,10 +81,8 @@ Prices: list every price the owner says, in ${currency}.
 }
 
 export type WatcherOptions = {
-  // How much Gemini reasons before it answers. Lower is faster; unset uses the
-  // model's default.
+  // Unset = the model's default (slow).
   thinkingLevel?: ThinkingLevel;
-  // Where the time went: sending the video to Gemini, then Gemini reading it.
   onTiming?: (timing: { uploadMs: number; modelMs: number }) => void;
 };
 

@@ -1,13 +1,7 @@
-// Times the real Watcher on a shelf video at each thinking level, and checks
-// every reading against a reference, so a faster setting can't quietly read
-// the shelf worse.
+// Times the real Watcher per thinking level and compares each reading with the
+// video's fixture (else the first reading).
 //
-//   npm run bench:watch -- sample-vdo/shoes-store.mp4 --levels default,low,minimal --runs 2
-//   npm run bench:watch -- <video> --restock      also times the Shelf matcher
-//
-// The reference is the video's recorded fixture (npm run record:watch) when
-// there is one, else the first reading. Either way it's an earlier reading,
-// not hand-checked truth.
+//   npm run bench:watch -- sample-vdo/shoes-store.mp4 --levels default,low --runs 2 [--restock]
 import { existsSync } from "node:fs";
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
@@ -48,7 +42,6 @@ const { values, positionals } = parseArgs({
   },
 });
 
-// Local secrets: .env.local when there is one, else .env (both git-ignored).
 const envFile = [".env.local", ".env"].find((file) => existsSync(file));
 if (!envFile) throw new Error("Put GEMINI_API_KEY in .env.local or .env");
 process.loadEnvFile(envFile);
@@ -86,11 +79,9 @@ type Result = {
   tokens?: Tokens;
   agreement?: Omit<Agreement, "pairs">;
   shelf?: { ms: number; correct: number; of: number };
-  // The reading itself, to compare settings by eye (saved with --out).
   watch?: Watch;
 };
 
-// Token use of one model, added up from its events.
 function tokenCounter(author: string) {
   const tokens: Tokens = { input: 0, thinking: 0, output: 0 };
   return {
@@ -118,8 +109,7 @@ async function watchOnce(level: string): Promise<{ watch: Watch; result: Partial
   return { watch, result: { totalMs: Math.round(performance.now() - started), ...timing, tokens: counter.tokens } };
 }
 
-// A restock of the reference shelf: every product the run shares with the
-// reference should come back with that product's id, the rest with none.
+// Restock of the reference shelf: shared products should match their reference id.
 async function matchShelf(level: string, watch: Watch, against: Watch, pairs: (number | null)[]) {
   const known = against.products.map((product, index) => ({
     id: `ref${index}`,

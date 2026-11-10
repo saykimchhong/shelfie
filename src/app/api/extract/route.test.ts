@@ -4,9 +4,7 @@ import { feedRows } from "@/features/capture/agentFeed";
 import { requestExtraction } from "@/features/capture/api";
 import { GET, POST } from "./route";
 
-// The whole capture wire, minus the network: the real /api/extract handler on
-// the mock AI streams to requestExtraction, whose step events feed the
-// activity feed. Only sign-in and Next's request scope are stubbed.
+// Real /api/extract (mock AI) → requestExtraction → activity feed; only auth is stubbed.
 
 vi.mock("@/server/auth", () => ({
   AuthError: class AuthError extends Error {},
@@ -18,7 +16,6 @@ vi.mock("next/server", async (importOriginal) => ({
   connection: async () => {},
 }));
 
-// The mock waits ~2 s so the feed is visible in the app; tests don't need to.
 vi.mock("@/server/extraction/mock", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/server/extraction/mock")>();
   return {

@@ -29,7 +29,6 @@ const { values, positionals } = parseArgs({
   },
 });
 
-// Local secrets: .env.local when there is one, else .env (both git-ignored).
 const envFile = [".env.local", ".env"].find((file) => existsSync(file));
 if (!envFile) throw new Error("Put GEMINI_API_KEY in .env.local or .env");
 process.loadEnvFile(envFile);

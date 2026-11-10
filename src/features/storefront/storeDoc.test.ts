@@ -3,8 +3,7 @@ import type { Product } from "@/domain/product";
 import { toPublicStore, toStore } from "@/lib/firebase/convert";
 import { DEFAULT_CHOICE, summarizeOrder } from "./order";
 
-// A store doc as Firestore returns it, through to what the storefront and the
-// order message see. Covers fields added after the first stores were created.
+// Firestore store doc → public store → order message.
 
 const doc = {
   ownerId: "seller",

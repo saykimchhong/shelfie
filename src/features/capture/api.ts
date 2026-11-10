@@ -33,6 +33,7 @@ export async function requestExtraction(input: {
   // The mock doesn't need the video (photos are grabbed from it right here in
   // the browser), so it's only uploaded when the real AI is on — and only if
   // it fits under the hosting platform's request limit.
+  const started = performance.now();
   const config = await extractionConfig(input.signal);
   let video = input.video;
   if (config.needsVideo && video.size > config.maxVideoBytes) {
@@ -65,11 +66,22 @@ export async function requestExtraction(input: {
     throw new Error(message ?? `Something went wrong (${response.status})`);
   }
 
+  let firstStepAt: number | null = null;
   for await (const line of readNdjson(response.body)) {
     const message = extractStreamMessageSchema.parse(line);
-    if (message.type === "step") input.onStep?.(message.event);
-    else if (message.type === "error") throw new Error(message.error);
-    else return message.result;
+    if (message.type === "step") {
+      firstStepAt ??= performance.now();
+      input.onStep?.(message.event);
+    } else if (message.type === "error") throw new Error(message.error);
+    else {
+      // Before the first agent: prep, shrinking and upload.
+      console.info("[capture] timings", {
+        beforeAgentsMs: Math.round((firstStepAt ?? started) - started),
+        totalMs: Math.round(performance.now() - started),
+        videoBytes: video.size,
+      });
+      return message.result;
+    }
   }
   throw new Error("The connection closed before the products arrived. Try again.");
 }

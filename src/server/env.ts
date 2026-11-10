@@ -8,9 +8,7 @@ const serverEnvSchema = z
     SHELFIE_AI: z.enum(["mock", "gemini"]).default("mock"),
     GEMINI_API_KEY: z.string().optional(),
     GEMINI_MODEL: z.string().min(1).default("gemini-3-flash-preview"),
-    // How much the shelf-reading agents think before answering. On the sample
-    // video "low" read the shelf in ~5 s; the model's own default ("default")
-    // took 20-60 s for a somewhat fuller list (npm run bench:watch).
+    // "low" ≈ 5 s a video; "default" took 20–60 s (npm run bench:watch).
     GEMINI_THINKING: z.enum(["default", "minimal", "low", "medium", "high"]).default("low"),
     // Optional: the image model for "AI photo" (src/server/photos.ts has fallbacks).
     GEMINI_IMAGE_MODEL: z.string().min(1).optional(),
