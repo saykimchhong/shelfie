@@ -79,7 +79,7 @@ export const SHOP_TYPE_INFO: Record<ShopType, ShopTypeInfo> = {
     priceUnit: "each",
     accent: "#334155",
     emptyTitle: "New collection coming soon",
-    noteHint: "Size and colour, e.g. 42, black",
+    noteHint: "Note, e.g. gift wrap please",
     orderTime: false,
     manyItems: false,
     sells: "a fashion shop: its products are clothes, shoes or accessories, so names include colour and style",

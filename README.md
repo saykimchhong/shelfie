@@ -101,6 +101,7 @@ Reading a shelf video is a [Google ADK](https://github.com/google/adk-js) workfl
 A store's look is `theme: { template, accent }`:
 
 - **Shop types** (`src/domain/shop.ts`): what the seller picks first, "What do you sell?". Each suggests a layout, color and price unit (all still changeable), gives the storefront its own banner and shapes (`data-style` in `StorefrontView.module.scss`: warm glow for food, leafy for markets, pastel and rounder for bakeries, quiet and sharp for fashion, a clean wash for groceries), previews its own sample goods (`src/domain/samples.ts`, local dishes and produce per label language), tells the AI what kind of shop it's reading, and turns on what that business needs in the cart: a note per item (food, fashion, fresh market, bakery, each with its own hint, e.g. "less spicy" or "size 42, black") and when the customer wants it (food and bakery: as soon as possible, or a day and time). Both go into the WhatsApp/LINE message.
+- **Sizes and colours** (`sizes`, `colors` on a product): typed with commas in the product editor (always shown for fashion, one tap away for other shops, e.g. drink or cake sizes). On the storefront, "+" opens a chooser; each size and colour is its own cart line, and the message says "1 × Linen Shirt (Size M, Black)". Same price for every choice.
 - **Search and weights** (`src/features/storefront/search.ts`, `quantity.ts`): a search box appears once a store has 8 products (grocery, fresh market) or 16 (others). It matches name, label name, category and shelf, by substring, so Thai and Khmer work. Per-kg items start at 1 kg and step by 0.5 kg ("1.5 kg × Mango" in the message); the cart counts them as one item.
 - **Opening hours** (`src/domain/hours.ts`): optional for every shop. The storefront shows "Open · until 21:00" or "Closed · opens 07:00", worked out in the seller's time zone, after hydration (the page is cached). While a food or bakery shop is closed, "as soon as possible" becomes "when you open".
 - **Templates:** `grid` (most shops), `list` (many small items), `showcase` (a few special items), `compact` (big catalogs, three across on a phone), `menu` (food and drinks: name ··· price, in sections) and `shelves` (many sections, each a row that scrolls sideways). Menu and shelves group by shelf, or by category when the shop has one shelf or none; their chips jump to a section.
@@ -179,6 +180,7 @@ stores/{slug}                       slug = document id = public URL
 
 stores/{slug}/products/{id}
   name, localName?, price (number | null = "Ask"), unit? (each|kg|bunch|pack, missing = the store's priceUnit),
+  sizes? [≤20], colors? [≤20],
   category?, shelf? (≤40),
   inStock, imageUrl?, position, createdAt, updatedAt
 ```

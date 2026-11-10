@@ -29,7 +29,7 @@ describe("store docs to the public storefront", () => {
     expect(store).not.toBeNull();
     expect(store.fulfillment).toBeUndefined();
     expect(store.paymentQrUrl).toBeUndefined();
-    expect(orderText(summarizeOrder(toPublicStore(store), [{ product: rice, quantity: 1 }]).whatsappHref)).toMatch(
+    expect(orderText(summarizeOrder(toPublicStore(store), [{ key: rice.id, product: rice, quantity: 1 }]).whatsappHref)).toMatch(
       /I'll pick it up\.$/,
     );
   });
@@ -43,7 +43,7 @@ describe("store docs to the public storefront", () => {
 
   it("orders for delivery from a delivery-only store, whatever the cart's default choice", () => {
     const store = toPublicStore(toStore("kamal-stores", { ...doc, fulfillment: "delivery" })!);
-    const summary = summarizeOrder(store, [{ product: rice, quantity: 1 }], DEFAULT_CHOICE);
+    const summary = summarizeOrder(store, [{ key: rice.id, product: rice, quantity: 1 }], DEFAULT_CHOICE);
     expect(summary.method).toBe("delivery");
     expect(orderText(summary.whatsappHref)).toMatch(/Please deliver it\. I'll send the address\.$/);
   });
@@ -55,7 +55,7 @@ describe("store docs to the public storefront", () => {
 
   it("caps a delivery address in the order message", () => {
     const store = toPublicStore(toStore("kamal-stores", { ...doc, fulfillment: "both" })!);
-    const summary = summarizeOrder(store, [{ product: rice, quantity: 1 }], {
+    const summary = summarizeOrder(store, [{ key: rice.id, product: rice, quantity: 1 }], {
       ...DEFAULT_CHOICE,
       method: "delivery",
       address: "x".repeat(500),

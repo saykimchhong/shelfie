@@ -53,3 +53,20 @@ export function QuantityControl({
     </motion.div>
   );
 }
+
+// For products with sizes or colours: "+" opens the chooser; the count is
+// everything of this product already in the cart.
+export function ChooseButton({ quantity, onChoose, label }: { quantity: number; onChoose: () => void; label: string }) {
+  return (
+    <div className={styles.control}>
+      {quantity > 0 ? (
+        <span key={quantity} className={styles.count} aria-label={`${quantity} in your order`}>
+          {formatQuantity(quantity)}
+        </span>
+      ) : null}
+      <button type="button" className={styles.add} aria-label={`Choose options for ${label}`} onClick={onChoose}>
+        <Plus aria-hidden />
+      </button>
+    </div>
+  );
+}

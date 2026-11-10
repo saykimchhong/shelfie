@@ -5,7 +5,7 @@ import { Badge, Text, Thumb } from "@/components/ui";
 import type { PriceUnit, Product } from "@/domain/product";
 import type { Currency } from "@/domain/store";
 import { formatPrice, perUnit } from "@/lib/format";
-import { QuantityControl } from "./QuantityControl";
+import { ChooseButton, QuantityControl } from "./QuantityControl";
 import styles from "./ProductCard.module.scss";
 
 export type ProductCardProps = {
@@ -16,6 +16,8 @@ export type ProductCardProps = {
   quantity: number;
   // Omitted when the store has no way to take orders.
   onQuantityChange?: (quantity: number) => void;
+  // Instead of the stepper, for products with sizes or colours.
+  onChoose?: () => void;
 };
 
 export function ProductCard({
@@ -24,6 +26,7 @@ export function ProductCard({
   unit,
   quantity,
   onQuantityChange,
+  onChoose,
   variant = "grid",
 }: ProductCardProps & { variant?: "grid" | "showcase" | "compact" }) {
   // Compact cards are three across: no room for the label name.
@@ -45,9 +48,13 @@ export function ProductCard({
           </Badge>
         ) : null}
         {/* Floats on the photo's corner, so the stepper can grow without covering the price. */}
-        {onQuantityChange && product.inStock ? (
+        {product.inStock && (onChoose || onQuantityChange) ? (
           <div className={styles.quantity}>
-            <QuantityControl quantity={quantity} onChange={onQuantityChange} label={product.name} unit={unit} />
+            {onChoose ? (
+              <ChooseButton quantity={quantity} onChoose={onChoose} label={product.name} />
+            ) : onQuantityChange ? (
+              <QuantityControl quantity={quantity} onChange={onQuantityChange} label={product.name} unit={unit} />
+            ) : null}
           </div>
         ) : null}
       </div>

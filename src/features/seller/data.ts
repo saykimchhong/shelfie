@@ -166,7 +166,7 @@ export async function updateStore(slug: string, patch: StorePatch): Promise<void
   });
 }
 
-const OPTIONAL_PRODUCT_FIELDS = ["localName", "unit", "category", "shelf", "imageUrl"] as const;
+const OPTIONAL_PRODUCT_FIELDS = ["localName", "unit", "category", "shelf", "imageUrl", "sizes", "colors"] as const;
 
 // Firestore caps a batch at 500 writes.
 const BATCH_LIMIT = 500;

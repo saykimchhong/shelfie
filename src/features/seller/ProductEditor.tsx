@@ -1,9 +1,16 @@
 "use client";
 
-import { ImageOff, ImagePlus, Sparkles, Trash2 } from "lucide-react";
+import { ImageOff, ImagePlus, Plus, Sparkles, Trash2 } from "lucide-react";
 import { useId, useState, type FormEvent } from "react";
 import { Button, Segmented, Sheet, Spinner, Switch, TextField, Thumb } from "@/components/ui";
-import { SHELF_NAME_MAX, unitOf, type PriceUnit, type Product, type ProductInput } from "@/domain/product";
+import {
+  parseOptions,
+  SHELF_NAME_MAX,
+  unitOf,
+  type PriceUnit,
+  type Product,
+  type ProductInput,
+} from "@/domain/product";
 import { canonicalShelf } from "@/domain/shelf";
 import type { Store } from "@/domain/store";
 import { generateProductPhoto, removeImage, saveProductImage, urlToBlob, useObjectUrl } from "@/features/media";
@@ -61,6 +68,12 @@ function EditorForm({
   const [category, setCategory] = useState(product?.category ?? "");
   const [shelf, setShelf] = useState(product?.shelf ?? "");
   const [inStock, setInStock] = useState(product?.inStock ?? true);
+  const [sizes, setSizes] = useState(product?.sizes?.join(", ") ?? "");
+  const [colors, setColors] = useState(product?.colors?.join(", ") ?? "");
+  // Always there for fashion; one tap away for other shops (drink sizes, cake sizes).
+  const [showOptions, setShowOptions] = useState(
+    store.shopType === "fashion" || Boolean(product?.sizes?.length || product?.colors?.length),
+  );
   const [photo, setPhoto] = useState<PhotoState>({ kind: "kept" });
   const [generating, setGenerating] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -105,6 +118,9 @@ function EditorForm({
         category: category.trim() || undefined,
         shelf: canonicalShelf(shelf, shelves) || undefined,
         inStock,
+        // Empty → undefined, which removes them.
+        sizes: parseOptions(sizes).length > 0 ? parseOptions(sizes) : undefined,
+        colors: parseOptions(colors).length > 0 ? parseOptions(colors) : undefined,
       };
       const imageUrl =
         photo.kind === "new" ? await saveProductImage(store, photo.blob) : photo.kind === "removed" ? undefined : null;
@@ -190,6 +206,27 @@ function EditorForm({
         <TextField label="Category" value={category} onChange={(event) => setCategory(event.target.value)} />
       </div>
       <Segmented label="Price per" options={PRICE_UNIT_OPTIONS} value={unit} onChange={setUnit} />
+      {showOptions ? (
+        <div className={styles.pair}>
+          <TextField
+            label="Sizes"
+            placeholder="S, M, L or 38, 39, 40"
+            hint="Comma between each"
+            value={sizes}
+            onChange={(event) => setSizes(event.target.value)}
+          />
+          <TextField
+            label="Colours"
+            placeholder="Black, White"
+            value={colors}
+            onChange={(event) => setColors(event.target.value)}
+          />
+        </div>
+      ) : (
+        <Button variant="ghost" size="sm" icon={<Plus />} onClick={() => setShowOptions(true)} className={styles.addOptions}>
+          Add sizes or colours
+        </Button>
+      )}
       <TextField
         label="Shelf"
         placeholder="e.g. Drinks"

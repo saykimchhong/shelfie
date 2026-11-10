@@ -10,14 +10,15 @@ import { LogoMark } from "@/components/brand/Logo";
 import { ScrollStagger } from "@/components/motion/ScrollStagger";
 import { ThemeScope } from "@/components/theme/ThemeScope";
 import { Badge, Button, Container, EmptyState, Text } from "@/components/ui";
-import { unitOf, type Product } from "@/domain/product";
+import { hasOptions, unitOf, type Product, type Variant } from "@/domain/product";
 import { sectionsOf } from "@/domain/shelf";
 import { DEFAULT_SHOP_TYPE, shopTypeOf } from "@/domain/shop";
 import type { PublicStore } from "@/domain/store";
 import { DEFAULT_THEME, type Template } from "@/domain/theme";
 import { initials } from "@/lib/format";
+import { OptionSheet } from "./OptionSheet";
 import { OrderBar } from "./OrderBar";
-import type { CartLine } from "./order";
+import { cartLines, lineKey, quantityOf } from "./order";
 import { ProductCard } from "./ProductCard";
 import { ProductListItem } from "./ProductListItem";
 import { ProductMenuItem } from "./ProductMenuItem";
@@ -37,8 +38,12 @@ export function StorefrontView({ store, products, embedded }: StorefrontViewProp
   const chipId = useId();
   const sectionId = useId();
   const reduceMotion = useReducedMotion();
+  // Quantities and notes by cart line (product + size + colour, see lineKey).
   const [cart, setCart] = useState<Record<string, number>>({});
   const [notes, setNotes] = useState<Record<string, string>>({});
+  // The product whose sizes or colours are being chosen; kept while the sheet
+  // closes. A new id per opening starts each choice fresh.
+  const [choosing, setChoosing] = useState<{ product: Product; open: boolean; id: number } | null>(null);
   const hours = useOpenState(store.hours, store.timeZone);
   const [category, setCategory] = useState<string | null>(null);
   const [query, setQuery] = useState("");
@@ -60,36 +65,45 @@ export function StorefrontView({ store, products, embedded }: StorefrontViewProp
   function jumpTo(index: number) {
     document.getElementById(sectionAnchor(index))?.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth" });
   }
-  const lines: CartLine[] = products
-    .filter((product) => cart[product.id])
-    .map((product) => ({ product, quantity: cart[product.id], note: notes[product.id] }));
+  const lines = cartLines(products, cart, notes);
 
-  function setQuantity(productId: string, quantity: number) {
+  function setQuantity(key: string, quantity: number) {
     setCart((current) => {
       const next = { ...current };
-      if (quantity <= 0) delete next[productId];
-      else next[productId] = quantity;
+      if (quantity <= 0) delete next[key];
+      else next[key] = quantity;
       return next;
     });
-    if (quantity <= 0) setNote(productId, "");
+    if (quantity <= 0) setNote(key, "");
   }
 
-  function setNote(productId: string, note: string) {
+  function setNote(key: string, note: string) {
     setNotes((current) => {
       const next = { ...current };
-      if (note) next[productId] = note;
-      else delete next[productId];
+      if (note) next[key] = note;
+      else delete next[key];
       return next;
     });
   }
 
-  const itemProps = (product: Product) => ({
-    product,
-    currency: store.currency,
-    unit: unitOf(product, store.priceUnit),
-    quantity: cart[product.id] ?? 0,
-    onQuantityChange: canOrder ? (quantity: number) => setQuantity(product.id, quantity) : undefined,
-  });
+  function addChosen(product: Product, variant: Variant) {
+    const key = lineKey(product.id, variant);
+    setQuantity(key, (cart[key] ?? 0) + 1);
+    setChoosing((current) => current && { ...current, open: false });
+  }
+
+  const itemProps = (product: Product) => {
+    const key = lineKey(product.id);
+    const choose = hasOptions(product);
+    return {
+      product,
+      currency: store.currency,
+      unit: unitOf(product, store.priceUnit),
+      quantity: choose ? quantityOf(lines, product.id) : (cart[key] ?? 0),
+      onQuantityChange: canOrder && !choose ? (quantity: number) => setQuantity(key, quantity) : undefined,
+      onChoose: canOrder && choose ? () => setChoosing({ product, open: true, id: Date.now() }) : undefined,
+    };
+  };
 
   return (
     <ThemeScope
@@ -243,6 +257,18 @@ export function StorefrontView({ store, products, embedded }: StorefrontViewProp
           Made with Shelfie
         </Link>
       </Container>
+
+      {choosing ? (
+        <OptionSheet
+          key={choosing.id}
+          product={choosing.product}
+          open={choosing.open}
+          currency={store.currency}
+          unit={unitOf(choosing.product, store.priceUnit)}
+          onClose={() => setChoosing({ ...choosing, open: false })}
+          onAdd={(variant) => addChosen(choosing.product, variant)}
+        />
+      ) : null}
 
       <OrderBar
         store={store}

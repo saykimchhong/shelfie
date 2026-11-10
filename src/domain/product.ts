@@ -16,6 +16,12 @@ export function unitOf(product: { unit?: PriceUnit }, shopDefault?: PriceUnit): 
   return product.unit ?? shopDefault ?? DEFAULT_PRICE_UNIT;
 }
 
+// Sizes and colours a customer picks from, e.g. ["S", "M", "L"]. Same price
+// for every choice. Keep the caps in sync with validProduct() in firestore.rules.
+export const OPTIONS_MAX = 20;
+export const OPTION_VALUE_MAX = 24;
+const optionsSchema = z.array(z.string().trim().min(1).max(OPTION_VALUE_MAX)).max(OPTIONS_MAX);
+
 export const productSchema = z.object({
   id: z.string(),
   name: z.string().trim().min(1).max(120),
@@ -31,6 +37,8 @@ export const productSchema = z.object({
   shelf: z.string().trim().max(SHELF_NAME_MAX).optional(),
   inStock: z.boolean(),
   imageUrl: z.url().optional(),
+  sizes: optionsSchema.optional(),
+  colors: optionsSchema.optional(),
   // Sort order on the shelf; extraction keeps the order things appear in the video.
   position: z.number(),
   createdAt: z.number(),
@@ -48,6 +56,31 @@ export const productInputSchema = productSchema.pick({
   shelf: true,
   inStock: true,
   imageUrl: true,
+  sizes: true,
+  colors: true,
 });
 
 export type ProductInput = z.infer<typeof productInputSchema>;
+
+// "S, M, L" → ["S", "M", "L"]: trimmed, no repeats, capped.
+export function parseOptions(text: string): string[] {
+  const values = text
+    .split(/[,\n]+/)
+    .map((value) => value.trim().replace(/\s+/g, " ").slice(0, OPTION_VALUE_MAX))
+    .filter(Boolean);
+  const firstSpelling = new Map<string, string>();
+  for (const value of values) if (!firstSpelling.has(value.toLocaleLowerCase())) firstSpelling.set(value.toLocaleLowerCase(), value);
+  return [...firstSpelling.values()].slice(0, OPTIONS_MAX);
+}
+
+export function hasOptions(product: Pick<Product, "sizes" | "colors">): boolean {
+  return Boolean(product.sizes?.length || product.colors?.length);
+}
+
+// What the customer picked.
+export type Variant = { size?: string; color?: string };
+
+// "Size M, Black"
+export function variantLabel(variant: Variant | undefined): string {
+  return [variant?.size ? `Size ${variant.size}` : null, variant?.color].filter(Boolean).join(", ");
+}

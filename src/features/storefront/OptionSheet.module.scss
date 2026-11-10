@@ -1,0 +1,66 @@
+@use "styles" as *;
+
+.summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
+}
+
+.thumb {
+  width: 72px;
+  flex-shrink: 0;
+}
+
+.group {
+  margin: 0 0 var(--space-5);
+  padding: 0;
+  border: 0;
+}
+
+.legend {
+  margin-bottom: var(--space-2);
+  padding: 0;
+  color: var(--fg-muted);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.choice {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 48px;
+  height: 44px;
+  padding: 0 var(--space-4);
+  justify-content: center;
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+  font-weight: 600;
+  @include pressable;
+
+  @include hover {
+    background: var(--surface-2);
+  }
+}
+
+.chosen {
+  background: var(--brand-soft);
+  color: var(--brand-text);
+  box-shadow: 0 0 0 2px var(--brand);
+}
+
+// Ringed so white and black both show on any background.
+.dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--dot);
+  box-shadow: 0 0 0 1px color-mix(in oklab, var(--fg) 25%, transparent);
+}

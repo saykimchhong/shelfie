@@ -84,6 +84,9 @@ service cloud.firestore {
         && data.position is number
         && validUnit(data, 'unit')
         && (!('shelf' in data) || (data.shelf is string && data.shelf.size() <= 40))
+        // Sizes and colours (src/domain/product.ts OPTIONS_MAX).
+        && (!('sizes' in data) || (data.sizes is list && data.sizes.size() <= 20))
+        && (!('colors' in data) || (data.colors is list && data.colors.size() <= 20))
         // Photos may be inline data URLs for now (src/features/media/storage.ts):
         // cap them so a product doc stays far below Firestore's 1 MB limit.
         && (!('imageUrl' in data) || (data.imageUrl is string && data.imageUrl.size() <= 250000));

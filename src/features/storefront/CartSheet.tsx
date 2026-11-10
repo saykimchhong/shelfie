@@ -11,7 +11,7 @@ import {
   type FulfillmentMethod,
   type PublicStore,
 } from "@/domain/store";
-import { unitOf, type PriceUnit } from "@/domain/product";
+import { unitOf, variantLabel, type PriceUnit } from "@/domain/product";
 import { shopTypeOf } from "@/domain/shop";
 import { ORDER_NOTE_MAX } from "@/lib/contact";
 import { formatPrice, perUnit } from "@/lib/format";
@@ -42,8 +42,8 @@ export function CartSheet({
   summary: OrderSummary;
   choice: FulfillmentChoice;
   onChoiceChange: (choice: FulfillmentChoice) => void;
-  onQuantityChange: (productId: string, quantity: number) => void;
-  onNoteChange: (productId: string, note: string) => void;
+  onQuantityChange: (key: string, quantity: number) => void;
+  onNoteChange: (key: string, note: string) => void;
   // "Closed · opens 07:00" while the shop is closed; null when open or unknown.
   closedLabel: string | null;
   onClear: () => void;
@@ -70,9 +70,9 @@ export function CartSheet({
     >
       <ul className={styles.lines}>
         <AnimatePresence initial={false} mode="popLayout">
-          {lines.map(({ product, quantity, note }) => (
+          {lines.map(({ key, product, quantity, note, variant }) => (
             <motion.li
-              key={product.id}
+              key={key}
               layout="position"
               className={styles.line}
               exit={{ opacity: 0, x: -32, transition: { duration: 0.16, ease: [0.4, 0, 1, 1] } }}
@@ -83,6 +83,11 @@ export function CartSheet({
                 <Text weight={600} clamp={1}>
                   {product.name}
                 </Text>
+                {variant ? (
+                  <Text size="sm" weight={600} tone="brand">
+                    {variantLabel(variant)}
+                  </Text>
+                ) : null}
                 <Text size="sm" tone="muted">
                   {product.price === null ? "Price on request" : unitPrice(product.price, store, unitOf(product, store.priceUnit))}
                 </Text>
@@ -90,14 +95,14 @@ export function CartSheet({
               <QuantityControl
                 unit={unitOf(product, store.priceUnit)}
                 quantity={quantity}
-                onChange={(next) => onQuantityChange(product.id, next)}
+                onChange={(next) => onQuantityChange(key, next)}
                 label={product.name}
               />
               {type.noteHint ? (
                 <input
                   className={styles.note}
                   value={note ?? ""}
-                  onChange={(event) => onNoteChange(product.id, event.target.value)}
+                  onChange={(event) => onNoteChange(key, event.target.value)}
                   placeholder={type.noteHint}
                   maxLength={ORDER_NOTE_MAX}
                   aria-label={`Note for ${product.name}`}

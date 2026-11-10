@@ -1,4 +1,4 @@
-import { unitOf, type Product } from "@/domain/product";
+import { unitOf, variantLabel, type Product, type Variant } from "@/domain/product";
 import { shopTypeOf } from "@/domain/shop";
 import {
   DEFAULT_FULFILLMENT,
@@ -10,7 +10,41 @@ import {
 import { lineLink, orderMessage, whatsappLink } from "@/lib/contact";
 import { formatPrice } from "@/lib/format";
 
-export type CartLine = { product: Product; quantity: number; note?: string };
+// One line per product, size and colour.
+export type CartLine = { key: string; product: Product; quantity: number; variant?: Variant; note?: string };
+
+export function lineKey(productId: string, variant: Variant = {}): string {
+  return JSON.stringify([productId, variant.size ?? null, variant.color ?? null]);
+}
+
+function parseLineKey(key: string): { productId: string; variant?: Variant } {
+  const [productId, size, color] = JSON.parse(key) as [string, string | null, string | null];
+  return { productId, variant: size || color ? { size: size ?? undefined, color: color ?? undefined } : undefined };
+}
+
+// The cart's lines in shelf order (products come sorted), then in the order added.
+export function cartLines(
+  products: readonly Product[],
+  quantities: Readonly<Record<string, number>>,
+  notes: Readonly<Record<string, string>> = {},
+): CartLine[] {
+  const position = new Map(products.map((product, index) => [product.id, index]));
+  return Object.entries(quantities)
+    .flatMap(([key, quantity]) => {
+      const { productId, variant } = parseLineKey(key);
+      const index = position.get(productId);
+      return index === undefined || quantity <= 0
+        ? []
+        : [{ key, product: products[index], quantity, variant, note: notes[key], index }];
+    })
+    .sort((a, b) => a.index - b.index)
+    .map(({ index: _index, ...line }) => line);
+}
+
+// How many of a product are in the cart, over all its sizes and colours.
+export function quantityOf(lines: readonly CartLine[], productId: string): number {
+  return lines.filter((line) => line.product.id === productId).reduce((sum, line) => sum + line.quantity, 0);
+}
 
 // What the customer chose in the cart. method only matters when the store
 // offers both; when/at only for shop types that ask for a time.
@@ -76,7 +110,7 @@ export function summarizeOrder(
   const message = orderMessage({
     storeName: store.name,
     lines: lines.map((line) => ({
-      name: line.product.name,
+      name: line.variant ? `${line.product.name} (${variantLabel(line.variant)})` : line.product.name,
       quantity: line.quantity,
       unit: unitOf(line.product, store.priceUnit),
       lineTotal: line.product.price === null ? null : line.product.price * line.quantity,

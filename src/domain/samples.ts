@@ -15,6 +15,8 @@ type SampleItem = {
   category: string;
   // Missing = the shop's own unit.
   unit?: PriceUnit;
+  sizes?: string[];
+  colors?: string[];
 };
 
 type Item = [name: string, localName: string | null, usd: number, category: string, unit?: PriceUnit];
@@ -129,6 +131,17 @@ const BAKERY = items([
   ["Custom Birthday Cake", null, 30, "Made to order"],
 ]);
 
+// Sizes and colours to choose from, by sample name.
+const OPTIONS: Record<string, Pick<SampleItem, "sizes" | "colors">> = {
+  "Leather Loafers": { sizes: ["39", "40", "41", "42", "43", "44"], colors: ["Black", "Brown"] },
+  "Canvas Sneakers": { sizes: ["38", "39", "40", "41", "42", "43"], colors: ["White", "Navy"] },
+  "Linen Shirt": { sizes: ["S", "M", "L", "XL"], colors: ["White", "Blue", "Black"] },
+  "Cotton Summer Dress": { sizes: ["S", "M", "L"], colors: ["Yellow", "Pink"] },
+  "Silk Scarf": { colors: ["Red", "Green", "Blue"] },
+  "Custom Birthday Cake": { sizes: ["6 inch", "8 inch", "10 inch"] },
+  "Iced Latte": { sizes: ["Regular", "Large"] },
+};
+
 function catalogFor(language: LabelLanguage, shopType?: ShopType): SampleItem[] {
   if (shopType === "fashion") return FASHION;
   if (shopType === "bakery") return BAKERY;
@@ -206,6 +219,8 @@ export type SampleProduct = {
   price: number;
   category: string;
   unit?: PriceUnit;
+  sizes?: string[];
+  colors?: string[];
 };
 
 // General shops and groceries get the pantry; other types their own goods.
@@ -216,6 +231,7 @@ export function sampleCatalog(language: LabelLanguage, currency: Currency, shopT
     price: samplePrice(item.usd, currency),
     category: item.category,
     unit: item.unit,
+    ...(shopType ? OPTIONS[item.name] : undefined),
   }));
 }
 
@@ -321,6 +337,8 @@ export function sampleStorefront(
     name: item.name,
     localName: item.localName ?? undefined,
     unit: item.unit,
+    sizes: item.sizes,
+    colors: item.colors,
     // Show the "Ask" and "Sold out" states too.
     price: index === 6 ? null : item.price,
     category: item.category,

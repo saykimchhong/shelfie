@@ -24,8 +24,8 @@ export function OrderBar({
 }: {
   store: PublicStore;
   lines: CartLine[];
-  onQuantityChange: (productId: string, quantity: number) => void;
-  onNoteChange: (productId: string, note: string) => void;
+  onQuantityChange: (key: string, quantity: number) => void;
+  onNoteChange: (key: string, note: string) => void;
   onClear: () => void;
 }) {
   const [cartOpen, setCartOpen] = useState(false);
@@ -35,10 +35,10 @@ export function OrderBar({
   // With both on offer, the customer picks in the cart before sending.
   const mustChoose = (store.fulfillment ?? DEFAULT_FULFILLMENT) === "both";
 
-  function changeQuantity(productId: string, quantity: number) {
+  function changeQuantity(key: string, quantity: number) {
     // Removing the last item closes the cart instead of leaving it empty.
     if (quantity <= 0 && lines.length === 1) setCartOpen(false);
-    onQuantityChange(productId, quantity);
+    onQuantityChange(key, quantity);
   }
 
   function clear() {
