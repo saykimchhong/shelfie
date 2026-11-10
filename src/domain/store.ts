@@ -22,6 +22,15 @@ export const LABEL_LANGUAGES = ["en", "km", "si", "ta", "th"] as const;
 export const labelLanguageSchema = z.enum(LABEL_LANGUAGES);
 export type LabelLanguage = z.infer<typeof labelLanguageSchema>;
 
+// For AI prompts.
+export const LANGUAGE_NAMES: Record<LabelLanguage, string> = {
+  en: "English",
+  km: "Khmer",
+  si: "Sinhala",
+  ta: "Tamil",
+  th: "Thai",
+};
+
 export const STORE_DESCRIPTION_MAX = 500;
 
 // Restocking re-films one shelf. This is what happens, by default, to that

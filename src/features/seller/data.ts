@@ -177,12 +177,12 @@ async function commitInBatches(writes: Write[]): Promise<void> {
 
 export type ProductUpdate = { id: string; patch: Partial<ProductInput> };
 
-// Everything one shelf video changes, saved together: new products after the
-// existing ones (positions from startPosition, in video order) and updates to
-// known ones (new price, back in stock, sold out).
+// Everything one shelf video (or one "Tell AI" message) changes, saved
+// together: new products after the existing ones (positions from
+// startPosition, in order), updates to known ones, and removed ones.
 export async function saveProductChanges(
   slug: string,
-  changes: { add: ProductInput[]; update: ProductUpdate[] },
+  changes: { add: ProductInput[]; update: ProductUpdate[]; remove?: string[] },
   startPosition: number,
 ): Promise<void> {
   await commitInBatches([
@@ -200,6 +200,7 @@ export async function saveProductChanges(
         updatedAt: serverTimestamp(),
       });
     }),
+    ...(changes.remove ?? []).map((id) => (batch: WriteBatch) => batch.delete(doc(productsRef(slug), id))),
   ]);
 }
 

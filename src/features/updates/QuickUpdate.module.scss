@@ -1,0 +1,86 @@
+@use "styles" as *;
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: 700;
+
+  svg {
+    width: 18px;
+    height: 18px;
+    color: var(--accent);
+  }
+}
+
+.input {
+  width: 100%;
+  min-height: 3.2em;
+  padding: var(--space-3);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+  color: var(--fg);
+  font: inherit;
+  line-height: var(--leading-snug);
+  resize: none;
+  field-sizing: content;
+  outline: none;
+  transition: opacity var(--dur-base) var(--ease-out);
+
+  &::placeholder {
+    color: var(--fg-subtle);
+  }
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+  }
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+// Recording light: a soft repeating pulse; steady for reduced motion.
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: recording 1.2s ease-in-out infinite;
+
+  @include reduced-motion {
+    animation: none;
+  }
+}
+
+.status {
+  animation: appear 0.2s var(--ease-out) backwards;
+}
+
+@keyframes recording {
+  50% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+}
+
+@keyframes appear {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}

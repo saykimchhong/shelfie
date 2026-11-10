@@ -68,6 +68,7 @@ The whole seller flow (film → check → photos → store) runs today without a
 | --- | --- | --- | --- |
 | Video → products | `SHELFIE_AI=mock`: the same agent pipeline, with sample products for the store's language and currency in place of the two Gemini steps | `SHELFIE_AI=gemini` + `GEMINI_API_KEY` | `src/server/extraction/` |
 | Default product photo | Frame grabbed from the seller's own video, in the browser (free) | (already real) | `src/features/media/video.ts` |
+| "Tell AI" updates | Mock: a few English patterns ("Milo 30", "rice sold out", "add eggs 4 each"); voice needs the real AI | `SHELFIE_AI=gemini`: the Update reader reads typed or spoken messages in any shop language | `src/server/updates/` |
 | "AI photo" | Mock: local canvas "studio shot" of that frame | Real AI: Gemini image model via `POST /api/photos`. Cleans the frame up, or draws the product from its name when the frame is wrong. Retries once when busy; on failure the seller keeps their photo and can try again | `src/server/photos.ts`, `src/features/media/generate.ts` |
 | Photo storage | Firebase Storage, `sellers/{uid}/stores/{slug}/…` (inline data URL only when no bucket is configured) | (already real) | `src/features/media/storage.ts` |
 
@@ -83,9 +84,11 @@ Reading a shelf video is a [Google ADK](https://github.com/google/adk-js) workfl
 | **Price matcher** | Ties each price to its product by time | Code |
 | **Shelf matcher** | Restock only: finds the products the shop already sells. If it fails, the review still matches by name | Gemini: text only |
 | **Checker** | Writes the "double-check" notes: no price, two prices, a 3× price jump, duplicates, low confidence | Code |
+| **Update reader** | Separate from the video: turns a typed message or voice note ("Coke is 25 now, Milo sold out, add eggs 4 each") into price, name and stock changes, new products and removals. Only real differences to listed products are kept | Gemini: text or audio, one call |
 | **Photo finder** | After the read, in the background: picks each new product's sharpest still (3 per product) and boxes it there, so its photo is cropped to the right item. If it fails, the photo uses the Watcher's box | Gemini: images, 6 products per call |
 
 - `POST /api/extract` streams each step's progress (`AgentEvent` in `src/domain/agents.ts`), then the result, for the activity feed.
+- `POST /api/updates` runs the Update reader (`src/domain/updates.ts`). The phone records voice as 16 kHz WAV, so every browser sends the same format. The seller ticks which changes to keep, and the browser saves them.
 - `POST /api/photos/find` runs the Photo finder (`src/domain/photos.ts`); the phone crops the picked frame from the original video.
 - Agents only propose. Nothing is saved until the seller confirms, and no step invents a price.
 - Shared helpers: `src/server/gemini.ts` (client, video upload) and `src/server/adk.ts` (ADK model, `runWorkflow`).
@@ -128,6 +131,7 @@ src/
       login/            Google sign-in
       dashboard/        Overview, capture/ (film → check → photos), edit/ (look + details)
     api/extract/        Video → products (mock or Gemini)
+    api/updates/        Typed or spoken message → product changes
   components/
     ui/                 Design-system primitives (Button, Surface, Stack, Text, Sheet…). No business logic.
     motion/             Reveal / Stagger (CSS entrances) + MotionProvider
@@ -137,6 +141,7 @@ src/
     auth/               AuthProvider, AuthGate, GoogleSignInButton
     seller/             Dashboard, store editor, product editor, Firestore hooks (data.ts)
     capture/            Record/upload → review list → photo step
+    updates/            "Tell AI what changed": text or voice → check the changes → save
     media/              Browser-only: video frames, photo compression, AI photos, photo storage
     theme/              ThemePicker (layout + color) and PhonePreview
     storefront/         Public store view in 3 templates, cart, order bar

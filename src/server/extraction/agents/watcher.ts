@@ -3,7 +3,7 @@ import { FunctionNode, LlmAgent } from "@google/adk";
 import { createUserContent, type ThinkingLevel } from "@google/genai";
 import { z } from "zod";
 import type { FrameBox } from "@/domain/extraction";
-import type { Currency, LabelLanguage } from "@/domain/store";
+import { LANGUAGE_NAMES, type Currency, type LabelLanguage } from "@/domain/store";
 import { geminiModel } from "@/server/adk";
 import { uploadVideo } from "@/server/gemini";
 
@@ -54,14 +54,6 @@ export type Watch = z.infer<typeof watchSchema>;
 export type WatcherSettings = { currency: Currency; labelLanguage: LabelLanguage };
 
 export type VideoInput = { blob: Blob; mimeType: string };
-
-const LANGUAGE_NAMES: Record<LabelLanguage, string> = {
-  km: "Khmer",
-  si: "Sinhala",
-  ta: "Tamil",
-  th: "Thai",
-  en: "English",
-};
 
 function instruction({ currency, labelLanguage }: WatcherSettings): string {
   const language = LANGUAGE_NAMES[labelLanguage];

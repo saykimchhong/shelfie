@@ -1,0 +1,1 @@
+export { QuickUpdate } from "./QuickUpdate";

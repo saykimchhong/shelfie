@@ -1,0 +1,103 @@
+@use "styles" as *;
+
+.heard {
+  display: flex;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-radius: var(--radius-lg);
+  background: var(--surface-1);
+  color: var(--fg-muted);
+  font-size: var(--text-sm);
+  font-style: italic;
+
+  svg {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    margin-top: 2px;
+    color: var(--accent);
+  }
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3) var(--space-2) var(--space-2);
+  border-radius: var(--radius-lg);
+  background: var(--bg-raised);
+  @include elevation(1);
+  transition: opacity var(--dur-base) var(--ease-out);
+}
+
+.skipped {
+  opacity: 0.45;
+}
+
+.check {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--surface-2);
+  color: transparent;
+  @include pressable;
+
+  svg {
+    width: 16px;
+    height: 16px;
+    stroke-width: 3;
+  }
+}
+
+.checked {
+  background: var(--accent);
+  color: #fff;
+}
+
+.thumb {
+  width: 48px;
+  flex-shrink: 0;
+}
+
+.info {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.name {
+  min-width: 0;
+  font-weight: 600;
+  @include truncate;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  color: var(--fg-muted);
+  font-size: var(--text-sm);
+
+  s {
+    color: var(--fg-subtle);
+  }
+}
+
+.price {
+  color: var(--brand-text);
+  font-weight: 700;
+}

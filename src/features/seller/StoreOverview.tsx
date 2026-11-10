@@ -20,6 +20,7 @@ import { unitOf, type Product } from "@/domain/product";
 import { shelvesOf } from "@/domain/shelf";
 import type { Store } from "@/domain/store";
 import { removeImage } from "@/features/media";
+import { QuickUpdate } from "@/features/updates";
 import { pluralize } from "@/lib/format";
 import { storeUrl, storeUrlLabel } from "@/lib/site";
 import { deleteAllProducts, updateProduct, updateStore, useProducts, useRefreshStorefront } from "./data";
@@ -109,6 +110,12 @@ export function StoreOverview({ store }: { store: Store }) {
           Film your shelf
         </ButtonLink>
       </Reveal>
+
+      {products.status === "ready" ? (
+        <Reveal delay={0.12}>
+          <QuickUpdate store={store} products={products.data} />
+        </Reveal>
+      ) : null}
 
       <Reveal delay={0.16}>
         <Surface padding="sm" radius="xl">
