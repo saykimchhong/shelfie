@@ -25,7 +25,7 @@ service cloud.firestore {
     // Optional look: layout template + accent color (src/domain/theme.ts).
     function validTheme(data) {
       return !('theme' in data)
-        || (data.theme.template in ['grid', 'list', 'showcase']
+        || (data.theme.template in ['grid', 'list', 'showcase', 'compact', 'menu', 'shelves']
             && data.theme.accent is string
             && data.theme.accent.matches('^#[0-9a-fA-F]{6}$'));
     }

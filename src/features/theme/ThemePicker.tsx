@@ -30,6 +30,7 @@ export function LayoutPicker({ value, onChange }: { value: Template; onChange: (
           >
             <TemplateGlyph template={template} />
             <span className={styles.templateName}>{TEMPLATE_INFO[template].name}</span>
+            <span className={styles.templateHint}>{TEMPLATE_INFO[template].bestFor}</span>
           </button>
         ))}
       </div>
@@ -81,11 +82,13 @@ export function ColorPicker({ value, onChange }: { value: string; onChange: (acc
   );
 }
 
+const GLYPH_PARTS: Record<Template, number> = { grid: 4, list: 4, showcase: 2, compact: 9, menu: 5, shelves: 6 };
+
 // Tiny wireframes, so the choice is visual instead of a paragraph of text.
 function TemplateGlyph({ template }: { template: Template }) {
   return (
     <span className={clsx(styles.glyph, styles[`glyph-${template}`])} aria-hidden>
-      {Array.from({ length: template === "showcase" ? 2 : 4 }, (_, index) => (
+      {Array.from({ length: GLYPH_PARTS[template] }, (_, index) => (
         <span key={index} />
       ))}
     </span>

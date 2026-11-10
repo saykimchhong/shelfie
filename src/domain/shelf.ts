@@ -17,6 +17,29 @@ export function shelvesOf(products: readonly Product[]): string[] {
   return [...shelves.values()];
 }
 
+// A titled group of products for the menu and shelves layouts.
+export type Section = { title: string | null; products: Product[] };
+
+// By shelf when the shop uses shelves, else by category, in the order they
+// first appear. Products with neither come last, under "More". A single group
+// gets no title.
+export function sectionsOf(products: readonly Product[]): Section[] {
+  for (const field of ["shelf", "category"] as const) {
+    const groups = new Map<string, Section>();
+    for (const product of products) {
+      const name = product[field]?.trim().replace(/\s+/g, " ") ?? "";
+      const key = shelfKey(name);
+      if (!groups.has(key)) groups.set(key, { title: name || null, products: [] });
+      groups.get(key)!.products.push(product);
+    }
+    if (groups.size < 2) continue;
+    const unsorted = groups.get(UNSORTED);
+    groups.delete(UNSORTED);
+    return [...groups.values(), ...(unsorted ? [{ title: "More", products: unsorted.products }] : [])];
+  }
+  return products.length > 0 ? [{ title: null, products: [...products] }] : [];
+}
+
 export function productsOnShelf(products: readonly Product[], shelf: string): Product[] {
   const key = shelfKey(shelf);
   return products.filter((product) => shelfKey(product.shelf) === key);

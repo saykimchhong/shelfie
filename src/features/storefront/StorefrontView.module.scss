@@ -188,6 +188,97 @@
   }
 }
 
+// ── Template: compact ───────────────────────────────────────
+// Three across on a phone: more products per screen, photos still lead.
+.compactGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+
+  @include container-up(md) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--space-3);
+  }
+
+  @include container-up(lg) {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+
+// ── Templates: menu and shelves (sections) ──────────────────
+.sections {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.sectionTitle {
+  margin-bottom: var(--space-3);
+  font-size: var(--text-xl);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+// Sections jumped to from the chips clear the top of the screen.
+.menuSection,
+.shelfSection {
+  scroll-margin-top: var(--space-4);
+}
+
+// Menu: one card per section, rows inside like a printed menu. Two columns
+// on wider screens, so name and price stay close.
+.menuSections {
+  @include container-up(md) {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+    gap: var(--space-5);
+  }
+}
+
+.menuSection {
+  padding: var(--space-4) var(--space-3);
+  border-radius: var(--radius-xl);
+  background: var(--bg-raised);
+  @include elevation(1);
+
+  .sectionTitle {
+    padding-inline: var(--space-2);
+  }
+}
+
+.menu {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  list-style: none;
+}
+
+// Shelves: each section is a row that scrolls sideways, edge to edge.
+.rail {
+  display: flex;
+  gap: var(--space-3);
+  overflow-x: auto;
+  margin-inline: calc(var(--gutter) * -1);
+  padding: var(--space-1) var(--gutter) var(--space-3);
+  scroll-padding-inline: var(--gutter);
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+// About two and a half cards on a phone, so the row reads as scrollable.
+.railItem {
+  flex: 0 0 40%;
+  scroll-snap-align: start;
+
+  @include container-up(md) {
+    flex-basis: 200px;
+  }
+}
+
 // ── Template: list ──────────────────────────────────────────
 .list {
   display: grid;

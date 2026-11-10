@@ -1,0 +1,90 @@
+@use "styles" as *;
+
+.item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-2);
+  border-radius: var(--radius-md);
+
+  // "In cart": a soft tint, faded in with opacity.
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: var(--brand-soft);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--dur-base) var(--ease-out);
+  }
+
+  > * {
+    position: relative;
+  }
+}
+
+.inCart::before {
+  opacity: 1;
+}
+
+.thumb {
+  width: 56px;
+  flex-shrink: 0;
+}
+
+.info {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.line {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.name {
+  min-width: 0;
+  font-weight: 600;
+  line-height: var(--leading-snug);
+  @include line-clamp(2);
+}
+
+// Dotted leader between name and price, drawn as a background (no borders).
+.leader {
+  flex: 1;
+  min-width: var(--space-4);
+  height: 1em;
+  background: radial-gradient(circle, var(--fg-subtle) 1px, transparent 1.4px) left bottom / 6px 4px repeat-x;
+  opacity: 0.6;
+}
+
+.price {
+  flex-shrink: 0;
+  color: var(--brand-text);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.ask {
+  color: var(--fg-subtle);
+}
+
+.local {
+  color: var(--fg-muted);
+  font-size: var(--text-sm);
+  @include truncate;
+}
+
+// Badge stays crisp; photo, name and price fade (same as the other templates).
+.soldOut {
+  .thumb,
+  .info {
+    opacity: 0.5;
+  }
+}

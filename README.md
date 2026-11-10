@@ -100,7 +100,7 @@ Reading a shelf video is a [Google ADK](https://github.com/google/adk-js) workfl
 
 A store's look is `theme: { template, accent }`:
 
-- **Templates:** `grid` (most shops), `list` (many small items) and `showcase` (a few special items).
+- **Templates:** `grid` (most shops), `list` (many small items), `showcase` (a few special items), `compact` (big catalogs, three across on a phone), `menu` (food and drinks: name ··· price, in sections) and `shelves` (many sections, each a row that scrolls sideways). Menu and shelves group by shelf, or by category when the shop has one shelf or none; their chips jump to a section.
 - **Accent:** any hex color. `src/lib/palette.ts` derives the button, tint and text shades and keeps text readable (WCAG AA) in light and dark mode.
 
 Review every combination with sample shops in each language at **`/templates`**. Sellers change theirs at `/dashboard/edit`, with a live phone preview.
@@ -167,7 +167,7 @@ storage.rules           Photo uploads: sellers write only under their own uid
 stores/{slug}                       slug = document id = public URL
   ownerId, name, tagline?, description? (≤500, line breaks kept), logoUrl?,
   currency (USD|KHR|LKR|THB), labelLanguage (en|km|si|ta|th),
-  contact { whatsapp?, line? }, theme? { template (grid|list|showcase), accent (#rrggbb) },
+  contact { whatsapp?, line? }, theme? { template (grid|list|showcase|compact|menu|shelves), accent (#rrggbb) },
   restock? { missing (soldOut|keep) }, fulfillment? (pickup|delivery|both, missing = pickup),
   priceUnit? (each|kg|bunch|pack, missing = each: what prices are usually for),
   paymentQrUrl?, published, createdAt, updatedAt

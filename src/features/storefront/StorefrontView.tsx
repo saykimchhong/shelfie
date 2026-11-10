@@ -2,7 +2,7 @@
 
 import clsx from "clsx";
 import { PackageOpen } from "lucide-react";
-import { motion } from "motion/react";
+import { motion, useReducedMotion } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
 import { useId, useMemo, useState } from "react";
@@ -11,13 +11,15 @@ import { ScrollStagger } from "@/components/motion/ScrollStagger";
 import { ThemeScope } from "@/components/theme/ThemeScope";
 import { Container, EmptyState, Text } from "@/components/ui";
 import { unitOf, type Product } from "@/domain/product";
+import { sectionsOf } from "@/domain/shelf";
 import type { PublicStore } from "@/domain/store";
-import { DEFAULT_THEME } from "@/domain/theme";
+import { DEFAULT_THEME, type Template } from "@/domain/theme";
 import { initials } from "@/lib/format";
 import { OrderBar } from "./OrderBar";
 import type { CartLine } from "./order";
 import { ProductCard } from "./ProductCard";
 import { ProductListItem } from "./ProductListItem";
+import { ProductMenuItem } from "./ProductMenuItem";
 import styles from "./StorefrontView.module.scss";
 
 export type StorefrontViewProps = {
@@ -30,6 +32,8 @@ export type StorefrontViewProps = {
 export function StorefrontView({ store, products, embedded }: StorefrontViewProps) {
   const theme = store.theme ?? DEFAULT_THEME;
   const chipId = useId();
+  const sectionId = useId();
+  const reduceMotion = useReducedMotion();
   const [cart, setCart] = useState<Record<string, number>>({});
   const [category, setCategory] = useState<string | null>(null);
 
@@ -39,6 +43,14 @@ export function StorefrontView({ store, products, embedded }: StorefrontViewProp
     [products],
   );
   const visible = category ? products.filter((product) => product.category === category) : products;
+  // Menu and shelves show every product in sections; their chips jump to one.
+  const sectioned = theme.template === "menu" || theme.template === "shelves";
+  const sections = useMemo(() => (sectioned ? sectionsOf(products) : []), [sectioned, products]);
+  const sectionAnchor = (index: number) => `${sectionId}-section-${index}`;
+
+  function jumpTo(index: number) {
+    document.getElementById(sectionAnchor(index))?.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth" });
+  }
   const lines: CartLine[] = products
     .filter((product) => cart[product.id])
     .map((product) => ({ product, quantity: cart[product.id] }));
@@ -86,7 +98,15 @@ export function StorefrontView({ store, products, embedded }: StorefrontViewProp
       </header>
 
       <Container as={embedded ? "section" : "main"} className={styles.main}>
-        {categories.length > 1 ? (
+        {sectioned && sections.length > 1 ? (
+          <nav className={styles.chips} aria-label="Sections">
+            {sections.map((section, index) => (
+              <button key={index} type="button" className={styles.chip} onClick={() => jumpTo(index)}>
+                <span className={styles.chipLabel}>{section.title}</span>
+              </button>
+            ))}
+          </nav>
+        ) : !sectioned && categories.length > 1 ? (
           <nav className={styles.chips} aria-label="Categories">
             {[null, ...categories].map((value) => {
               const active = value === category;
@@ -116,17 +136,41 @@ export function StorefrontView({ store, products, embedded }: StorefrontViewProp
               </li>
             ))}
           </ScrollStagger>
+        ) : theme.template === "menu" ? (
+          <div className={clsx(styles.sections, styles.menuSections)}>
+            {sections.map((section, index) => (
+              <section key={index} id={sectionAnchor(index)} className={styles.menuSection}>
+                {section.title ? <h2 className={styles.sectionTitle}>{section.title}</h2> : null}
+                <ScrollStagger as="ul" className={styles.menu} interval={0.03}>
+                  {section.products.map((product) => (
+                    <li key={product.id}>
+                      <ProductMenuItem {...itemProps(product)} />
+                    </li>
+                  ))}
+                </ScrollStagger>
+              </section>
+            ))}
+          </div>
+        ) : theme.template === "shelves" ? (
+          // Rows rise in whole: a vertical rise on a sideways swipe looks wrong.
+          <ScrollStagger className={styles.sections} interval={0.05}>
+            {sections.map((section, index) => (
+              <section key={index} id={sectionAnchor(index)} className={styles.shelfSection}>
+                {section.title ? <h2 className={styles.sectionTitle}>{section.title}</h2> : null}
+                <div className={styles.rail}>
+                  {section.products.map((product) => (
+                    <div key={product.id} className={styles.railItem}>
+                      <ProductCard {...itemProps(product)} />
+                    </div>
+                  ))}
+                </div>
+              </section>
+            ))}
+          </ScrollStagger>
         ) : (
-          <ScrollStagger
-            className={clsx(styles.grid, theme.template === "showcase" && styles.showcaseGrid)}
-            interval={0.035}
-          >
+          <ScrollStagger className={clsx(styles.grid, GRID_CLASS[theme.template])} interval={0.035}>
             {visible.map((product) => (
-              <ProductCard
-                key={product.id}
-                variant={theme.template === "showcase" ? "showcase" : "grid"}
-                {...itemProps(product)}
-              />
+              <ProductCard key={product.id} variant={CARD_VARIANT[theme.template]} {...itemProps(product)} />
             ))}
           </ScrollStagger>
         )}
@@ -141,6 +185,16 @@ export function StorefrontView({ store, products, embedded }: StorefrontViewProp
     </ThemeScope>
   );
 }
+
+// Card templates: which grid and card look each one uses.
+const GRID_CLASS: Partial<Record<Template, string>> = {
+  showcase: styles.showcaseGrid,
+  compact: styles.compactGrid,
+};
+const CARD_VARIANT: Partial<Record<Template, "showcase" | "compact">> = {
+  showcase: "showcase",
+  compact: "compact",
+};
 
 // Shop description: three lines, with "More" when there's more to read.
 function About({ text }: { text: string }) {

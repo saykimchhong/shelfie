@@ -34,7 +34,7 @@
   }
 }
 
-// Swipe between phones on mobile; all three side by side on desktop.
+// Swipe between phones on mobile; rows of phones on desktop.
 .phones {
   display: flex;
   gap: var(--space-6);
@@ -49,7 +49,9 @@
   }
 
   @include up(lg) {
+    flex-wrap: wrap;
     justify-content: center;
+    row-gap: var(--space-10);
     overflow: visible;
   }
 }

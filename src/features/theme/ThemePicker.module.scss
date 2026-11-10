@@ -55,6 +55,14 @@
   font-weight: 700;
 }
 
+.templateHint {
+  margin-top: calc(var(--space-2) * -1);
+  color: var(--fg-muted);
+  font-size: var(--text-xs);
+  line-height: var(--leading-snug);
+  text-align: center;
+}
+
 // Wireframe glyphs
 .glyph {
   display: grid;
@@ -86,6 +94,43 @@
 
 .glyph-showcase {
   grid-template-rows: 1fr 1fr;
+}
+
+.glyph-compact {
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3px;
+
+  span {
+    border-radius: 3px;
+  }
+}
+
+// Text lines with a price at the end.
+.glyph-menu {
+  grid-template-rows: repeat(5, 1fr);
+  gap: 5px;
+
+  span {
+    border-radius: 2px;
+    background: linear-gradient(
+      90deg,
+      var(--surface-2) 58%,
+      transparent 58% 74%,
+      color-mix(in oklab, var(--brand) 55%, var(--surface-2)) 74%
+    );
+  }
+}
+
+// Two rows running off the right edge.
+.glyph-shelves {
+  grid-template-columns: 1fr 1fr 0.45fr;
+  grid-template-rows: 1fr 1fr;
+  padding-right: 0;
+  overflow: hidden;
+
+  span:nth-child(3n) {
+    border-radius: 4px 0 0 4px;
+  }
 }
 
 .swatches {

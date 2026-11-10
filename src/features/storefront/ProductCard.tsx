@@ -25,7 +25,9 @@ export function ProductCard({
   quantity,
   onQuantityChange,
   variant = "grid",
-}: ProductCardProps & { variant?: "grid" | "showcase" }) {
+}: ProductCardProps & { variant?: "grid" | "showcase" | "compact" }) {
+  // Compact cards are three across: no room for the label name.
+  const localName = variant === "compact" ? undefined : product.localName;
   return (
     <article
       className={clsx(
@@ -51,12 +53,12 @@ export function ProductCard({
       </div>
       <div className={styles.body}>
         {/* Two text lines at most, so cards in a row stay the same height. */}
-        <Text weight={600} clamp={product.localName ? 1 : 2} className={styles.name}>
+        <Text weight={600} clamp={localName ? 1 : 2} className={styles.name}>
           {product.name}
         </Text>
-        {product.localName ? (
+        {localName ? (
           <Text tone="muted" clamp={1} className={styles.localName}>
-            {product.localName}
+            {localName}
           </Text>
         ) : null}
         <div className={styles.footer}>

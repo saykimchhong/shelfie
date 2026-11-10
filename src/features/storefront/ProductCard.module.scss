@@ -116,3 +116,30 @@
     font-size: var(--text-lg);
   }
 }
+
+// "compact" template: three across on a phone, so corners, padding and type shrink.
+.compact {
+  border-radius: var(--radius-md);
+
+  .body {
+    padding: var(--space-2);
+  }
+
+  .name {
+    font-size: var(--text-xs);
+  }
+
+  .price {
+    font-size: var(--text-sm);
+  }
+
+  .badge {
+    top: var(--space-1);
+    left: var(--space-1);
+  }
+
+  .quantity {
+    right: var(--space-1);
+    bottom: var(--space-1);
+  }
+}
