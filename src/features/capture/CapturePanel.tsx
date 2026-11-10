@@ -204,13 +204,13 @@ function Capture({ store, products }: { store: Store; products: Product[] }) {
   }
 
   async function makeAiPhoto(draft: Draft) {
-    patch(draft.key, { photoBusy: true });
+    patch(draft.key, { photoBusy: true, photoFailed: false });
     try {
       const photo = await generateProductPhoto({ name: draft.name, frame: draft.frame });
       patch(draft.key, { photo, photoSource: "ai", photoBusy: false });
     } catch (cause) {
       console.error(cause);
-      patch(draft.key, { photoBusy: false });
+      patch(draft.key, { photoBusy: false, photoFailed: true });
     }
   }
 
@@ -219,11 +219,11 @@ function Capture({ store, products }: { store: Store; products: Product[] }) {
       const draft = drafts.find((item) => item.key === key);
       if (!draft) return;
       if (source === "ai") void makeAiPhoto(draft);
-      else if (source === "video") patch(key, { photo: draft.frame, photoSource: "video" });
-      else patch(key, { photo: null, photoSource: "none" });
+      else if (source === "video") patch(key, { photo: draft.frame, photoSource: "video", photoFailed: false });
+      else patch(key, { photo: null, photoSource: "none", photoFailed: false });
     },
     upload(key, file) {
-      patch(key, { photo: file, photoSource: "upload" });
+      patch(key, { photo: file, photoSource: "upload", photoFailed: false });
     },
     aiForAll() {
       adding.forEach((draft) => void makeAiPhoto(draft));
@@ -234,7 +234,7 @@ function Capture({ store, products }: { store: Store; products: Product[] }) {
         let next = 0;
         return current.map((draft) =>
           draft.group === "new" && isSavable(draft) && draft.photoSource !== "upload" && next < files.length
-            ? { ...draft, photo: files[next++], photoSource: "upload" }
+            ? { ...draft, photo: files[next++], photoSource: "upload", photoFailed: false }
             : draft,
         );
       });

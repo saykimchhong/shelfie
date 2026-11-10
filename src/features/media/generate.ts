@@ -7,33 +7,42 @@ import { canvasToBlob, centerSquare, createCanvas } from "./image";
 // REAL: POST /api/photos → Gemini image editing. It cleans the frame up when
 // it shows the product, and draws the product from its name when the frame
 // is wrong (a hand, the next item), so one tap also fixes bad frames.
+// If Gemini fails, this throws: the seller keeps their photo and can retry.
 //
-// FALLBACK (mock mode, offline, or Gemini fails): a local canvas "studio shot"
-// of the frame (brighter, full-bleed), or a styled tile when there is no frame.
+// LOCAL (mock mode or signed out): a canvas "studio shot" of the frame
+// (brighter, full-bleed), or a styled tile when there is no frame.
 export async function generateProductPhoto(input: { name: string; frame: Blob | null }): Promise<Blob> {
   const photo = await geminiPhoto(input);
   if (photo) return photo;
   return input.frame ? studioShot(input.frame) : illustratedTile(input.name);
 }
 
+const RETRY_AFTER_MS = 1500;
+
+// null when the real AI isn't on here; throws when it is on but failed.
 async function geminiPhoto({ name, frame }: { name: string; frame: Blob | null }): Promise<Blob | null> {
-  try {
-    const idToken = await clientAuth().currentUser?.getIdToken();
-    if (!idToken) return null;
-    const body = new FormData();
-    body.append("name", name);
-    if (frame) body.append("frame", frame);
+  const idToken = await clientAuth().currentUser?.getIdToken();
+  if (!idToken) return null;
+  const body = new FormData();
+  body.append("name", name);
+  if (frame) body.append("frame", frame);
+
+  for (let attempt = 1; ; attempt++) {
     const response = await fetch("/api/photos", {
       method: "POST",
       headers: { Authorization: `Bearer ${idToken}` },
       body,
     });
-    if (!response.ok) return null; // 501 in mock mode: use the local look
-    const photo = await response.blob();
-    return photo.type.startsWith("image/") ? photo : null;
-  } catch (error) {
-    console.warn("AI photo fell back to the local look", error);
-    return null;
+    if (response.status === 501) return null;
+    if (response.ok) {
+      const photo = await response.blob();
+      if (photo.type.startsWith("image/")) return photo;
+      throw new Error("AI photo came back without an image");
+    }
+    // Busy or a hiccup (several photos at once can hit the rate limit): one retry.
+    const busy = response.status === 429 || response.status >= 500;
+    if (!busy || attempt === 2) throw new Error(`AI photo failed (${response.status})`);
+    await new Promise((resolve) => setTimeout(resolve, RETRY_AFTER_MS));
   }
 }
 

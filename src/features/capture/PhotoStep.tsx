@@ -67,9 +67,14 @@ function PhotoCard({ draft, actions }: { draft: Draft; actions: PhotoActions }) 
             <Spinner size={28} label="Making photo" />
           </span>
         ) : null}
-        {draft.photoSource === "ai" && !draft.photoBusy ? (
+        {draft.photoSource === "ai" && !draft.photoBusy && !draft.photoFailed ? (
           <Badge tone="accent" icon={<Sparkles />} className={styles.tag}>
             AI
+          </Badge>
+        ) : null}
+        {draft.photoFailed && !draft.photoBusy ? (
+          <Badge tone="danger" className={styles.tag}>
+            AI photo failed
           </Badge>
         ) : null}
       </div>

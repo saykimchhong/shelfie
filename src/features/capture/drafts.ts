@@ -36,6 +36,8 @@ export type Draft = {
   photo: Blob | null;
   photoSource: PhotoSource;
   photoBusy: boolean;
+  // The last AI photo try failed; the current photo was kept.
+  photoFailed: boolean;
 };
 
 export function toDraft(item: ExtractedProduct, index: number, known?: Product): Draft {
@@ -58,6 +60,7 @@ export function toDraft(item: ExtractedProduct, index: number, known?: Product):
     photo: null,
     photoSource: "none",
     photoBusy: false,
+    photoFailed: false,
   };
 }
 
