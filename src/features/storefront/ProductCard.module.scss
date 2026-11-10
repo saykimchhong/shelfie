@@ -76,20 +76,18 @@
   padding-top: var(--space-1);
 }
 
+// Badge stays crisp; photo, name and price fade (same as the list template).
 .soldOut {
-  .media,
-  .name {
+  .thumb,
+  .name,
+  .footer {
     opacity: 0.5;
   }
 }
 
-// "showcase" template: wide photo, bigger type, more air.
+// "showcase" template: bigger type, more air. Photos stay square like everywhere else.
 .showcase {
   border-radius: var(--radius-xl);
-
-  .media .thumb {
-    aspect-ratio: 4 / 3;
-  }
 
   .body {
     padding: var(--space-4) var(--space-5) var(--space-5);

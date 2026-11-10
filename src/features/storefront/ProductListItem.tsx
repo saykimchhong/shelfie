@@ -13,7 +13,7 @@ export function ProductListItem({ product, currency, unit, quantity, onQuantityC
     <article className={clsx(styles.item, !product.inStock && styles.soldOut, quantity > 0 && styles.inCart)}>
       <Thumb label={product.name} src={product.imageUrl} size={72} className={styles.thumb} />
       <div className={styles.info}>
-        <Text weight={600} clamp={1}>
+        <Text weight={600} clamp={2}>
           {product.name}
         </Text>
         {product.localName ? (

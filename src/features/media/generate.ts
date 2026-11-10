@@ -9,8 +9,7 @@ import { canvasToBlob, centerSquare, createCanvas } from "./image";
 // is wrong (a hand, the next item), so one tap also fixes bad frames.
 //
 // FALLBACK (mock mode, offline, or Gemini fails): a local canvas "studio shot"
-// of the frame (soft blurred backdrop, product centered with a shadow), or a
-// styled tile when there is no frame. Free and instant.
+// of the frame (brighter, full-bleed), or a styled tile when there is no frame.
 export async function generateProductPhoto(input: { name: string; frame: Blob | null }): Promise<Blob> {
   const photo = await geminiPhoto(input);
   if (photo) return photo;
@@ -40,38 +39,22 @@ async function geminiPhoto({ name, frame }: { name: string; frame: Blob | null }
 
 const SIZE = 640;
 
+// Full-bleed and cleaned up; no inner frame, since cards already have their own.
 async function studioShot(frame: Blob): Promise<Blob> {
   const bitmap = await createImageBitmap(frame);
   const { sx, sy, side } = centerSquare(bitmap.width, bitmap.height);
   const [canvas, context] = createCanvas(SIZE);
 
-  // Backdrop: the same frame, heavily blurred and brightened.
-  context.filter = "blur(28px) brightness(1.15) saturate(1.3)";
-  context.drawImage(bitmap, sx, sy, side, side, -40, -40, SIZE + 80, SIZE + 80);
+  context.filter = "contrast(1.08) saturate(1.15) brightness(1.04)";
+  context.drawImage(bitmap, sx, sy, side, side, 0, 0, SIZE, SIZE);
   context.filter = "none";
-  context.fillStyle = "rgba(255, 255, 255, 0.35)";
+
+  // Soft light from above, gently darker corners.
+  const light = context.createRadialGradient(SIZE / 2, SIZE * 0.35, SIZE * 0.1, SIZE / 2, SIZE / 2, SIZE * 0.75);
+  light.addColorStop(0, "rgba(255, 255, 255, 0.12)");
+  light.addColorStop(1, "rgba(0, 0, 0, 0.16)");
+  context.fillStyle = light;
   context.fillRect(0, 0, SIZE, SIZE);
-
-  // Subject: centered, punchier, rounded, with a soft shadow.
-  const inset = SIZE * 0.13;
-  const box = SIZE - inset * 2;
-  context.save();
-  context.shadowColor = "rgba(40, 20, 10, 0.28)";
-  context.shadowBlur = 40;
-  context.shadowOffsetY = 18;
-  context.beginPath();
-  context.roundRect(inset, inset, box, box, 36);
-  context.fillStyle = "#fff";
-  context.fill();
-  context.restore();
-
-  context.save();
-  context.beginPath();
-  context.roundRect(inset, inset, box, box, 36);
-  context.clip();
-  context.filter = "contrast(1.08) saturate(1.2)";
-  context.drawImage(bitmap, sx, sy, side, side, inset, inset, box, box);
-  context.restore();
 
   bitmap.close();
   return canvasToBlob(canvas);
