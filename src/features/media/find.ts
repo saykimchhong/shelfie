@@ -1,4 +1,10 @@
-import { MAX_SHOT_FRAME_BYTES, shotPicksSchema, type ShotPick, type ShotProduct } from "@/domain/photos";
+import {
+  MAX_SHOT_FRAME_BYTES,
+  MAX_SHOT_PRODUCTS,
+  shotPicksSchema,
+  type ShotPick,
+  type ShotProduct,
+} from "@/domain/photos";
 import { clientAuth } from "@/lib/firebase/client";
 import { shotRequests, shotTimes, type ShotTarget } from "./shots";
 import { captureStills, type FrameRequest } from "./video";
@@ -19,7 +25,9 @@ export async function pickShots(url: string, targets: readonly ShotTarget[]): Pr
         return still && still.size <= MAX_SHOT_FRAME_BYTES ? [{ time, still }] : [];
       }),
     );
-    const asked = targets.flatMap((target, index) => (sent[index].length > 0 && target.name.trim() ? [index] : []));
+    const asked = targets
+      .flatMap((target, index) => (sent[index].length > 0 && target.name.trim() ? [index] : []))
+      .slice(0, MAX_SHOT_PRODUCTS);
     if (asked.length === 0) return fallback();
 
     const products: ShotProduct[] = asked.map((index) => ({

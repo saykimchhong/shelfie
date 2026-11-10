@@ -1,7 +1,26 @@
-import { describe, expect, it } from "vitest";
+import type { Content } from "@google/genai";
+import { describe, expect, it, vi } from "vitest";
 import type { ShotProduct } from "@/domain/photos";
-import { describeProduct, toGridBox, toPicks } from "./photo-finder";
+import { describeProduct, findShots, toGridBox, toPicks } from "./photo-finder";
 import { toFrameBox } from "./watcher";
+
+// Fake Gemini: picks frame 1 of every product it's shown; fails calls naming "broken".
+const calls = vi.hoisted(() => ({ active: 0, peak: 0, count: 0 }));
+vi.mock("@/server/adk", () => ({
+  geminiModel: () => "gemini-test",
+  runWorkflow: async (_name: string, entry: (run: (node: unknown, input: Content) => Promise<unknown>) => unknown) =>
+    entry(async (_node, input) => {
+      calls.count++;
+      calls.active++;
+      calls.peak = Math.max(calls.peak, calls.active);
+      await new Promise((resolve) => setTimeout(resolve, 5));
+      calls.active--;
+      const texts = (input.parts ?? []).map((part) => part.text ?? "");
+      if (texts.some((text) => text.includes("broken"))) throw new Error("model down");
+      const products = texts.filter((text) => /^Product \d+: /.test(text)).length;
+      return { picks: Array.from({ length: products }, (_, i) => ({ product: i + 1, frame: 1, box: [0, 0, 500, 500] })) };
+    }),
+}));
 
 const rice: ShotProduct = {
   name: "Jasmine Rice 5kg",
@@ -56,5 +75,34 @@ describe("toPicks", () => {
 
   it("treats output that doesn't fit the schema as no picks", () => {
     expect(toPicks("nonsense", [rice])).toEqual([{ frame: null, box: null }]);
+  });
+});
+
+describe("findShots", () => {
+  const product = (name: string): ShotProduct => ({ name, localName: null, hint: null, frames: 2 });
+  const framesFor = (count: number) =>
+    Array.from({ length: count * 2 }, () => ({ data: new Blob(["x"], { type: "image/webp" }), mimeType: "image/webp" }));
+  const picked = { frame: 0, box: { left: 0, top: 0, width: 0.5, height: 0.5 } };
+  const none = { frame: null, box: null };
+
+  it("asks six products per call, a few calls at a time, and keeps their order", async () => {
+    Object.assign(calls, { active: 0, peak: 0, count: 0 });
+    const products = Array.from({ length: 30 }, (_, i) => product(`Item ${i}`));
+
+    const picks = await findShots(products, framesFor(30));
+
+    expect(picks).toHaveLength(30);
+    expect(picks.every((pick) => pick.frame === 0)).toBe(true);
+    expect(calls.count).toBe(5);
+    expect(calls.peak).toBeLessThanOrEqual(4);
+  });
+
+  it("leaves only a failed call's products without a pick", async () => {
+    const products = [...Array.from({ length: 6 }, (_, i) => product(`Item ${i}`)), product("broken scale")];
+
+    const picks = await findShots(products, framesFor(7));
+
+    expect(picks.slice(0, 6)).toEqual(Array.from({ length: 6 }, () => picked));
+    expect(picks[6]).toEqual(none);
   });
 });

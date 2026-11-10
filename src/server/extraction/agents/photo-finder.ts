@@ -4,12 +4,14 @@ import { createPartFromBase64, createUserContent, type Part, type ThinkingLevel 
 import { z } from "zod";
 import type { FrameBox } from "@/domain/extraction";
 import type { ShotPick, ShotProduct } from "@/domain/photos";
+import { chunk } from "@/lib/chunk";
 import { geminiModel, runWorkflow } from "@/server/adk";
 import { toFrameBox } from "./watcher";
 
 // Picks each product's best still and boxes it there: video boxes drift while the phone pans.
 
 const PRODUCTS_PER_CALL = 6;
+const PARALLEL_CALLS = 4;
 
 const finderSchema = z.object({
   picks: z.array(
@@ -45,28 +47,31 @@ export async function findShots(
   { thinkingLevel }: { thinkingLevel?: ThinkingLevel } = {},
 ): Promise<ShotPick[]> {
   const offsets = frameOffsets(products);
-  const chunks: number[][] = [];
-  for (let start = 0; start < products.length; start += PRODUCTS_PER_CALL) {
-    chunks.push(products.slice(start, start + PRODUCTS_PER_CALL).map((_, index) => start + index));
-  }
+  const pickGroup = async (indexes: number[]) => {
+    const group = indexes.map((index) => products[index]);
+    const groupFrames = indexes.map((index) => frames.slice(offsets[index], offsets[index] + products[index].frames));
+    const parts = await promptParts(group, groupFrames);
+    const output = await runWorkflow("photoFinder", (run) => run(createPhotoFinder(thinkingLevel), createUserContent(parts)));
+    return toPicks(output, group);
+  };
 
-  const results = await Promise.allSettled(
-    chunks.map(async (indexes) => {
-      const chunk = indexes.map((index) => products[index]);
-      const chunkFrames = indexes.map((index) => frames.slice(offsets[index], offsets[index] + products[index].frames));
-      const parts = await promptParts(chunk, chunkFrames);
-      const output = await runWorkflow("photoFinder", (run) =>
-        run(createPhotoFinder(thinkingLevel), createUserContent(parts)),
-      );
-      return toPicks(output, chunk);
-    }),
+  const picks: ShotPick[] = [];
+  const groups = chunk(
+    products.map((_, index) => index),
+    PRODUCTS_PER_CALL,
   );
-
-  return results.flatMap((result, chunk) => {
-    if (result.status === "fulfilled") return result.value;
-    console.error("Photo finder call failed", result.reason);
-    return chunks[chunk].map(() => ({ frame: null, box: null }));
-  });
+  for (const wave of chunk(groups, PARALLEL_CALLS)) {
+    const results = await Promise.allSettled(wave.map(pickGroup));
+    results.forEach((result, index) => {
+      if (result.status === "fulfilled") {
+        picks.push(...result.value);
+      } else {
+        console.error("Photo finder call failed", result.reason);
+        picks.push(...wave[index].map(() => ({ frame: null, box: null })));
+      }
+    });
+  }
+  return picks;
 }
 
 function createPhotoFinder(thinkingLevel?: ThinkingLevel): LlmAgent {
