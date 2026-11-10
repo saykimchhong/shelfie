@@ -25,6 +25,8 @@ export type ShopTypeInfo = {
   noteHint: string | null;
   // Ask when the customer wants it: as soon as possible, or a day and time.
   orderTime: boolean;
+  // Lots of small items: the storefront shows search sooner.
+  manyItems: boolean;
   // For AI prompts: what this shop sells.
   sells: string;
 };
@@ -40,6 +42,7 @@ export const SHOP_TYPE_INFO: Record<ShopType, ShopTypeInfo> = {
     emptyTitle: "Products coming soon",
     noteHint: null,
     orderTime: false,
+    manyItems: false,
     sells: "a general shop",
   },
   food: {
@@ -52,6 +55,7 @@ export const SHOP_TYPE_INFO: Record<ShopType, ShopTypeInfo> = {
     emptyTitle: "Menu coming soon",
     noteHint: "Note, e.g. less spicy, no ice",
     orderTime: true,
+    manyItems: false,
     sells: "a food and drinks seller (stall, café or restaurant): its products are dishes and drinks, often listed on a menu",
   },
   grocery: {
@@ -64,6 +68,7 @@ export const SHOP_TYPE_INFO: Record<ShopType, ShopTypeInfo> = {
     emptyTitle: "Shelves coming soon",
     noteHint: null,
     orderTime: false,
+    manyItems: true,
     sells: "a grocery or mini-mart: its products are packaged goods with a brand and size",
   },
   fashion: {
@@ -76,6 +81,7 @@ export const SHOP_TYPE_INFO: Record<ShopType, ShopTypeInfo> = {
     emptyTitle: "New collection coming soon",
     noteHint: "Size and colour, e.g. 42, black",
     orderTime: false,
+    manyItems: false,
     sells: "a fashion shop: its products are clothes, shoes or accessories, so names include colour and style",
   },
   market: {
@@ -88,6 +94,7 @@ export const SHOP_TYPE_INFO: Record<ShopType, ShopTypeInfo> = {
     emptyTitle: "Fresh stock coming soon",
     noteHint: "Note, e.g. ripe ones please",
     orderTime: false,
+    manyItems: true,
     sells: "a fresh market stall: its products are fruit, vegetables, meat or fish, usually priced per kg",
   },
   bakery: {
@@ -100,6 +107,7 @@ export const SHOP_TYPE_INFO: Record<ShopType, ShopTypeInfo> = {
     emptyTitle: "Fresh bakes coming soon",
     noteHint: "Note, e.g. Happy birthday Mia",
     orderTime: true,
+    manyItems: false,
     sells: "a bakery or home kitchen: its products are cakes, bread and snacks, often made to order",
   },
 };

@@ -49,6 +49,7 @@
   min-width: 1.5ch;
   font-weight: 800;
   text-align: center;
+  white-space: nowrap;
   animation: bump var(--dur-slow) var(--ease-spring);
 }
 
@@ -56,4 +57,11 @@
   from {
     transform: scale(1.5);
   }
+}
+
+.unit {
+  margin-left: 2px;
+  font-size: var(--text-xs);
+  font-weight: 700;
+  color: var(--fg-muted);
 }

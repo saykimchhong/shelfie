@@ -62,7 +62,11 @@ export function summarizeOrder(
   choice: FulfillmentChoice = DEFAULT_CHOICE,
   { now, closed = false }: { now?: Date; closed?: boolean } = {},
 ): OrderSummary {
-  const count = lines.reduce((sum, line) => sum + line.quantity, 0);
+  // A weighed item is one item, however many kilos.
+  const count = lines.reduce(
+    (sum, line) => sum + (unitOf(line.product, store.priceUnit) === "kg" ? 1 : line.quantity),
+    0,
+  );
   const subtotal = lines.reduce((sum, line) => sum + (line.product.price ?? 0) * line.quantity, 0);
   const hasUnpriced = lines.some((line) => line.product.price === null);
   const price = (amount: number) => formatPrice(amount, store.currency);

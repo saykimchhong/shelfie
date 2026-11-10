@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import { Clock, PackageOpen } from "lucide-react";
+import { Clock, PackageOpen, Search, SearchX, X } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
@@ -9,7 +9,7 @@ import { useId, useMemo, useState } from "react";
 import { LogoMark } from "@/components/brand/Logo";
 import { ScrollStagger } from "@/components/motion/ScrollStagger";
 import { ThemeScope } from "@/components/theme/ThemeScope";
-import { Badge, Container, EmptyState, Text } from "@/components/ui";
+import { Badge, Button, Container, EmptyState, Text } from "@/components/ui";
 import { unitOf, type Product } from "@/domain/product";
 import { sectionsOf } from "@/domain/shelf";
 import { DEFAULT_SHOP_TYPE, shopTypeOf } from "@/domain/shop";
@@ -21,6 +21,7 @@ import type { CartLine } from "./order";
 import { ProductCard } from "./ProductCard";
 import { ProductListItem } from "./ProductListItem";
 import { ProductMenuItem } from "./ProductMenuItem";
+import { matchesSearch, showsSearch } from "./search";
 import { useOpenState } from "./useOpenState";
 import styles from "./StorefrontView.module.scss";
 
@@ -40,16 +41,20 @@ export function StorefrontView({ store, products, embedded }: StorefrontViewProp
   const [notes, setNotes] = useState<Record<string, string>>({});
   const hours = useOpenState(store.hours, store.timeZone);
   const [category, setCategory] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+  const type = shopTypeOf(store);
 
   const canOrder = Boolean(store.contact.whatsapp || store.contact.line);
   const categories = useMemo(
     () => [...new Set(products.map((product) => product.category).filter((value): value is string => !!value))],
     [products],
   );
-  const visible = category ? products.filter((product) => product.category === category) : products;
+  const searchable = showsSearch(products.length, type.manyItems);
+  const searched = searchable && query.trim() ? products.filter((product) => matchesSearch(product, query)) : products;
+  const visible = category ? searched.filter((product) => product.category === category) : searched;
   // Menu and shelves show every product in sections; their chips jump to one.
   const sectioned = theme.template === "menu" || theme.template === "shelves";
-  const sections = useMemo(() => (sectioned ? sectionsOf(products) : []), [sectioned, products]);
+  const sections = useMemo(() => (sectioned ? sectionsOf(searched) : []), [sectioned, searched]);
   const sectionAnchor = (index: number) => `${sectionId}-section-${index}`;
 
   function jumpTo(index: number) {
@@ -126,6 +131,25 @@ export function StorefrontView({ store, products, embedded }: StorefrontViewProp
       </header>
 
       <Container as={embedded ? "section" : "main"} className={styles.main}>
+        {searchable ? (
+          <label className={styles.search}>
+            <Search aria-hidden />
+            <input
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder={`Search ${products.length} products`}
+              aria-label="Search products"
+              enterKeyHint="search"
+            />
+            {query ? (
+              <button type="button" className={styles.clearSearch} aria-label="Clear search" onClick={() => setQuery("")}>
+                <X aria-hidden />
+              </button>
+            ) : null}
+          </label>
+        ) : null}
+
         {sectioned && sections.length > 1 ? (
           <nav className={styles.chips} aria-label="Sections">
             {sections.map((section, index) => (
@@ -155,7 +179,18 @@ export function StorefrontView({ store, products, embedded }: StorefrontViewProp
         ) : null}
 
         {products.length === 0 ? (
-          <EmptyState icon={<PackageOpen />} title={shopTypeOf(store).emptyTitle} tone="sun" />
+          <EmptyState icon={<PackageOpen />} title={type.emptyTitle} tone="sun" />
+        ) : searched.length === 0 ? (
+          <EmptyState
+            icon={<SearchX />}
+            title={`Nothing matches “${query.trim()}”`}
+            description="Try another word, or the name on the label."
+            action={
+              <Button variant="soft" onClick={() => setQuery("")}>
+                Clear search
+              </Button>
+            }
+          />
         ) : theme.template === "list" ? (
           <ScrollStagger as="ul" className={styles.list} interval={0.03}>
             {visible.map((product) => (

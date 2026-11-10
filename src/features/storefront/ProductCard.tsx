@@ -47,7 +47,7 @@ export function ProductCard({
         {/* Floats on the photo's corner, so the stepper can grow without covering the price. */}
         {onQuantityChange && product.inStock ? (
           <div className={styles.quantity}>
-            <QuantityControl quantity={quantity} onChange={onQuantityChange} label={product.name} />
+            <QuantityControl quantity={quantity} onChange={onQuantityChange} label={product.name} unit={unit} />
           </div>
         ) : null}
       </div>

@@ -26,7 +26,7 @@ export function ProductMenuItem({ product, currency, unit, quantity, onQuantityC
       {!product.inStock ? (
         <Badge>Sold out</Badge>
       ) : onQuantityChange ? (
-        <QuantityControl quantity={quantity} onChange={onQuantityChange} label={product.name} />
+        <QuantityControl quantity={quantity} onChange={onQuantityChange} label={product.name} unit={unit} />
       ) : null}
     </article>
   );

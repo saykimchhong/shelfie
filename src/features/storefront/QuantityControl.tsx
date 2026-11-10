@@ -2,19 +2,25 @@
 
 import { Minus, Plus, Trash2 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
+import type { PriceUnit } from "@/domain/product";
+import { addOne, formatQuantity, removeOne } from "./quantity";
 import styles from "./QuantityControl.module.scss";
 
 // "+" bubble that grows into a − n + stepper once something is in the cart.
-// At 1 the minus becomes a bin, so it's clear the next tap removes the item.
+// When the next tap would remove the item, the minus becomes a bin.
+// Per-kg items step by half a kilo and show "1.5 kg".
 export function QuantityControl({
   quantity,
   onChange,
   label,
+  unit = "each",
 }: {
   quantity: number;
   onChange: (quantity: number) => void;
   label: string;
+  unit?: PriceUnit;
 }) {
+  const last = removeOne(quantity, unit) === 0;
   return (
     <motion.div layout className={styles.control} transition={{ type: "spring", stiffness: 500, damping: 35 }}>
       <AnimatePresence initial={false} mode="popLayout">
@@ -29,18 +35,19 @@ export function QuantityControl({
             <button
               type="button"
               className={styles.step}
-              aria-label={quantity === 1 ? `Remove ${label}` : `Remove one ${label}`}
-              onClick={() => onChange(quantity - 1)}
+              aria-label={last ? `Remove ${label}` : `Less ${label}`}
+              onClick={() => onChange(removeOne(quantity, unit))}
             >
-              {quantity === 1 ? <Trash2 aria-hidden /> : <Minus aria-hidden />}
+              {last ? <Trash2 aria-hidden /> : <Minus aria-hidden />}
             </button>
             <span key={quantity} className={styles.count} aria-live="polite">
-              {quantity}
+              {formatQuantity(quantity)}
+              {unit === "kg" ? <small className={styles.unit}>kg</small> : null}
             </span>
           </motion.span>
         ) : null}
       </AnimatePresence>
-      <button type="button" className={styles.add} aria-label={`Add ${label}`} onClick={() => onChange(quantity + 1)}>
+      <button type="button" className={styles.add} aria-label={`Add ${label}`} onClick={() => onChange(addOne(quantity, unit))}>
         <Plus aria-hidden />
       </button>
     </motion.div>

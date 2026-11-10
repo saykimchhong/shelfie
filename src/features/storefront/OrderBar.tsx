@@ -4,6 +4,7 @@ import { ChevronUp, ShoppingBag } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
 import { DEFAULT_FULFILLMENT, type PublicStore } from "@/domain/store";
+import { pluralize } from "@/lib/format";
 import { CartSheet } from "./CartSheet";
 import { DEFAULT_CHOICE, summarizeOrder, type CartLine, type FulfillmentChoice } from "./order";
 import { OrderButtons } from "./OrderButtons";
@@ -61,7 +62,7 @@ export function OrderBar({
               className={styles.summary}
               onClick={() => setCartOpen(true)}
               aria-haspopup="dialog"
-              aria-label={`Review order: ${summary.count} items${summary.total ? `, ${summary.total}` : ""}`}
+              aria-label={`Review order: ${pluralize(summary.count, "item")}${summary.total ? `, ${summary.total}` : ""}`}
             >
               <span className={styles.bag}>
                 <ShoppingBag aria-hidden />

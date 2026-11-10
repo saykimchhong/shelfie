@@ -86,22 +86,23 @@ export function CartSheet({
                 <Text size="sm" tone="muted">
                   {product.price === null ? "Price on request" : unitPrice(product.price, store, unitOf(product, store.priceUnit))}
                 </Text>
-                {type.noteHint ? (
-                  <input
-                    className={styles.note}
-                    value={note ?? ""}
-                    onChange={(event) => onNoteChange(product.id, event.target.value)}
-                    placeholder={type.noteHint}
-                    maxLength={ORDER_NOTE_MAX}
-                    aria-label={`Note for ${product.name}`}
-                  />
-                ) : null}
               </div>
               <QuantityControl
+                unit={unitOf(product, store.priceUnit)}
                 quantity={quantity}
                 onChange={(next) => onQuantityChange(product.id, next)}
                 label={product.name}
               />
+              {type.noteHint ? (
+                <input
+                  className={styles.note}
+                  value={note ?? ""}
+                  onChange={(event) => onNoteChange(product.id, event.target.value)}
+                  placeholder={type.noteHint}
+                  maxLength={ORDER_NOTE_MAX}
+                  aria-label={`Note for ${product.name}`}
+                />
+              ) : null}
             </motion.li>
           ))}
         </AnimatePresence>
