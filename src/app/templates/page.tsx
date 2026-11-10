@@ -3,7 +3,7 @@ import { TemplateGallery } from "./TemplateGallery";
 
 export const metadata: Metadata = {
   title: "Store templates",
-  description: "Six layouts, any color, labels in Khmer, Sinhala, Tamil, Thai or English.",
+  description: "Six shop types, six layouts, any color, labels in Khmer, Sinhala, Tamil, Thai or English.",
 };
 
 export default function TemplatesPage() {

@@ -93,7 +93,7 @@ export function listItems(text: string): MockItem[] {
 }
 
 function newShelfItems(input: ExtractInput): MockItem[] {
-  return sampleCatalog(input.labelLanguage, input.currency)
+  return sampleCatalog(input.labelLanguage, input.currency, input.shopType)
     .slice(0, MOCK_ITEMS)
     .map((item, index) => ({
       ...item,
@@ -114,7 +114,7 @@ function restockItems(input: ExtractInput): MockItem[] {
     }));
 
   const knownNames = new Set(input.known.map((product) => product.name.toLowerCase()));
-  const added = sampleCatalog(input.labelLanguage, input.currency)
+  const added = sampleCatalog(input.labelLanguage, input.currency, input.shopType)
     .filter((item) => !knownNames.has(item.name.toLowerCase()))
     .slice(0, MOCK_NEW_ON_RESTOCK)
     .map((item) => ({ ...item, note: null }));

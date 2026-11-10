@@ -31,6 +31,7 @@ export const DEFAULT_THEME: Theme = { template: "grid", accent: "#f26430" };
 
 export const PALETTE_PRESETS = [
   { name: "Mango", accent: "#f26430" },
+  { name: "Chili", accent: "#e03131" },
   { name: "Lotus", accent: "#d6336c" },
   { name: "Saffron", accent: "#e8a100" },
   { name: "Lagoon", accent: "#0f9f8e" },

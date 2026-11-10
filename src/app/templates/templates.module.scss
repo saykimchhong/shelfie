@@ -27,10 +27,20 @@
   max-width: 720px;
   margin-inline: auto;
 
+  > * {
+    min-width: 0;
+  }
+
   @include up(md) {
     grid-template-columns: auto minmax(0, 1fr);
     align-items: start;
-    gap: var(--space-8);
+    gap: var(--space-5) var(--space-8);
+  }
+}
+
+.shopType {
+  @include up(md) {
+    grid-column: 1 / -1;
   }
 }
 

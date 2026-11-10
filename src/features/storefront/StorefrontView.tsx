@@ -12,6 +12,7 @@ import { ThemeScope } from "@/components/theme/ThemeScope";
 import { Badge, Container, EmptyState, Text } from "@/components/ui";
 import { unitOf, type Product } from "@/domain/product";
 import { sectionsOf } from "@/domain/shelf";
+import { DEFAULT_SHOP_TYPE, shopTypeOf } from "@/domain/shop";
 import type { PublicStore } from "@/domain/store";
 import { DEFAULT_THEME, type Template } from "@/domain/theme";
 import { initials } from "@/lib/format";
@@ -86,7 +87,11 @@ export function StorefrontView({ store, products, embedded }: StorefrontViewProp
   });
 
   return (
-    <ThemeScope accent={theme.accent} className={clsx(styles.page, styles[`t-${theme.template}`])}>
+    <ThemeScope
+      accent={theme.accent}
+      className={clsx(styles.page, styles[`t-${theme.template}`])}
+      data-style={store.shopType ?? DEFAULT_SHOP_TYPE}
+    >
       <header className={styles.banner}>
         <Container className={styles.header}>
           <span className={styles.avatar} aria-hidden>
@@ -101,7 +106,7 @@ export function StorefrontView({ store, products, embedded }: StorefrontViewProp
               {store.name}
             </Text>
             {store.tagline ? (
-              <Text tone="muted" clamp={2}>
+              <Text tone="muted" clamp={2} className={styles.tagline}>
                 {store.tagline}
               </Text>
             ) : null}
@@ -150,7 +155,7 @@ export function StorefrontView({ store, products, embedded }: StorefrontViewProp
         ) : null}
 
         {products.length === 0 ? (
-          <EmptyState icon={<PackageOpen />} title="Shelves coming soon" tone="sun" />
+          <EmptyState icon={<PackageOpen />} title={shopTypeOf(store).emptyTitle} tone="sun" />
         ) : theme.template === "list" ? (
           <ScrollStagger as="ul" className={styles.list} interval={0.03}>
             {visible.map((product) => (

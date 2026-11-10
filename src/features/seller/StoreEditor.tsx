@@ -136,13 +136,13 @@ function StoreEditor({ store }: { store: Store }) {
     setForm((current) => ({ ...current, [key]: value }));
     setJustSaved(false);
   };
-  // A new type suggests its own layout and price unit; both stay changeable.
+  // A new type suggests its own layout, color and price unit; all stay changeable.
   const changeShopType = (shopType: ShopType) => {
     const type = SHOP_TYPE_INFO[shopType];
     setForm((current) => ({
       ...current,
       shopType,
-      theme: { ...current.theme, template: type.template },
+      theme: { template: type.template, accent: type.accent },
       priceUnit: type.priceUnit,
     }));
     setJustSaved(false);
@@ -178,7 +178,9 @@ function StoreEditor({ store }: { store: Store }) {
     updatedAt: store.updatedAt,
   };
   const usingSamples = products.status === "ready" && products.data.length === 0;
-  const previewProducts = usingSamples ? sampleStorefront(form.labelLanguage).products : products.data;
+  const previewProducts = usingSamples
+    ? sampleStorefront(form.labelLanguage, form.theme, form.shopType).products
+    : products.data;
 
   async function save() {
     const parsed = detailsSchema.safeParse({
@@ -312,7 +314,7 @@ function StoreEditor({ store }: { store: Store }) {
             <Stack gap={2}>
               <ShopTypePicker value={form.shopType} onChange={changeShopType} />
               <Text size="xs" tone="subtle">
-                Suggests a layout and price unit, and adds what your shop needs to the cart.
+                Sets a matching look, layout and price unit, and adds what your shop needs to the cart.
               </Text>
             </Stack>
           </Section>

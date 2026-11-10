@@ -4,6 +4,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
+  min-width: 0;
 }
 
 .label {
@@ -12,17 +13,26 @@
   color: var(--fg-muted);
 }
 
+// Many options on a narrow screen scroll inside the track instead of
+// pushing the page wider.
 .track {
   display: flex;
   gap: var(--space-1);
+  overflow-x: auto;
   padding: var(--space-1);
   border-radius: var(--radius-full);
   background: var(--surface-1);
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 .option {
   position: relative;
-  flex: 1;
+  flex: 1 0 auto;
+  white-space: nowrap;
   min-height: 40px;
   padding: 0 var(--space-3);
   border-radius: var(--radius-full);

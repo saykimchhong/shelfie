@@ -157,6 +157,76 @@
   position: relative;
 }
 
+// ── Shop type styles ────────────────────────────────────────
+// The banner and shapes follow what the shop sells, on top of any layout.
+// Tokens only, no images: the seller's own photos stay the focus.
+
+// Food: a warm, appetising glow.
+.page[data-style="food"] .banner {
+  background:
+    radial-gradient(110% 90% at 0% 0%, color-mix(in oklab, var(--brand) 55%, transparent), transparent 60%),
+    radial-gradient(90% 75% at 100% 0%, color-mix(in oklab, var(--sun) 48%, transparent), transparent 62%),
+    var(--bg);
+}
+
+// Grocery: clean and bright, a light wash instead of a glow.
+.page[data-style="grocery"] .banner {
+  background:
+    linear-gradient(180deg, color-mix(in oklab, var(--brand) 18%, transparent), transparent 75%),
+    var(--bg);
+}
+
+// Fresh market: leafy greens from the top.
+.page[data-style="market"] .banner {
+  background:
+    radial-gradient(120% 80% at 50% 0%, color-mix(in oklab, var(--brand) 40%, transparent), transparent 65%),
+    radial-gradient(70% 60% at 100% 10%, color-mix(in oklab, var(--accent) 30%, transparent), transparent 60%),
+    var(--bg);
+}
+
+// Bakery: soft pastels and rounder shapes.
+.page[data-style="bakery"] {
+  --radius-md: 18px;
+  --radius-lg: 26px;
+  --radius-xl: 34px;
+
+  .banner {
+    background:
+      radial-gradient(100% 90% at 20% 0%, color-mix(in oklab, var(--brand) 28%, transparent), transparent 65%),
+      radial-gradient(80% 70% at 90% 5%, color-mix(in oklab, var(--sun) 26%, transparent), transparent 60%),
+      var(--bg);
+  }
+}
+
+// Fashion: a quiet banner, sharp editorial shapes, a big tight name.
+.page[data-style="fashion"] {
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+
+  .banner {
+    background:
+      linear-gradient(180deg, color-mix(in oklab, var(--fg) 6%, transparent), transparent 80%),
+      var(--bg);
+  }
+
+  .avatar {
+    border-radius: var(--radius-lg);
+  }
+
+  .titles h1 {
+    letter-spacing: -0.045em;
+  }
+
+  .tagline {
+    font-size: var(--text-xs);
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+}
+
 // ── Template: grid (default) ────────────────────────────────
 .grid {
   display: grid;

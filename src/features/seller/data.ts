@@ -23,7 +23,6 @@ import { useCallback, useEffect, useState } from "react";
 import type { Product, ProductInput } from "@/domain/product";
 import { shopTypeOf } from "@/domain/shop";
 import type { Store, StoreInput } from "@/domain/store";
-import { DEFAULT_THEME } from "@/domain/theme";
 import { useAuth } from "@/features/auth";
 import { chunk } from "@/lib/chunk";
 import { clientDb } from "@/lib/firebase/client";
@@ -114,7 +113,7 @@ export async function createStore(ownerId: string, input: StoreInput): Promise<v
       tx.set(ref, {
         ...input,
         ownerId,
-        theme: { ...DEFAULT_THEME, template: type.template },
+        theme: { template: type.template, accent: type.accent },
         priceUnit: type.priceUnit,
         published: false,
         createdAt: serverTimestamp(),
