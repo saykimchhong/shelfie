@@ -5,7 +5,7 @@ import { Clock, PackageOpen, Search, SearchX, X } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
-import { useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { LogoMark } from "@/components/brand/Logo";
 import { ScrollStagger } from "@/components/motion/ScrollStagger";
 import { ThemeScope } from "@/components/theme/ThemeScope";
@@ -16,6 +16,7 @@ import { DEFAULT_SHOP_TYPE, shopTypeOf } from "@/domain/shop";
 import type { PublicStore } from "@/domain/store";
 import { DEFAULT_THEME, type Template } from "@/domain/theme";
 import { initials } from "@/lib/format";
+import { isDarkColor } from "@/lib/palette";
 import { OptionSheet } from "./OptionSheet";
 import { OrderBar } from "./OrderBar";
 import { cartLines, lineKey, quantityOf } from "./order";
@@ -35,6 +36,7 @@ export type StorefrontViewProps = {
 
 export function StorefrontView({ store, products, embedded }: StorefrontViewProps) {
   const theme = store.theme ?? DEFAULT_THEME;
+  useBrowserChrome(embedded ? undefined : theme.background);
   const chipId = useId();
   const sectionId = useId();
   const reduceMotion = useReducedMotion();
@@ -283,6 +285,25 @@ export function StorefrontView({ store, products, embedded }: StorefrontViewProp
       />
     </ThemeScope>
   );
+}
+
+// On the real page, the browser bar, over-scroll and scrollbars match the
+// seller's background too, not the device's light or dark mode.
+function useBrowserChrome(background: string | undefined) {
+  useEffect(() => {
+    if (!background) return;
+    const root = document.documentElement;
+    const before = { background: root.style.background, colorScheme: root.style.colorScheme };
+    const metas = [...document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]')];
+    const contents = metas.map((meta) => meta.content);
+    root.style.background = background;
+    root.style.colorScheme = isDarkColor(background) ? "dark" : "light";
+    metas.forEach((meta) => (meta.content = background));
+    return () => {
+      Object.assign(root.style, before);
+      metas.forEach((meta, index) => (meta.content = contents[index]));
+    };
+  }, [background]);
 }
 
 // Card templates: which grid and card look each one uses.
