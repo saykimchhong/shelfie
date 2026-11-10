@@ -2,7 +2,7 @@
 
 import clsx from "clsx";
 import { Badge, Text, Thumb } from "@/components/ui";
-import { formatPrice, perUnit } from "@/lib/format";
+import { Price } from "./Price";
 import type { ProductCardProps } from "./ProductCard";
 import { ChooseButton, QuantityControl } from "./QuantityControl";
 import styles from "./ProductListItem.module.scss";
@@ -21,9 +21,7 @@ export function ProductListItem({ product, currency, unit, quantity, onQuantityC
             {product.localName}
           </Text>
         ) : null}
-        <Text weight={800} tone={product.price === null ? "subtle" : "brand"}>
-          {product.price === null ? "Ask" : `${formatPrice(product.price, currency)}${perUnit(unit)}`}
-        </Text>
+        <Price amount={product.price} currency={currency} unit={unit} />
       </div>
       {!product.inStock ? (
         <Badge>Sold out</Badge>

@@ -3,10 +3,10 @@
 import clsx from "clsx";
 import { ShoppingBag } from "lucide-react";
 import { useState, type CSSProperties } from "react";
-import { Button, Sheet, Text, Thumb } from "@/components/ui";
+import { Button, Sheet, Thumb } from "@/components/ui";
 import type { PriceUnit, Product, Variant } from "@/domain/product";
 import type { Currency } from "@/domain/store";
-import { formatPrice, perUnit } from "@/lib/format";
+import { Price } from "./Price";
 import styles from "./OptionSheet.module.scss";
 
 // Pick a size and colour before adding: each list with choices needs one.
@@ -42,9 +42,7 @@ export function OptionSheet({
     >
       <div className={styles.summary}>
         <Thumb label={product.name} src={product.imageUrl} size={72} className={styles.thumb} />
-        <Text size="lg" weight={800} tone={product.price === null ? "subtle" : "brand"}>
-          {product.price === null ? "Ask" : `${formatPrice(product.price, currency)}${perUnit(unit)}`}
-        </Text>
+        <Price amount={product.price} currency={currency} unit={unit} className={styles.price} />
       </div>
       {product.sizes?.length ? <Choices label="Size" values={product.sizes} value={size} onChange={setSize} /> : null}
       {product.colors?.length ? (

@@ -4,7 +4,7 @@ import clsx from "clsx";
 import { Badge, Text, Thumb } from "@/components/ui";
 import type { PriceUnit, Product } from "@/domain/product";
 import type { Currency } from "@/domain/store";
-import { formatPrice, perUnit } from "@/lib/format";
+import { Price } from "./Price";
 import { ChooseButton, QuantityControl } from "./QuantityControl";
 import styles from "./ProductCard.module.scss";
 
@@ -69,9 +69,7 @@ export function ProductCard({
           </Text>
         ) : null}
         <div className={styles.footer}>
-          <Text weight={800} tone={product.price === null ? "subtle" : "brand"} className={styles.price}>
-            {product.price === null ? "Ask" : `${formatPrice(product.price, currency)}${perUnit(unit)}`}
-          </Text>
+          <Price amount={product.price} currency={currency} unit={unit} className={styles.price} />
         </div>
       </div>
     </article>

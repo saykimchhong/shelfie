@@ -146,6 +146,8 @@
   -webkit-line-clamp: $lines;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  // A long word with no spaces breaks instead of being cut off at the side.
+  overflow-wrap: anywhere;
 }
 
 // Emits a token map as CSS custom properties.
