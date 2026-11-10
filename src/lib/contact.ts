@@ -19,10 +19,16 @@ export function lineLink(lineId: string, text?: string): string {
 }
 
 // unit: what the quantity counts ("2 kg × Mango"); items when missing.
-export type OrderLine = { name: string; quantity: number; unit?: PriceUnit; lineTotal: number | null };
+// note: the customer's request for this item, e.g. "no ice".
+export type OrderLine = { name: string; quantity: number; unit?: PriceUnit; lineTotal: number | null; note?: string };
 
-// How the customer gets the order. The address is optional free text.
-export type OrderFulfillment = { method: FulfillmentMethod; address?: string };
+// How the customer gets the order. The address is optional free text; when is
+// already worded, e.g. "as soon as possible" or "tomorrow at 09:00".
+export type OrderFulfillment = { method: FulfillmentMethod; address?: string; when?: string };
+
+export const ORDER_NOTE_MAX = 80;
+
+const oneLine = (text: string | undefined) => text?.trim().replace(/\s+/g, " ") ?? "";
 
 export function orderMessage(input: {
   storeName: string;
@@ -33,13 +39,15 @@ export function orderMessage(input: {
 }): string {
   const items = input.lines.map((line) => {
     const price = line.lineTotal === null ? "" : ` (${input.formatLineTotal(line.lineTotal)})`;
-    return `• ${quantityWithUnit(line.quantity, line.unit ?? "each")} × ${line.name}${price}`;
+    const note = oneLine(line.note).slice(0, ORDER_NOTE_MAX);
+    return `• ${quantityWithUnit(line.quantity, line.unit ?? "each")} × ${line.name}${price}${note ? ` – ${note}` : ""}`;
   });
   return [
     `Hi ${input.storeName}! I'd like to order:`,
     ...items,
     input.total ? `Total: ${input.total}` : null,
     input.fulfillment ? fulfillmentLine(input.fulfillment) : null,
+    input.fulfillment?.when ? `When: ${input.fulfillment.when}` : null,
   ]
     .filter(Boolean)
     .join("\n");
@@ -47,6 +55,6 @@ export function orderMessage(input: {
 
 function fulfillmentLine({ method, address }: OrderFulfillment): string {
   if (method === "pickup") return "I'll pick it up.";
-  const where = address?.trim().replace(/\s+/g, " ");
+  const where = oneLine(address);
   return where ? `Please deliver to: ${where}` : "Please deliver it. I'll send the address.";
 }

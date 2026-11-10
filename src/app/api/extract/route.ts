@@ -10,6 +10,7 @@ import {
   type ExtractStreamMessage,
   type KnownProduct,
 } from "@/domain/extraction";
+import { shopTypeSchema } from "@/domain/shop";
 import { currencySchema, labelLanguageSchema } from "@/domain/store";
 import { NDJSON_CONTENT_TYPE, ndjsonStream } from "@/lib/ndjson";
 import { AuthError, requireUser } from "@/server/auth";
@@ -52,6 +53,8 @@ export async function POST(request: Request) {
   const text = String(form?.get("text") ?? "").trim();
   const currency = currencySchema.safeParse(form?.get("currency"));
   const labelLanguage = labelLanguageSchema.safeParse(form?.get("labelLanguage") ?? "en");
+  // Optional: steers the AI ("a food stall"); an unknown value is just ignored.
+  const shopType = shopTypeSchema.safeParse(form?.get("shopType")).data;
   const durationSeconds = Number(form?.get("durationSeconds")) || undefined;
   const known = parseKnown(form?.get("known"));
   const hasVideo = video instanceof Blob && video.size > 0;
@@ -85,6 +88,7 @@ export async function POST(request: Request) {
     mimeType: hasVideo ? video.type : "",
     currency: currency.data,
     labelLanguage: labelLanguage.data,
+    shopType,
     durationSeconds,
     known,
   };

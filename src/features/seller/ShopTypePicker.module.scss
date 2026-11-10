@@ -1,0 +1,82 @@
+@use "styles" as *;
+
+.group {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.legend {
+  padding: 0;
+  margin-bottom: var(--space-3);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--fg-muted);
+}
+
+.types {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+
+  @include up(sm) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.type {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    "icon name"
+    "icon examples";
+  align-items: center;
+  column-gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-lg);
+  background: var(--surface-1);
+  text-align: start;
+  @include pressable;
+
+  @include hover {
+    background: var(--surface-2);
+  }
+}
+
+.selected {
+  background: var(--brand-soft);
+  box-shadow: 0 0 0 2px var(--brand);
+}
+
+.icon {
+  grid-area: icon;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--bg-raised);
+  color: var(--brand-text);
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+.name {
+  grid-area: name;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  line-height: var(--leading-snug);
+}
+
+.examples {
+  grid-area: examples;
+  color: var(--fg-muted);
+  font-size: var(--text-xs);
+  line-height: var(--leading-snug);
+}

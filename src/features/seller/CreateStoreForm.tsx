@@ -5,12 +5,14 @@ import { useState, type FormEvent } from "react";
 import type { z } from "zod";
 import { Reveal } from "@/components/motion/Reveal";
 import { Button, Segmented, Stack, Surface, Text, TextField } from "@/components/ui";
+import { DEFAULT_SHOP_TYPE, type ShopType } from "@/domain/shop";
 import { sanitizeSlugInput, slugify } from "@/domain/slug";
 import { storeInputSchema, type Currency, type LabelLanguage } from "@/domain/store";
 import { useSignedInUser } from "@/features/auth";
 import { storeUrlLabel } from "@/lib/site";
 import { createStore, RulesNotDeployedError, SlugTakenError } from "./data";
 import { CURRENCY_OPTIONS, LABEL_LANGUAGE_OPTIONS, PHONE_PLACEHOLDER } from "./options";
+import { ShopTypePicker } from "./ShopTypePicker";
 import styles from "./CreateStoreForm.module.scss";
 
 type FieldErrors = Partial<Record<"name" | "slug" | "whatsapp" | "line" | "form", string>>;
@@ -26,6 +28,7 @@ function toFieldErrors(error: z.ZodError): FieldErrors {
 
 export function CreateStoreForm() {
   const user = useSignedInUser();
+  const [shopType, setShopType] = useState<ShopType>(DEFAULT_SHOP_TYPE);
   const [name, setName] = useState("");
   const [customSlug, setCustomSlug] = useState<string | null>(null);
   const [currency, setCurrency] = useState<Currency>("USD");
@@ -47,6 +50,7 @@ export function CreateStoreForm() {
       currency,
       labelLanguage,
       contact: { whatsapp: whatsapp.trim() || undefined, line: line.trim() || undefined },
+      shopType,
     });
     if (!parsed.success) return setErrors(toFieldErrors(parsed.error));
     if (!parsed.data.contact.whatsapp && !parsed.data.contact.line) {
@@ -78,6 +82,8 @@ export function CreateStoreForm() {
               Set up your shop
             </Text>
           </Stack>
+
+          <ShopTypePicker value={shopType} onChange={setShopType} />
 
           <TextField
             label="Shop name"

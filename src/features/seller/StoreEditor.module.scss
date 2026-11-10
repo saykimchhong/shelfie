@@ -6,30 +6,42 @@
   gap: var(--space-6);
 }
 
-// Phone: profile → look → preview → details → payment → restock.
+// Phone: profile → type → look → preview → details → hours → payment → restock.
 // Desktop: settings on the left, sticky live preview on the right.
 .layout {
   display: grid;
   grid-template-areas:
     "profile"
+    "kind"
     "look"
     "preview"
     "details"
+    "hours"
     "payment"
     "restock";
   gap: var(--space-6);
 
   @include up(lg) {
     grid-template-columns: minmax(0, 1fr) 340px;
-    grid-template-rows: auto auto auto auto 1fr;
+    grid-template-rows: auto auto auto auto auto auto 1fr;
     grid-template-areas:
       "profile preview"
+      "kind preview"
       "look preview"
       "details preview"
+      "hours preview"
       "payment preview"
       "restock preview";
     align-items: start;
   }
+}
+
+.kind {
+  grid-area: kind;
+}
+
+.hours {
+  grid-area: hours;
 }
 
 .profile {

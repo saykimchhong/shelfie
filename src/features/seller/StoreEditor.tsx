@@ -18,6 +18,7 @@ import {
   TextArea,
   TextField,
 } from "@/components/ui";
+import type { OpeningHours } from "@/domain/hours";
 import { DEFAULT_PRICE_UNIT, type PriceUnit } from "@/domain/product";
 import { sampleStorefront } from "@/domain/samples";
 import {
@@ -34,6 +35,7 @@ import {
   type RestockSettings,
   type Store,
 } from "@/domain/store";
+import { DEFAULT_SHOP_TYPE, SHOP_TYPE_INFO, type ShopType } from "@/domain/shop";
 import { DEFAULT_THEME, type Theme } from "@/domain/theme";
 import { useSignedInUser } from "@/features/auth";
 import { removeImage, saveStoreLogo, saveStorePaymentQr, useObjectUrl } from "@/features/media";
@@ -49,7 +51,9 @@ import {
   PHONE_PLACEHOLDER,
   PRICE_UNIT_OPTIONS,
 } from "./options";
+import { HoursEditor } from "./HoursEditor";
 import { DashboardSkeleton } from "./SellerHome";
+import { ShopTypePicker } from "./ShopTypePicker";
 import styles from "./StoreEditor.module.scss";
 
 export function StoreEditorPage() {
@@ -80,6 +84,8 @@ type Form = {
   restock: RestockSettings;
   fulfillment: FulfillmentOffer;
   priceUnit: PriceUnit;
+  shopType: ShopType;
+  hours: OpeningHours | null;
 };
 
 // The logo and payment QR are files, so they're tracked apart from the text fields.
@@ -98,6 +104,8 @@ function toForm(store: Store): Form {
     restock: store.restock ?? DEFAULT_RESTOCK,
     fulfillment: store.fulfillment ?? DEFAULT_FULFILLMENT,
     priceUnit: store.priceUnit ?? DEFAULT_PRICE_UNIT,
+    shopType: store.shopType ?? DEFAULT_SHOP_TYPE,
+    hours: store.hours ?? null,
   };
 }
 
@@ -128,6 +136,17 @@ function StoreEditor({ store }: { store: Store }) {
     setForm((current) => ({ ...current, [key]: value }));
     setJustSaved(false);
   };
+  // A new type suggests its own layout and price unit; both stay changeable.
+  const changeShopType = (shopType: ShopType) => {
+    const type = SHOP_TYPE_INFO[shopType];
+    setForm((current) => ({
+      ...current,
+      shopType,
+      theme: { ...current.theme, template: type.template },
+      priceUnit: type.priceUnit,
+    }));
+    setJustSaved(false);
+  };
   const changeLogo = (next: ImageChange) => {
     setLogo(next);
     setJustSaved(false);
@@ -150,6 +169,9 @@ function StoreEditor({ store }: { store: Store }) {
     theme: form.theme,
     fulfillment: form.fulfillment,
     priceUnit: form.priceUnit,
+    shopType: form.shopType,
+    hours: form.hours ?? undefined,
+    timeZone: store.timeZone,
     paymentQrUrl: qrUrl ?? undefined,
     published: store.published,
     createdAt: store.createdAt,
@@ -203,6 +225,10 @@ function StoreEditor({ store }: { store: Store }) {
         restock: form.restock,
         fulfillment: form.fulfillment,
         priceUnit: form.priceUnit,
+        shopType: form.shopType,
+        // undefined removes the hours; the seller's zone makes "open now" right for every customer.
+        hours: form.hours ?? undefined,
+        ...(form.hours ? { timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone } : {}),
         ...logoPatch,
         ...qrPatch,
       });
@@ -281,6 +307,17 @@ function StoreEditor({ store }: { store: Store }) {
           </Section>
         </Reveal>
 
+        <Reveal delay={0.04} className={styles.kind}>
+          <Section title="Shop type">
+            <Stack gap={2}>
+              <ShopTypePicker value={form.shopType} onChange={changeShopType} />
+              <Text size="xs" tone="subtle">
+                Suggests a layout and price unit, and adds what your shop needs to the cart.
+              </Text>
+            </Stack>
+          </Section>
+        </Reveal>
+
         <Reveal delay={0.06} className={styles.look}>
           {/* Scoped to the chosen color so the picker itself previews it. */}
           <ThemeScope accent={form.theme.accent}>
@@ -340,6 +377,12 @@ function StoreEditor({ store }: { store: Store }) {
               value={form.fulfillment}
               onChange={(v) => set("fulfillment", v)}
             />
+          </Section>
+        </Reveal>
+
+        <Reveal delay={0.15} className={styles.hours}>
+          <Section title="Opening hours">
+            <HoursEditor value={form.hours} onChange={(hours) => set("hours", hours)} />
           </Section>
         </Reveal>
 

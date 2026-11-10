@@ -7,6 +7,7 @@ import { DEFAULT_FULFILLMENT, type PublicStore } from "@/domain/store";
 import { CartSheet } from "./CartSheet";
 import { DEFAULT_CHOICE, summarizeOrder, type CartLine, type FulfillmentChoice } from "./order";
 import { OrderButtons } from "./OrderButtons";
+import { useOpenState } from "./useOpenState";
 import styles from "./OrderBar.module.scss";
 
 export type { CartLine } from "./order";
@@ -17,16 +18,19 @@ export function OrderBar({
   store,
   lines,
   onQuantityChange,
+  onNoteChange,
   onClear,
 }: {
   store: PublicStore;
   lines: CartLine[];
   onQuantityChange: (productId: string, quantity: number) => void;
+  onNoteChange: (productId: string, note: string) => void;
   onClear: () => void;
 }) {
   const [cartOpen, setCartOpen] = useState(false);
   const [choice, setChoice] = useState<FulfillmentChoice>(DEFAULT_CHOICE);
-  const summary = summarizeOrder(store, lines, choice);
+  const hours = useOpenState(store.hours, store.timeZone);
+  const summary = summarizeOrder(store, lines, choice, { closed: hours?.open === false });
   // With both on offer, the customer picks in the cart before sending.
   const mustChoose = (store.fulfillment ?? DEFAULT_FULFILLMENT) === "both";
 
@@ -88,6 +92,8 @@ export function OrderBar({
         choice={choice}
         onChoiceChange={setChoice}
         onQuantityChange={changeQuantity}
+        onNoteChange={onNoteChange}
+        closedLabel={hours?.open === false ? hours.label : null}
         onClear={clear}
       />
     </>

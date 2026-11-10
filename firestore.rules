@@ -41,6 +41,15 @@ service cloud.firestore {
       return !('fulfillment' in data) || data.fulfillment in ['pickup', 'delivery', 'both'];
     }
 
+    // Optional opening hours (src/domain/hours.ts): "HH:MM" times, closed weekdays 0–6.
+    function validHours(data) {
+      return !('hours' in data)
+        || (data.hours is map
+            && data.hours.open is string && data.hours.open.matches('^([01][0-9]|2[0-3]):[0-5][0-9]$')
+            && data.hours.close is string && data.hours.close.matches('^([01][0-9]|2[0-3]):[0-5][0-9]$')
+            && data.hours.closedDays is list && data.hours.closedDays.size() <= 7);
+    }
+
     // Optional price units (src/domain/product.ts PRICE_UNITS).
     function validUnit(data, field) {
       return !(field in data) || data[field] in ['each', 'kg', 'bunch', 'pack'];
@@ -57,6 +66,9 @@ service cloud.firestore {
         && validRestock(data)
         && validFulfillment(data)
         && validUnit(data, 'priceUnit')
+        && (!('shopType' in data) || data.shopType in ['shop', 'food', 'grocery', 'fashion', 'market', 'bakery'])
+        && validHours(data)
+        && (!('timeZone' in data) || (data.timeZone is string && data.timeZone.size() <= 64))
         && (!('description' in data) || (data.description is string && data.description.size() <= 500))
         // Logo may be an inline data URL for now, like product photos.
         && (!('logoUrl' in data) || (data.logoUrl is string && data.logoUrl.size() <= 250000))

@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { PRICE_UNITS } from "./product";
+import { SHOP_TYPES } from "./shop";
 import { CURRENCIES, FULFILLMENT_OFFERS, LABEL_LANGUAGES, MISSING_PRODUCT_ACTIONS } from "./store";
 import { TEMPLATES } from "./theme";
 
@@ -24,6 +25,7 @@ describe("firestore.rules matches src/domain", () => {
     ["data.fulfillment", FULFILLMENT_OFFERS],
     ["data.restock.missing", MISSING_PRODUCT_ACTIONS],
     ["data.theme.template", TEMPLATES],
+    ["data.shopType", SHOP_TYPES],
     // validUnit(data, field): product `unit` and store `priceUnit`.
     ["data[field]", PRICE_UNITS],
   ])("%s", (field, values) => {

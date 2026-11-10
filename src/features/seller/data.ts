@@ -21,6 +21,7 @@ import {
 } from "firebase/firestore";
 import { useCallback, useEffect, useState } from "react";
 import type { Product, ProductInput } from "@/domain/product";
+import { shopTypeOf } from "@/domain/shop";
 import type { Store, StoreInput } from "@/domain/store";
 import { DEFAULT_THEME } from "@/domain/theme";
 import { useAuth } from "@/features/auth";
@@ -108,10 +109,13 @@ export async function createStore(ownerId: string, input: StoreInput): Promise<v
   try {
     await runTransaction(db, async (tx) => {
       if ((await tx.get(ref)).exists()) throw new SlugTakenError();
+      // The shop type suggests where to start: its layout and price unit.
+      const type = shopTypeOf(input);
       tx.set(ref, {
         ...input,
         ownerId,
-        theme: DEFAULT_THEME,
+        theme: { ...DEFAULT_THEME, template: type.template },
+        priceUnit: type.priceUnit,
         published: false,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
@@ -150,12 +154,15 @@ export type StorePatch = Partial<
     | "priceUnit"
     | "published"
     | "paymentQrUrl"
+    | "shopType"
+    | "hours"
+    | "timeZone"
   >
 >;
 
 export async function updateStore(slug: string, patch: StorePatch): Promise<void> {
   await updateDoc(storeRef(slug), {
-    ...withDeletes(patch, ["tagline", "description", "logoUrl", "paymentQrUrl"]),
+    ...withDeletes(patch, ["tagline", "description", "logoUrl", "paymentQrUrl", "hours"]),
     updatedAt: serverTimestamp(),
   });
 }

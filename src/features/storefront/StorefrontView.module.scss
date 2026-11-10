@@ -65,6 +65,17 @@
   object-fit: cover;
 }
 
+.hours {
+  align-self: inherit;
+  width: fit-content;
+  margin-top: var(--space-1);
+  margin-inline: auto;
+
+  .t-list & {
+    margin-inline: 0;
+  }
+}
+
 .about {
   display: flex;
   flex-direction: column;

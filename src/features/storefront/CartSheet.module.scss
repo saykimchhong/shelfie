@@ -1,3 +1,5 @@
+@use "styles" as *;
+
 .lines {
   display: flex;
   flex-direction: column;
@@ -78,4 +80,26 @@
 
 .qrImage {
   object-fit: contain;
+}
+
+// A quiet one-line field under the item, for "no ice" or "size 42".
+.note {
+  width: 100%;
+  margin-top: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: var(--surface-1);
+  color: var(--fg);
+  font: inherit;
+  font-size: var(--text-sm);
+  outline: none;
+
+  &::placeholder {
+    color: var(--fg-subtle);
+  }
+
+  &:focus-visible {
+    @include focus-ring;
+  }
 }

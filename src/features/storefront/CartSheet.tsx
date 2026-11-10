@@ -1,6 +1,6 @@
 "use client";
 
-import { Store, Trash2, Truck } from "lucide-react";
+import { Clock, Store, Trash2, Truck } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import Image from "next/image";
 import { Badge, Button, Segmented, Sheet, Text, TextField, Thumb } from "@/components/ui";
@@ -12,6 +12,8 @@ import {
   type PublicStore,
 } from "@/domain/store";
 import { unitOf, type PriceUnit } from "@/domain/product";
+import { shopTypeOf } from "@/domain/shop";
+import { ORDER_NOTE_MAX } from "@/lib/contact";
 import { formatPrice, perUnit } from "@/lib/format";
 import type { CartLine, FulfillmentChoice, OrderSummary } from "./order";
 import { OrderButtons } from "./OrderButtons";
@@ -29,6 +31,8 @@ export function CartSheet({
   choice,
   onChoiceChange,
   onQuantityChange,
+  onNoteChange,
+  closedLabel,
   onClear,
 }: {
   open: boolean;
@@ -39,8 +43,12 @@ export function CartSheet({
   choice: FulfillmentChoice;
   onChoiceChange: (choice: FulfillmentChoice) => void;
   onQuantityChange: (productId: string, quantity: number) => void;
+  onNoteChange: (productId: string, note: string) => void;
+  // "Closed · opens 07:00" while the shop is closed; null when open or unknown.
+  closedLabel: string | null;
   onClear: () => void;
 }) {
+  const type = shopTypeOf(store);
   return (
     <Sheet
       open={open}
@@ -62,7 +70,7 @@ export function CartSheet({
     >
       <ul className={styles.lines}>
         <AnimatePresence initial={false} mode="popLayout">
-          {lines.map(({ product, quantity }) => (
+          {lines.map(({ product, quantity, note }) => (
             <motion.li
               key={product.id}
               layout="position"
@@ -78,6 +86,16 @@ export function CartSheet({
                 <Text size="sm" tone="muted">
                   {product.price === null ? "Price on request" : unitPrice(product.price, store, unitOf(product, store.priceUnit))}
                 </Text>
+                {type.noteHint ? (
+                  <input
+                    className={styles.note}
+                    value={note ?? ""}
+                    onChange={(event) => onNoteChange(product.id, event.target.value)}
+                    placeholder={type.noteHint}
+                    maxLength={ORDER_NOTE_MAX}
+                    aria-label={`Note for ${product.name}`}
+                  />
+                ) : null}
               </div>
               <QuantityControl
                 quantity={quantity}
@@ -94,6 +112,7 @@ export function CartSheet({
         </Button>
       </div>
       <Fulfillment store={store} method={summary.method} choice={choice} onChange={onChoiceChange} />
+      {type.orderTime ? <OrderTime choice={choice} closedLabel={closedLabel} onChange={onChoiceChange} /> : null}
       {store.paymentQrUrl ? <PaymentQr store={store} url={store.paymentQrUrl} /> : null}
     </Sheet>
   );
@@ -166,6 +185,45 @@ function Fulfillment({
           value={choice.address}
           onChange={(event) => onChange({ ...choice, address: event.target.value })}
         />
+      ) : null}
+    </div>
+  );
+}
+
+// As soon as possible (or when the shop opens, if it's closed now), or a day and time.
+function OrderTime({
+  choice,
+  closedLabel,
+  onChange,
+}: {
+  choice: FulfillmentChoice;
+  closedLabel: string | null;
+  onChange: (choice: FulfillmentChoice) => void;
+}) {
+  const options = [
+    { value: "soon", label: closedLabel ? "When you open" : "As soon as possible" },
+    { value: "later", label: "Pick a time" },
+  ] as const;
+  return (
+    <div className={styles.fulfillment}>
+      <Segmented
+        label="When do you want it?"
+        options={options}
+        value={choice.when}
+        onChange={(when) => onChange({ ...choice, when })}
+      />
+      {choice.when === "later" ? (
+        <TextField
+          label="Day and time"
+          type="datetime-local"
+          value={choice.at}
+          onChange={(event) => onChange({ ...choice, at: event.target.value })}
+        />
+      ) : null}
+      {closedLabel ? (
+        <Badge icon={<Clock />} className={styles.offer}>
+          {closedLabel}
+        </Badge>
       ) : null}
     </div>
   );

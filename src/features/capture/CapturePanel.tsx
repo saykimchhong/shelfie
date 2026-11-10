@@ -196,6 +196,7 @@ function Capture({ store, products }: { store: Store; products: Product[] }) {
         capture,
         currency: store.currency,
         labelLanguage: store.labelLanguage,
+        shopType: store.shopType,
         known: toKnownProducts(shelfProducts),
         idToken: await getIdToken(),
         signal: controller.signal,

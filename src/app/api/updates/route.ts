@@ -1,3 +1,4 @@
+import { shopTypeSchema } from "@/domain/shop";
 import { currencySchema, labelLanguageSchema } from "@/domain/store";
 import { listedProductsSchema, MAX_UPDATE_AUDIO_BYTES, MAX_UPDATE_TEXT, type ListedProduct } from "@/domain/updates";
 import { AuthError, requireUser } from "@/server/auth";
@@ -40,6 +41,7 @@ export async function POST(request: Request) {
     products,
     currency: currency.data,
     labelLanguage: labelLanguage.data,
+    shopType: shopTypeSchema.safeParse(form?.get("shopType")).data,
   };
   try {
     const result = await readUpdates(input);

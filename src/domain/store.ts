@@ -1,5 +1,7 @@
 import { z } from "zod";
+import { openingHoursSchema } from "./hours";
 import { priceUnitSchema } from "./product";
+import { shopTypeSchema } from "./shop";
 import { isValidSlug } from "./slug";
 import { themeSchema } from "./theme";
 
@@ -84,6 +86,13 @@ export const storeSchema = z.object({
   // override it. Missing → "each" (DEFAULT_PRICE_UNIT).
   priceUnit: priceUnitSchema.optional(),
   paymentQrUrl: z.url().optional(),
+  // Missing on stores created before shop types existed → "shop".
+  shopType: shopTypeSchema.optional(),
+  // Missing → no hours shown.
+  hours: openingHoursSchema.optional(),
+  // The seller's time zone when they saved the hours, so "open now" is right
+  // wherever the customer is.
+  timeZone: z.string().max(64).optional(),
   published: z.boolean(),
   createdAt: z.number(),
   updatedAt: z.number(),
@@ -102,6 +111,7 @@ export const storeInputSchema = storeSchema.pick({
   currency: true,
   labelLanguage: true,
   contact: true,
+  shopType: true,
 });
 
 export type StoreInput = z.infer<typeof storeInputSchema>;

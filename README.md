@@ -100,6 +100,8 @@ Reading a shelf video is a [Google ADK](https://github.com/google/adk-js) workfl
 
 A store's look is `theme: { template, accent }`:
 
+- **Shop types** (`src/domain/shop.ts`): what the seller picks first, "What do you sell?". Each suggests a layout and price unit, tells the AI what kind of shop it's reading, and turns on what that business needs in the cart: a note per item (food, fashion, fresh market, bakery, each with its own hint, e.g. "less spicy" or "size 42, black") and when the customer wants it (food and bakery: as soon as possible, or a day and time). Both go into the WhatsApp/LINE message.
+- **Opening hours** (`src/domain/hours.ts`): optional for every shop. The storefront shows "Open · until 21:00" or "Closed · opens 07:00", worked out in the seller's time zone, after hydration (the page is cached). While a food or bakery shop is closed, "as soon as possible" becomes "when you open".
 - **Templates:** `grid` (most shops), `list` (many small items), `showcase` (a few special items), `compact` (big catalogs, three across on a phone), `menu` (food and drinks: name ··· price, in sections) and `shelves` (many sections, each a row that scrolls sideways). Menu and shelves group by shelf, or by category when the shop has one shelf or none; their chips jump to a section.
 - **Accent:** any hex color. `src/lib/palette.ts` derives the button, tint and text shades and keeps text readable (WCAG AA) in light and dark mode.
 
@@ -170,7 +172,9 @@ stores/{slug}                       slug = document id = public URL
   contact { whatsapp?, line? }, theme? { template (grid|list|showcase|compact|menu|shelves), accent (#rrggbb) },
   restock? { missing (soldOut|keep) }, fulfillment? (pickup|delivery|both, missing = pickup),
   priceUnit? (each|kg|bunch|pack, missing = each: what prices are usually for),
-  paymentQrUrl?, published, createdAt, updatedAt
+  shopType? (shop|food|grocery|fashion|market|bakery, missing = shop),
+  hours? { open "HH:MM", close "HH:MM" (before open = past midnight), closedDays [0–6, 0 = Sunday] },
+  timeZone? (the seller's, saved with the hours), paymentQrUrl?, published, createdAt, updatedAt
 
 stores/{slug}/products/{id}
   name, localName?, price (number | null = "Ask"), unit? (each|kg|bunch|pack, missing = the store's priceUnit),

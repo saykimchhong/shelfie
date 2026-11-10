@@ -2,6 +2,7 @@ import "server-only";
 import { FunctionNode, LlmAgent } from "@google/adk";
 import { createPartFromBase64, createUserContent, type Part, type ThinkingLevel } from "@google/genai";
 import { z } from "zod";
+import { aboutShop } from "@/domain/shop";
 import { LANGUAGE_NAMES } from "@/domain/store";
 import { geminiModel } from "@/server/adk";
 import type { Watch, WatcherSettings } from "./watcher";
@@ -47,10 +48,10 @@ const listReadSchema = z.object({
 export type PhotoRead = z.infer<typeof photoReadSchema>;
 export type ListRead = z.infer<typeof listReadSchema>;
 
-function photoInstruction({ currency, labelLanguage }: WatcherSettings): string {
+function photoInstruction({ currency, labelLanguage, shopType }: WatcherSettings): string {
   const language = LANGUAGE_NAMES[labelLanguage];
   return `You catalogue the products in a small shop from photos the owner took: shelves, a menu board or a price list.
-List every distinct product for sale.
+${aboutShop(shopType)}List every distinct product for sale.
 - Labels are mostly in ${language}. localName is only the ${language}-script words of its name, exactly as written; null when there are none.
 - The same product in several photos is one item. Different sizes, colours or flavours are separate items.
 - photo is the number of the photo where it is clearest, and box is where it is in that photo. A line on a menu or price list with no picture of the item has box null.
@@ -59,10 +60,10 @@ List every distinct product for sale.
 - Keep the order: photo by photo, top to bottom, left to right.`;
 }
 
-function listInstruction({ currency, labelLanguage }: WatcherSettings): string {
+function listInstruction({ currency, labelLanguage, shopType }: WatcherSettings): string {
   const language = LANGUAGE_NAMES[labelLanguage];
   return `You turn the owner's typed product list into a shop catalogue. It may be in ${language}, English or both, one product per line or separated by commas, usually with the price after the name.
-- name is a short English name a customer would search for, translated when written in ${language}. localName is only the ${language}-script words of its name, exactly as written; null when there are none.
+${aboutShop(shopType)}- name is a short English name a customer would search for, translated when written in ${language}. localName is only the ${language}-script words of its name, exactly as written; null when there are none.
 - price is the number written for it, in ${currency}. null if none. Never guess.
 - Skip headings, totals, notes and anything that isn't a product. Keep the owner's order.`;
 }

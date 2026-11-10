@@ -3,6 +3,7 @@ import { FunctionNode, LlmAgent } from "@google/adk";
 import { createUserContent, type ThinkingLevel } from "@google/genai";
 import { z } from "zod";
 import type { FrameBox } from "@/domain/extraction";
+import { aboutShop, type ShopType } from "@/domain/shop";
 import { LANGUAGE_NAMES, type Currency, type LabelLanguage } from "@/domain/store";
 import { geminiModel } from "@/server/adk";
 import { uploadVideo } from "@/server/gemini";
@@ -51,14 +52,14 @@ export type WatchedProduct = z.infer<typeof watchedProductSchema>;
 export type HeardPrice = z.infer<typeof heardPriceSchema>;
 export type Watch = z.infer<typeof watchSchema>;
 
-export type WatcherSettings = { currency: Currency; labelLanguage: LabelLanguage };
+export type WatcherSettings = { currency: Currency; labelLanguage: LabelLanguage; shopType?: ShopType };
 
 export type VideoInput = { blob: Blob; mimeType: string };
 
-function instruction({ currency, labelLanguage }: WatcherSettings): string {
+function instruction({ currency, labelLanguage, shopType }: WatcherSettings): string {
   const language = LANGUAGE_NAMES[labelLanguage];
   return `You catalogue the products in a small shop from a video the owner recorded on their phone.
-The owner walks past one shelf and may say prices out loud, often mixing ${language} and English, with numbers in either language.
+${aboutShop(shopType)}The owner walks past one shelf and may say prices out loud, often mixing ${language} and English, with numbers in either language.
 
 Products: list every distinct product for sale that is visible.
 - Labels are mostly in ${language}. Copy local-script names exactly as printed into localName.

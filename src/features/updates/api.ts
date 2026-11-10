@@ -1,3 +1,4 @@
+import type { ShopType } from "@/domain/shop";
 import type { Currency, LabelLanguage } from "@/domain/store";
 import { updatesResponseSchema, type ListedProduct, type UpdatesResponse } from "@/domain/updates";
 
@@ -6,6 +7,7 @@ export type UpdateRequest = {
   products: ListedProduct[];
   currency: Currency;
   labelLanguage: LabelLanguage;
+  shopType?: ShopType;
   idToken: string;
   signal?: AbortSignal;
 };
@@ -15,6 +17,7 @@ export async function requestUpdates({
   products,
   currency,
   labelLanguage,
+  shopType,
   idToken,
   signal,
 }: UpdateRequest): Promise<UpdatesResponse> {
@@ -24,6 +27,7 @@ export async function requestUpdates({
   body.append("products", JSON.stringify(products));
   body.append("currency", currency);
   body.append("labelLanguage", labelLanguage);
+  if (shopType) body.append("shopType", shopType);
 
   const response = await fetch("/api/updates", {
     method: "POST",

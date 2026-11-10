@@ -53,6 +53,7 @@ export function QuickUpdate({ store, products }: { store: Store; products: Produ
         products: toListedProducts(products, store.priceUnit),
         currency: store.currency,
         labelLanguage: store.labelLanguage,
+        shopType: store.shopType,
         idToken: await getIdToken(),
       });
       if (result.changes.length > 0) setReview({ id: Date.now(), result, open: true });

@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import { PackageOpen } from "lucide-react";
+import { Clock, PackageOpen } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
@@ -9,7 +9,7 @@ import { useId, useMemo, useState } from "react";
 import { LogoMark } from "@/components/brand/Logo";
 import { ScrollStagger } from "@/components/motion/ScrollStagger";
 import { ThemeScope } from "@/components/theme/ThemeScope";
-import { Container, EmptyState, Text } from "@/components/ui";
+import { Badge, Container, EmptyState, Text } from "@/components/ui";
 import { unitOf, type Product } from "@/domain/product";
 import { sectionsOf } from "@/domain/shelf";
 import type { PublicStore } from "@/domain/store";
@@ -20,6 +20,7 @@ import type { CartLine } from "./order";
 import { ProductCard } from "./ProductCard";
 import { ProductListItem } from "./ProductListItem";
 import { ProductMenuItem } from "./ProductMenuItem";
+import { useOpenState } from "./useOpenState";
 import styles from "./StorefrontView.module.scss";
 
 export type StorefrontViewProps = {
@@ -35,6 +36,8 @@ export function StorefrontView({ store, products, embedded }: StorefrontViewProp
   const sectionId = useId();
   const reduceMotion = useReducedMotion();
   const [cart, setCart] = useState<Record<string, number>>({});
+  const [notes, setNotes] = useState<Record<string, string>>({});
+  const hours = useOpenState(store.hours, store.timeZone);
   const [category, setCategory] = useState<string | null>(null);
 
   const canOrder = Boolean(store.contact.whatsapp || store.contact.line);
@@ -53,13 +56,23 @@ export function StorefrontView({ store, products, embedded }: StorefrontViewProp
   }
   const lines: CartLine[] = products
     .filter((product) => cart[product.id])
-    .map((product) => ({ product, quantity: cart[product.id] }));
+    .map((product) => ({ product, quantity: cart[product.id], note: notes[product.id] }));
 
   function setQuantity(productId: string, quantity: number) {
     setCart((current) => {
       const next = { ...current };
       if (quantity <= 0) delete next[productId];
       else next[productId] = quantity;
+      return next;
+    });
+    if (quantity <= 0) setNote(productId, "");
+  }
+
+  function setNote(productId: string, note: string) {
+    setNotes((current) => {
+      const next = { ...current };
+      if (note) next[productId] = note;
+      else delete next[productId];
       return next;
     });
   }
@@ -91,6 +104,16 @@ export function StorefrontView({ store, products, embedded }: StorefrontViewProp
               <Text tone="muted" clamp={2}>
                 {store.tagline}
               </Text>
+            ) : null}
+            {hours ? (
+              <Badge
+                tone={hours.open ? "success" : "neutral"}
+                pulse={hours.open}
+                icon={hours.open ? undefined : <Clock />}
+                className={styles.hours}
+              >
+                {hours.label}
+              </Badge>
             ) : null}
             {store.description ? <About text={store.description} /> : null}
           </div>
@@ -181,7 +204,16 @@ export function StorefrontView({ store, products, embedded }: StorefrontViewProp
         </Link>
       </Container>
 
-      <OrderBar store={store} lines={lines} onQuantityChange={setQuantity} onClear={() => setCart({})} />
+      <OrderBar
+        store={store}
+        lines={lines}
+        onQuantityChange={setQuantity}
+        onNoteChange={setNote}
+        onClear={() => {
+          setCart({});
+          setNotes({});
+        }}
+      />
     </ThemeScope>
   );
 }

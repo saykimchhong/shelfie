@@ -3,6 +3,7 @@ import { LlmAgent } from "@google/adk";
 import { createPartFromBase64, createUserContent, type Part, type ThinkingLevel } from "@google/genai";
 import { z } from "zod";
 import { PRICE_UNITS } from "@/domain/product";
+import { aboutShop, type ShopType } from "@/domain/shop";
 import { LANGUAGE_NAMES, type Currency, type LabelLanguage } from "@/domain/store";
 import type { ListedProduct, NewProduct, ProductChange, ProductEdit } from "@/domain/updates";
 import { geminiModel, runWorkflow } from "@/server/adk";
@@ -32,14 +33,14 @@ export const readerSchema = z.object({
 
 export type ReaderOutput = z.infer<typeof readerSchema>;
 
-export type ShopSettings = { currency: Currency; labelLanguage: LabelLanguage };
+export type ShopSettings = { currency: Currency; labelLanguage: LabelLanguage; shopType?: ShopType };
 
 export type UpdateMessage = { text: string } | { audio: Blob };
 
-function instruction({ currency, labelLanguage }: ShopSettings): string {
+function instruction({ currency, labelLanguage, shopType }: ShopSettings): string {
   const language = LANGUAGE_NAMES[labelLanguage];
   return `You keep a small shop's product list up to date from the owner's message. The message is typed or a voice note, often mixing ${language} and English.
-The shop's products are listed, numbered. Prices are in ${currency}.
+${aboutShop(shopType)}The shop's products are listed, numbered. Prices are in ${currency}.
 Turn the message into changes:
 - update: a listed product changes. Fill only what the owner asked to change (name, localName, price, unit, inStock) and leave the rest null. Naming a product to point at it is not a rename.
 - add: a product that isn't listed. Give its name in English, localName in ${language} when said, and its price and unit when said.

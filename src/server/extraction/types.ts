@@ -1,4 +1,5 @@
 import type { CaptureSource, KnownProduct } from "@/domain/extraction";
+import type { ShopType } from "@/domain/shop";
 import type { Currency, LabelLanguage } from "@/domain/store";
 
 export type ExtractInput = {
@@ -13,6 +14,7 @@ export type ExtractInput = {
   text?: string;
   currency: Currency;
   labelLanguage: LabelLanguage;
+  shopType?: ShopType;
   // Measured in the browser; lets the mock spread timestamps over the video.
   durationSeconds?: number;
   // The shelf's current products, so known ones come back with a matchId.

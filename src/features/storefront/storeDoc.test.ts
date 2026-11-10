@@ -56,6 +56,7 @@ describe("store docs to the public storefront", () => {
   it("caps a delivery address in the order message", () => {
     const store = toPublicStore(toStore("kamal-stores", { ...doc, fulfillment: "both" })!);
     const summary = summarizeOrder(store, [{ product: rice, quantity: 1 }], {
+      ...DEFAULT_CHOICE,
       method: "delivery",
       address: "x".repeat(500),
     });
