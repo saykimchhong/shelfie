@@ -2,7 +2,7 @@ import "server-only";
 import { LlmAgent } from "@google/adk";
 import { createPartFromBase64, createUserContent, type Part, type ThinkingLevel } from "@google/genai";
 import { z } from "zod";
-import { PRICE_UNITS } from "@/domain/product";
+import { PRICE_UNIT_GUIDE, PRICE_UNITS } from "@/domain/product";
 import { aboutShop, type ShopType } from "@/domain/shop";
 import { LANGUAGE_NAMES, type Currency, type LabelLanguage } from "@/domain/store";
 import type { ListedProduct, NewProduct, ProductChange, ProductEdit } from "@/domain/updates";
@@ -25,7 +25,10 @@ export const readerSchema = z.object({
         .nullable()
         .describe("update: the new label-language name, only when renamed. add: the name in the label language."),
       price: z.number().nullable().describe("The new price, only when said."),
-      unit: z.enum(PRICE_UNITS).nullable().describe("What the price is for, only when said."),
+      unit: z
+        .enum(PRICE_UNITS)
+        .nullable()
+        .describe(`update: the new unit, only when the owner says it. add: always set. ${PRICE_UNIT_GUIDE}`),
       inStock: z.boolean().nullable().describe("false when sold out, true when back in stock, null when not said."),
     }),
   ),
@@ -43,7 +46,7 @@ function instruction({ currency, labelLanguage, shopType }: ShopSettings): strin
 ${aboutShop(shopType)}The shop's products are listed, numbered. Prices are in ${currency}.
 Turn the message into changes:
 - update: a listed product changes. Fill only what the owner asked to change (name, localName, price, unit, inStock) and leave the rest null. Naming a product to point at it is not a rename.
-- add: a product that isn't listed. Give its name in English, localName in ${language} when said, and its price and unit when said.
+- add: a product that isn't listed. Give its name in English, localName in ${language} when said, its price when said, and always its unit.
 - remove: the owner stops selling a listed product. Sold out is not remove: it is update with inStock false.
 - Match products by meaning: names may be short, misspelled, translated or said differently.
 - Prices are plain numbers in ${currency}: "25", "twenty five" and "25 baht" are all 25. Never convert currency.

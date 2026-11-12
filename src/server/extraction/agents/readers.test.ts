@@ -6,6 +6,7 @@ const photoProduct = (name: string, photo: number, price: number | null, box: nu
   name,
   localName: null,
   category: null,
+  unit: "each" as const,
   photo,
   box,
   price,
@@ -35,9 +36,9 @@ describe("listToWatch", () => {
   it("keeps the owner's order and skips impossible prices", () => {
     const watch = listToWatch({
       products: [
-        { name: "Coke 1.5L", localName: null, category: null, price: 25 },
-        { name: "Toothpaste", localName: null, category: null, price: null },
-        { name: "Soap", localName: null, category: null, price: -3 },
+        { name: "Coke 1.5L", localName: null, category: null, unit: "each", price: 25 },
+        { name: "Toothpaste", localName: null, category: null, unit: "each", price: null },
+        { name: "Soap", localName: null, category: null, unit: "kg", price: -3 },
       ],
     });
 
@@ -47,6 +48,19 @@ describe("listToWatch", () => {
       ["Soap", 2, null],
     ]);
     expect(watch.prices.map(({ product, amount }) => [product, amount])).toEqual([[0, 25]]);
+  });
+
+  it("keeps each product's own unit", () => {
+    const list = listToWatch({
+      products: [
+        { name: "Rice", localName: null, category: null, unit: "kg", price: 45 },
+        { name: "Mint", localName: null, category: null, unit: "bunch", price: 10 },
+      ],
+    });
+    expect(list.products.map((product) => product.unit)).toEqual(["kg", "bunch"]);
+
+    const photos = photosToWatch({ products: [{ ...photoProduct("Mango", 1, 60), unit: "kg" }] }, 1);
+    expect(photos.products[0].unit).toBe("kg");
   });
 });
 

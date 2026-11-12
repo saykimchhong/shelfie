@@ -7,6 +7,7 @@ function product(name: string, localName: string | null = null): WatchedProduct 
     name,
     localName,
     category: null,
+    unit: "each",
     firstSeenSeconds: 0,
     lastSeenSeconds: 10,
     clearestSeconds: 5,

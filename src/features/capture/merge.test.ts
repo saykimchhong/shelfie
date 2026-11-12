@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { ExtractedProduct } from "@/domain/extraction";
 import type { Product } from "@/domain/product";
-import { toProductUpdate } from "./drafts";
+import { toProductInput, toProductUpdate } from "./drafts";
 import { mergeShelf, resolveMatches, toKnownProducts } from "./merge";
 
 const product = (id: string, name: string, extra: Partial<Product> = {}): Product => ({
@@ -85,6 +85,32 @@ describe("mergeShelf", () => {
   it("skips products that are already sold out", () => {
     const soldOut = [product("milo", "Milo", { inStock: false })];
     expect(mergeShelf([], soldOut, { restock: true, markMissingSoldOut: true }).missing).toEqual([]);
+  });
+});
+
+describe("units", () => {
+  it("gives a new product the AI's unit, else the shop's, else each", () => {
+    const [rice, mint, cola] = mergeShelf([seen("Rice", { unit: "kg" }), seen("Mint"), seen("Cola", { unit: "each" })], [], {
+      restock: false,
+      markMissingSoldOut: false,
+      shopUnit: "bunch",
+    }).drafts;
+    expect([rice.unit, mint.unit, cola.unit]).toEqual(["kg", "bunch", "each"]);
+    expect(mergeShelf([seen("Mint")], [], { restock: false, markMissingSoldOut: false }).drafts[0].unit).toBe("each");
+  });
+
+  it("keeps a known product's own unit, whatever the AI says", () => {
+    const known = [product("rice", "Rice", { unit: "kg" }), product("eggs", "Eggs")];
+    const drafts = mergeShelf([seen("Rice", { unit: "each" }), seen("Eggs", { unit: "pack" })], known, {
+      restock: true,
+      markMissingSoldOut: false,
+    }).drafts;
+    expect(drafts.map((draft) => draft.unit)).toEqual(["kg", "each"]);
+  });
+
+  it("saves a new product with its unit", () => {
+    const [rice] = mergeShelf([seen("Rice", { unit: "kg", price: 45 })], [], { restock: false, markMissingSoldOut: false }).drafts;
+    expect(toProductInput(rice, undefined, "")).toMatchObject({ name: "Rice", price: 45, unit: "kg" });
   });
 });
 

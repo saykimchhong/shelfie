@@ -6,6 +6,7 @@ const product = (name: string, firstSeenSeconds: number, lastSeenSeconds: number
   name,
   localName: null,
   category: null,
+  unit: "each",
   firstSeenSeconds,
   lastSeenSeconds,
   clearestSeconds: (firstSeenSeconds + lastSeenSeconds) / 2,

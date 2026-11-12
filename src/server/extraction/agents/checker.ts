@@ -37,6 +37,7 @@ export function checkProducts({ pricing, matchIds }: CheckInput, { currency, kno
         localName: product.localName,
         price: product.price,
         category: product.category,
+        unit: product.unit,
         seenAtSeconds: product.clearestSeconds,
         box: toFrameBox(product.box),
         priceSaidAt: product.priceSaidAt,

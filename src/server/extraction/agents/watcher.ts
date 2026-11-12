@@ -3,6 +3,7 @@ import { FunctionNode, LlmAgent } from "@google/adk";
 import { createUserContent, type ThinkingLevel } from "@google/genai";
 import { z } from "zod";
 import type { FrameBox } from "@/domain/extraction";
+import { PRICE_UNIT_GUIDE, PRICE_UNITS } from "@/domain/product";
 import { aboutShop, type ShopType } from "@/domain/shop";
 import { LANGUAGE_NAMES, type Currency, type LabelLanguage } from "@/domain/store";
 import { geminiModel } from "@/server/adk";
@@ -17,6 +18,7 @@ export const watchedProductSchema = z.object({
     .nullable()
     .describe("Name exactly as printed on the label in Khmer, Sinhala, Tamil or Thai script. null if none."),
   category: z.string().nullable().describe("One or two English words, e.g. Rice, Snacks, Shoes."),
+  unit: z.enum(PRICE_UNITS).describe(PRICE_UNIT_GUIDE),
   firstSeenSeconds: z.number().describe("Seconds from the start when the product first appears."),
   lastSeenSeconds: z.number().describe("Seconds from the start when the product was last on screen."),
   clearestSeconds: z.number().describe("Seconds from the start where the product is clearest."),
@@ -66,6 +68,7 @@ Products: list every distinct product for sale that is visible.
 - The same product seen more than once is one item. Different sizes, colours or flavours are separate items.
 - Ignore people, hands, furniture and anything that is not for sale.
 - Keep the order in which products first appear.
+- unit is chosen product by product: one shelf often mixes things sold each, by the kg and by the bunch.
 
 Prices: list every price the owner says, in ${currency}.
 - Record when it is said and the words as said.

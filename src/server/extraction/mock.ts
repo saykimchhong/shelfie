@@ -1,7 +1,9 @@
 import "server-only";
 import { FunctionNode } from "@google/adk";
 import type { KnownProduct } from "@/domain/extraction";
+import type { PriceUnit } from "@/domain/product";
 import { sampleCatalog } from "@/domain/samples";
+import { shopTypeOf } from "@/domain/shop";
 import type { ShelfMatch, ShelfMatchInput } from "./agents/shelf-matcher";
 import type { Watch } from "./agents/watcher";
 import type { ShelfAgents } from "./pipeline";
@@ -22,6 +24,8 @@ type MockItem = {
   category: string | null;
   price: number | null;
   note: string | null;
+  // Missing = the shop type's usual unit.
+  unit?: PriceUnit;
 };
 
 // Stand-ins for the two AI steps, with deterministic sample data.
@@ -62,6 +66,7 @@ function mockWatch(input: ExtractInput): Watch {
       name: item.name,
       localName: item.localName,
       category: item.category,
+      unit: item.unit ?? shopTypeOf(input).priceUnit,
       firstSeenSeconds: first,
       lastSeenSeconds: last,
       clearestSeconds: clearest,
@@ -80,15 +85,25 @@ function mockWatch(input: ExtractInput): Watch {
   return { products, prices };
 }
 
-// One product per line or comma; the last number on it is the price.
+const LIST_UNITS: [PriceUnit, RegExp][] = [
+  ["kg", /\/\s*kg\b|\b(per|a) (kg|kilo)\b/i],
+  ["bunch", /\/\s*bunch\b|\b(per|a) bunch\b/i],
+  ["pack", /\/\s*pack\b|\b(per|a) pack\b/i],
+];
+
+// One product per line or comma; the last number on it is the price, and
+// "/kg" or "a bunch" after it the unit.
 export function listItems(text: string): MockItem[] {
   return text.split(/[\n,;]+/).flatMap((line) => {
-    const price = line.match(/(\d+(?:\.\d+)?)(?!.*\d)/);
-    const name = (price ? line.slice(0, price.index) + line.slice(price.index! + price[0].length) : line)
+    const unit = LIST_UNITS.find(([, pattern]) => pattern.test(line));
+    const rest = unit ? line.replace(unit[1], " ") : line;
+    const price = rest.match(/(\d+(?:\.\d+)?)(?!.*\d)/);
+    const name = (price ? rest.slice(0, price.index) + rest.slice(price.index! + price[0].length) : rest)
       .replace(/[-–:=@$฿៛]|\b(baht|riel|rs|usd)\b/gi, " ")
       .replace(/\s+/g, " ")
       .trim();
-    return name ? [{ name, localName: null, category: null, price: price ? Number(price[1]) : null, note: null }] : [];
+    const item = { name, localName: null, category: null, price: price ? Number(price[1]) : null, note: null };
+    return name ? [unit ? { ...item, unit: unit[0] } : item] : [];
   });
 }
 

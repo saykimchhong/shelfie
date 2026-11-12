@@ -72,4 +72,14 @@ describe("mock list reading", () => {
       ["Toothpaste", null],
     ]);
   });
+
+  it("reads a unit written after the price", () => {
+    const items = listItems("Rice 45/kg, Mint 10 a bunch, Cola 15; Eggs 60 per pack");
+    expect(items.map(({ name, price, unit }) => [name, price, unit])).toEqual([
+      ["Rice", 45, "kg"],
+      ["Mint", 10, "bunch"],
+      ["Cola", 15, undefined],
+      ["Eggs", 60, "pack"],
+    ]);
+  });
 });

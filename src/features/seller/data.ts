@@ -159,11 +159,25 @@ export type StorePatch = Partial<
   >
 >;
 
-export async function updateStore(slug: string, patch: StorePatch): Promise<void> {
-  await updateDoc(storeRef(slug), {
+// prices: new product prices saved with the store, for a change of currency
+// (so the shop is never left with old numbers under a new symbol).
+export async function updateStore(
+  slug: string,
+  patch: StorePatch,
+  prices: readonly { id: string; price: number }[] = [],
+): Promise<void> {
+  const store = {
     ...withDeletes(patch, ["tagline", "description", "logoUrl", "paymentQrUrl", "hours"]),
     updatedAt: serverTimestamp(),
-  });
+  };
+  if (prices.length === 0) return updateDoc(storeRef(slug), store);
+
+  await commitInBatches([
+    (batch) => batch.update(storeRef(slug), store),
+    ...prices.map(({ id, price }) => (batch: WriteBatch) => {
+      batch.update(doc(productsRef(slug), id), { price, updatedAt: serverTimestamp() });
+    }),
+  ]);
 }
 
 const OPTIONAL_PRODUCT_FIELDS = ["localName", "unit", "category", "shelf", "imageUrl", "sizes", "colors"] as const;

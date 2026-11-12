@@ -2,6 +2,7 @@ import "server-only";
 import { FunctionNode, LlmAgent } from "@google/adk";
 import { createPartFromBase64, createUserContent, type Part, type ThinkingLevel } from "@google/genai";
 import { z } from "zod";
+import { PRICE_UNIT_GUIDE, PRICE_UNITS } from "@/domain/product";
 import { aboutShop } from "@/domain/shop";
 import { LANGUAGE_NAMES } from "@/domain/store";
 import { geminiModel } from "@/server/adk";
@@ -18,6 +19,7 @@ const productFields = {
     .nullable()
     .describe("Name exactly as written in Khmer, Sinhala, Tamil or Thai script. null if none."),
   category: z.string().nullable().describe("One or two English words, e.g. Rice, Snacks, Shoes."),
+  unit: z.enum(PRICE_UNITS).describe(PRICE_UNIT_GUIDE),
 };
 
 const photoReadSchema = z.object({
@@ -56,6 +58,7 @@ ${aboutShop(shopType)}List every distinct product for sale.
 - The same product in several photos is one item. Different sizes, colours or flavours are separate items.
 - photo is the number of the photo where it is clearest, and box is where it is in that photo. A line on a menu or price list with no picture of the item has box null.
 - price is only a price written for that product (tag, shelf label, menu or list line), as a number in ${currency}. Never guess.
+- unit is chosen product by product: one shop often mixes things sold each, by the kg and by the bunch.
 - Ignore people, hands, furniture and anything not for sale.
 - Keep the order: photo by photo, top to bottom, left to right.`;
 }
@@ -65,6 +68,7 @@ function listInstruction({ currency, labelLanguage, shopType }: WatcherSettings)
   return `You turn the owner's typed product list into a shop catalogue. It may be in ${language}, English or both, one product per line or separated by commas, usually with the price after the name.
 ${aboutShop(shopType)}- name is a short English name a customer would search for, translated when written in ${language}. localName is only the ${language}-script words of its name, exactly as written; null when there are none.
 - price is the number written for it, in ${currency}. null if none. Never guess.
+- unit is chosen product by product: "rice 45/kg" is kg, "mint 10 a bunch" is bunch, "cola 15" is each.
 - Skip headings, totals, notes and anything that isn't a product. Keep the owner's order.`;
 }
 
@@ -117,7 +121,7 @@ export function localOnly(localName: string | null): string | null {
 }
 
 export function photosToWatch(read: PhotoRead, photoCount: number): Watch {
-  const products = read.products.map(({ name, localName, category, photo, box, confidence }) => {
+  const products = read.products.map(({ name, localName, category, unit, photo, box, confidence }) => {
     const index = photo - 1;
     const valid = index >= 0 && index < photoCount;
     const at = valid ? index : 0;
@@ -125,6 +129,7 @@ export function photosToWatch(read: PhotoRead, photoCount: number): Watch {
       name,
       localName: localOnly(localName),
       category,
+      unit,
       firstSeenSeconds: at,
       lastSeenSeconds: at,
       clearestSeconds: at,
@@ -137,10 +142,11 @@ export function photosToWatch(read: PhotoRead, photoCount: number): Watch {
 }
 
 export function listToWatch(read: ListRead): Watch {
-  const products = read.products.map(({ name, localName, category }, index) => ({
+  const products = read.products.map(({ name, localName, category, unit }, index) => ({
     name,
     localName: localOnly(localName),
     category,
+    unit,
     firstSeenSeconds: index,
     lastSeenSeconds: index,
     clearestSeconds: index,

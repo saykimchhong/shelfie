@@ -1,5 +1,5 @@
 import type { ExtractedProduct, FrameBox } from "@/domain/extraction";
-import type { Product, ProductInput } from "@/domain/product";
+import { unitOf, type PriceUnit, type Product, type ProductInput } from "@/domain/product";
 import type { ProductUpdate } from "@/features/seller/data";
 
 // Where a product's photo comes from. The seller picks per product:
@@ -24,6 +24,8 @@ export type Draft = {
   localName: string | null;
   // Kept as typed text; parsed on save.
   price: string;
+  // What the price is for: the AI's pick for a new product, a known one's own.
+  unit: PriceUnit;
   category: string | null;
   confidence: number;
   // Why the AI wants a second look, e.g. "Price not said".
@@ -40,7 +42,7 @@ export type Draft = {
   photoFailed: boolean;
 };
 
-export function toDraft(item: ExtractedProduct, index: number, known?: Product): Draft {
+export function toDraft(item: ExtractedProduct, index: number, known?: Product, shopUnit?: PriceUnit): Draft {
   // A known product keeps its current price unless a new one was said.
   const price = item.price ?? known?.price ?? null;
   return {
@@ -51,6 +53,7 @@ export function toDraft(item: ExtractedProduct, index: number, known?: Product):
     name: known?.name ?? item.name,
     localName: item.localName ?? known?.localName ?? null,
     price: price === null ? "" : String(price),
+    unit: unitOf(known ?? item, shopUnit),
     category: item.category,
     confidence: item.confidence,
     note: item.note,
@@ -80,6 +83,7 @@ export function toProductInput(draft: Draft, imageUrl: string | undefined, shelf
     name: draft.name.trim(),
     localName: draft.localName?.trim() || undefined,
     price: parsePrice(draft.price),
+    unit: draft.unit,
     category: draft.category?.trim() || undefined,
     shelf: shelf || undefined,
     inStock: true,

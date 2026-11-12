@@ -11,6 +11,13 @@ export const CURRENCY_OPTIONS: readonly SegmentedOption<Currency>[] = [
   { value: "THB", label: "฿ THB", ariaLabel: "Thai baht" },
 ];
 
+export const CURRENCY_NAMES: Record<Currency, string> = {
+  USD: "US dollars",
+  KHR: "Cambodian riel",
+  LKR: "Sri Lankan rupees",
+  THB: "Thai baht",
+};
+
 export const LABEL_LANGUAGE_OPTIONS: readonly SegmentedOption<LabelLanguage>[] = [
   { value: "en", label: "EN", ariaLabel: "English" },
   { value: "km", label: "ខ្មែរ", ariaLabel: "Khmer" },

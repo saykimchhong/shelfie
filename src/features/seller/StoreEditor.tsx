@@ -10,6 +10,7 @@ import {
   Badge,
   Button,
   ButtonLink,
+  Checkbox,
   EmptyState,
   Segmented,
   Stack,
@@ -18,8 +19,8 @@ import {
   TextArea,
   TextField,
 } from "@/components/ui";
+import { convertPrice, convertPrices, type Rates } from "@/domain/currency";
 import type { OpeningHours } from "@/domain/hours";
-import { DEFAULT_PRICE_UNIT, type PriceUnit } from "@/domain/product";
 import { sampleStorefront } from "@/domain/samples";
 import {
   DEFAULT_FULFILLMENT,
@@ -41,15 +42,16 @@ import { useSignedInUser } from "@/features/auth";
 import { removeImage, saveStoreLogo, saveStorePaymentQr, useObjectUrl } from "@/features/media";
 import { StorefrontView } from "@/features/storefront";
 import { PhonePreview, ThemePicker } from "@/features/theme";
-import { initials } from "@/lib/format";
+import { formatPrice, initials, pluralize } from "@/lib/format";
 import { updateStore, useMyStore, useProducts, useRefreshStorefront } from "./data";
+import { fetchRates } from "./rates";
 import {
+  CURRENCY_NAMES,
   CURRENCY_OPTIONS,
   FULFILLMENT_OPTIONS,
   LABEL_LANGUAGE_OPTIONS,
   MISSING_PRODUCT_OPTIONS,
   PHONE_PLACEHOLDER,
-  PRICE_UNIT_OPTIONS,
 } from "./options";
 import { HoursEditor } from "./HoursEditor";
 import { DashboardSkeleton } from "./SellerHome";
@@ -83,7 +85,6 @@ type Form = {
   theme: Theme;
   restock: RestockSettings;
   fulfillment: FulfillmentOffer;
-  priceUnit: PriceUnit;
   shopType: ShopType;
   hours: OpeningHours | null;
 };
@@ -103,7 +104,6 @@ function toForm(store: Store): Form {
     theme: store.theme ?? DEFAULT_THEME,
     restock: store.restock ?? DEFAULT_RESTOCK,
     fulfillment: store.fulfillment ?? DEFAULT_FULFILLMENT,
-    priceUnit: store.priceUnit ?? DEFAULT_PRICE_UNIT,
     shopType: store.shopType ?? DEFAULT_SHOP_TYPE,
     hours: store.hours ?? null,
   };
@@ -125,6 +125,12 @@ function StoreEditor({ store }: { store: Store }) {
   const [errors, setErrors] = useState<Errors>({});
   const [saving, setSaving] = useState(false);
   const [justSaved, setJustSaved] = useState(false);
+  // Changing the currency converts the prices too, unless the seller unticks it.
+  const [rates, setRates] = useState<Rates | null>(null);
+  const [convert, setConvert] = useState(true);
+  const currencyChanged = form.currency !== saved.currency;
+  const priced = products.data.filter((product) => product.price !== null && product.price > 0);
+  const converting = currencyChanged && convert && priced.length > 0;
 
   const newLogoUrl = useObjectUrl(logo.kind === "new" ? logo.blob : null);
   const logoUrl = logo.kind === "new" ? newLogoUrl : logo.kind === "kept" ? store.logoUrl : undefined;
@@ -136,14 +142,17 @@ function StoreEditor({ store }: { store: Store }) {
     setForm((current) => ({ ...current, [key]: value }));
     setJustSaved(false);
   };
-  // A new type suggests its own layout, color and price unit; all stay changeable.
+  const changeCurrency = (currency: Currency) => {
+    set("currency", currency);
+    if (!rates) void fetchRates().then(setRates);
+  };
+  // A new type suggests its own layout and color; both stay changeable.
   const changeShopType = (shopType: ShopType) => {
     const type = SHOP_TYPE_INFO[shopType];
     setForm((current) => ({
       ...current,
       shopType,
       theme: { ...current.theme, template: type.template, accent: type.accent },
-      priceUnit: type.priceUnit,
     }));
     setJustSaved(false);
   };
@@ -168,7 +177,6 @@ function StoreEditor({ store }: { store: Store }) {
     contact: { whatsapp: form.whatsapp || undefined, line: form.line || undefined },
     theme: form.theme,
     fulfillment: form.fulfillment,
-    priceUnit: form.priceUnit,
     shopType: form.shopType,
     hours: form.hours ?? undefined,
     timeZone: store.timeZone,
@@ -180,7 +188,13 @@ function StoreEditor({ store }: { store: Store }) {
   const usingSamples = products.status === "ready" && products.data.length === 0;
   const previewProducts = usingSamples
     ? sampleStorefront(form.labelLanguage, form.theme, form.shopType).products
-    : products.data;
+    : converting && rates
+      ? products.data.map((product) =>
+          product.price === null
+            ? product
+            : { ...product, price: convertPrice(product.price, saved.currency, form.currency, rates) },
+        )
+      : products.data;
 
   async function save() {
     const parsed = detailsSchema.safeParse({
@@ -218,22 +232,28 @@ function StoreEditor({ store }: { store: Store }) {
           : qr.kind === "removed"
             ? { paymentQrUrl: undefined } // removes it
             : {};
+      const newPrices = converting
+        ? convertPrices(products.data, saved.currency, form.currency, rates ?? (await fetchRates()))
+        : [];
       // tagline/description are always sent: undefined removes them.
-      await updateStore(store.slug, {
-        ...parsed.data,
-        tagline: parsed.data.tagline,
-        description: parsed.data.description,
-        theme: form.theme,
-        restock: form.restock,
-        fulfillment: form.fulfillment,
-        priceUnit: form.priceUnit,
-        shopType: form.shopType,
-        // undefined removes the hours; the seller's zone makes "open now" right for every customer.
-        hours: form.hours ?? undefined,
-        ...(form.hours ? { timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone } : {}),
-        ...logoPatch,
-        ...qrPatch,
-      });
+      await updateStore(
+        store.slug,
+        {
+          ...parsed.data,
+          tagline: parsed.data.tagline,
+          description: parsed.data.description,
+          theme: form.theme,
+          restock: form.restock,
+          fulfillment: form.fulfillment,
+          shopType: form.shopType,
+          // undefined removes the hours; the seller's zone makes "open now" right for every customer.
+          hours: form.hours ?? undefined,
+          ...(form.hours ? { timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone } : {}),
+          ...logoPatch,
+          ...qrPatch,
+        },
+        newPrices,
+      );
       if (logo.kind !== "kept") removeImage(store.logoUrl);
       if (qr.kind !== "kept") removeImage(store.paymentQrUrl);
       await refreshStorefront(store.slug);
@@ -316,7 +336,7 @@ function StoreEditor({ store }: { store: Store }) {
             <Stack gap={2}>
               <ShopTypePicker value={form.shopType} onChange={changeShopType} />
               <Text size="xs" tone="subtle">
-                Sets a matching look, layout and price unit, and adds what your shop needs to the cart.
+                Sets a matching look and layout, and adds what your shop needs to the cart.
               </Text>
             </Stack>
           </Section>
@@ -340,7 +360,23 @@ function StoreEditor({ store }: { store: Store }) {
 
         <Reveal delay={0.14} className={styles.details}>
           <Section title="Orders & labels">
-            <Segmented label="Currency" options={CURRENCY_OPTIONS} value={form.currency} onChange={(v) => set("currency", v)} />
+            <Segmented label="Currency" options={CURRENCY_OPTIONS} value={form.currency} onChange={changeCurrency} />
+            {currencyChanged && priced.length > 0 ? (
+              <Stack gap={2}>
+                <Checkbox
+                  checked={convert}
+                  onChange={setConvert}
+                  label={`Change my ${pluralize(priced.length, "price")} to ${CURRENCY_NAMES[form.currency]}`}
+                />
+                <Text size="sm" tone="muted">
+                  {!convert
+                    ? `Prices keep their numbers: ${formatPrice(priced[0].price!, saved.currency)} becomes ${formatPrice(priced[0].price!, form.currency)}.`
+                    : rates
+                      ? `At today's rate, rounded: ${formatPrice(priced[0].price!, saved.currency)} becomes ${formatPrice(convertPrice(priced[0].price!, saved.currency, form.currency, rates), form.currency)}. You can still change any price after.`
+                      : "Getting today's rate…"}
+                </Text>
+              </Stack>
+            ) : null}
             <Segmented
               label="Label language"
               options={LABEL_LANGUAGE_OPTIONS}
@@ -364,17 +400,6 @@ function StoreEditor({ store }: { store: Store }) {
               error={errors.line}
               autoCapitalize="none"
             />
-            <Stack gap={2}>
-              <Segmented
-                label="Prices are usually per"
-                options={PRICE_UNIT_OPTIONS}
-                value={form.priceUnit}
-                onChange={(v) => set("priceUnit", v)}
-              />
-              <Text size="xs" tone="subtle">
-                e.g. kg for fruit and veg. You can change it for any product.
-              </Text>
-            </Stack>
             <Segmented
               label="Customers get orders by"
               options={FULFILLMENT_OPTIONS}

@@ -11,6 +11,13 @@ export const priceUnitSchema = z.enum(PRICE_UNITS);
 export type PriceUnit = z.infer<typeof priceUnitSchema>;
 export const DEFAULT_PRICE_UNIT: PriceUnit = "each";
 
+// How the AI picks a product's unit (part of its prompts). One shop can mix
+// them: rice by the kg beside canned fish sold each.
+export const PRICE_UNIT_GUIDE =
+  'What one price buys. Use what the owner says or the label shows ("per kilo", "/kg", "a bunch") when there is one. ' +
+  "Otherwise choose how shops normally sell that product: kg for things sold by weight (loose fruit, vegetables, meat, fish, rice or beans from a sack), " +
+  "bunch for herbs and greens tied in bunches, pack for a multi-pack or bundle sold together, each for everything else.";
+
 // The unit a product's price is for: its own, else the shop's default.
 export function unitOf(product: { unit?: PriceUnit }, shopDefault?: PriceUnit): PriceUnit {
   return product.unit ?? shopDefault ?? DEFAULT_PRICE_UNIT;

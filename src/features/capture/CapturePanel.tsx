@@ -204,6 +204,7 @@ function Capture({ store, products }: { store: Store; products: Product[] }) {
         onShrink: setShrinking,
       });
       const merge = mergeShelf(result.products, shelfProducts, {
+        shopUnit: store.priceUnit,
         restock,
         markMissingSoldOut: (store.restock ?? DEFAULT_RESTOCK).missing === "soldOut",
       });

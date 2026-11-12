@@ -7,6 +7,7 @@ const priced = (name: string, extra: Partial<PricedProduct> = {}): PricedProduct
   name,
   localName: null,
   category: "Shoes",
+  unit: "each",
   firstSeenSeconds: 0,
   lastSeenSeconds: 4,
   clearestSeconds: 2,

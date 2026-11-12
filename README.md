@@ -42,7 +42,7 @@ Local values go in `.env.local` (never committed). On App Hosting, the Firebase 
 | --- | --- | --- |
 | `NEXT_PUBLIC_FIREBASE_API_KEY`, `_AUTH_DOMAIN`, `_PROJECT_ID`, `_APP_ID` | Sign-in, Firestore | Firebase console → Project settings → Your apps → Web. Public by design |
 | `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` | Photo uploads | Without it, photos are saved inline in Firestore (fine for local demos) |
-| `NEXT_PUBLIC_SITE_URL` | Share links, metadata | Defaults to `http://localhost:3000` |
+| `NEXT_PUBLIC_SITE_URL` | Share links, QR codes, link-preview pictures | Defaults to `http://localhost:3000`; set for production in `apphosting.yaml` |
 | `SHELFIE_AI` | Reading videos | `mock` (default: sample products, no AI cost) or `gemini` |
 | `GEMINI_API_KEY` | `SHELFIE_AI=gemini` | Server only. <https://aistudio.google.com/apikey> |
 | `GEMINI_MODEL` | Optional | Defaults to `gemini-3-flash-preview` |
@@ -100,8 +100,12 @@ Reading a shelf video is a [Google ADK](https://github.com/google/adk-js) workfl
 
 A store's look is `theme: { template, accent }`:
 
-- **Shop types** (`src/domain/shop.ts`): what the seller picks first, "What do you sell?". Each suggests a layout, color and price unit (all still changeable), gives the storefront its own banner and shapes (`data-style` in `StorefrontView.module.scss`: warm glow for food, leafy for markets, pastel and rounder for bakeries, quiet and sharp for fashion, a clean wash for groceries), previews its own sample goods (`src/domain/samples.ts`, local dishes and produce per label language), tells the AI what kind of shop it's reading, and turns on what that business needs in the cart: a note per item (food, fashion, fresh market, bakery, each with its own hint, e.g. "less spicy" or "size 42, black") and when the customer wants it (food and bakery: as soon as possible, or a day and time). Both go into the WhatsApp/LINE message.
+- **Shop types** (`src/domain/shop.ts`): what the seller picks first, "What do you sell?". Each suggests a layout and color (both still changeable), gives the storefront its own banner and shapes (`data-style` in `StorefrontView.module.scss`: warm glow for food, leafy for markets, pastel and rounder for bakeries, quiet and sharp for fashion, a clean wash for groceries), previews its own sample goods (`src/domain/samples.ts`, local dishes and produce per label language), tells the AI what kind of shop it's reading, and turns on what that business needs in the cart: a note per item (food, fashion, fresh market, bakery, each with its own hint, e.g. "less spicy" or "size 42, black") and when the customer wants it (food and bakery: as soon as possible, or a day and time). Both go into the WhatsApp/LINE message.
 - **Sizes and colours** (`sizes`, `colors` on a product): typed with commas in the product editor (always shown for fashion, one tap away for other shops, e.g. drink or cake sizes). On the storefront, "+" opens a chooser; each size and colour is its own cart line, and the message says "1 × Linen Shirt (Size M, Black)". Same price for every choice.
+- **Units per product** (`unit` on a product, `PRICE_UNIT_GUIDE` in `src/domain/product.ts`): the AI picks each, kg, bunch or pack for every product it reads (video, photos, list, Quick update), from what was said or written, else from how shops normally sell it. One shelf can mix them. The seller can change it in the review list and the product editor. There is no shop-wide unit setting.
+- **Changing currency** (`src/domain/currency.ts`, `src/server/rates.ts`): picking another currency in Edit store converts every price at today's rate (a free daily feed, cached for hours, with built-in rates as the fallback) and rounds it the way shops price (฿53, 6,200៛, $1.45). Store and prices are saved in one batch. The seller can untick it to keep the numbers.
+- **Saved cart** (`src/features/storefront/savedCart.ts`): the cart lives in the customer's browser per shop, so a refresh or a trip to WhatsApp doesn't empty it. It's forgotten after 3 days, or 30 minutes after the order was sent. Sold-out products and sizes no longer offered drop out of it.
+- **Link previews and QR code** (`src/server/shareImage.ts`, `src/features/seller/qr.ts`): `/<shop>/share-image` draws the shop's first product photos as a small JPEG for WhatsApp, LINE and Facebook previews (no text, so no fonts). The dashboard's "QR code" button makes a sheet to print or save for the counter.
 - **Search and weights** (`src/features/storefront/search.ts`, `quantity.ts`): a search box appears once a store has 8 products (grocery, fresh market) or 16 (others). It matches name, label name, category and shelf, by substring, so Thai and Khmer work. Per-kg items start at 1 kg and step by 0.5 kg ("1.5 kg × Mango" in the message); the cart counts them as one item.
 - **Opening hours** (`src/domain/hours.ts`): optional for every shop. The storefront shows "Open · until 21:00" or "Closed · opens 07:00", worked out in the seller's time zone, after hydration (the page is cached). While a food or bakery shop is closed, "as soon as possible" becomes "when you open".
 - **Templates:** `grid` (most shops), `list` (many small items), `showcase` (a few special items), `compact` (big catalogs, three across on a phone), `menu` (food and drinks: name ··· price, in sections) and `shelves` (many sections, each a row that scrolls sideways). Menu and shelves group by shelf, or by category when the shop has one shelf or none; their chips jump to a section.
@@ -174,7 +178,7 @@ stores/{slug}                       slug = document id = public URL
   currency (USD|KHR|LKR|THB), labelLanguage (en|km|si|ta|th),
   contact { whatsapp?, line? }, theme? { template (grid|list|showcase|compact|menu|shelves), accent (#rrggbb), background? (#rrggbb) },
   restock? { missing (soldOut|keep) }, fulfillment? (pickup|delivery|both, missing = pickup),
-  priceUnit? (each|kg|bunch|pack, missing = each: what prices are usually for),
+  priceUnit? (each|kg|bunch|pack, missing = each: the unit of products saved without one; set once from the shop type),
   shopType? (shop|food|grocery|fashion|market|bakery, missing = shop),
   hours? { open "HH:MM", close "HH:MM" (before open = past midnight), closedDays [0–6, 0 = Sunday] },
   timeZone? (the seller's, saved with the hours), paymentQrUrl?, published, createdAt, updatedAt

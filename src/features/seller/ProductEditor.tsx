@@ -114,7 +114,7 @@ function EditorForm({
         localName: localName.trim() || undefined,
         price: amount,
         // Same as the shop's default → follow it (so changing the default moves it too).
-        unit: unit === unitOf({}, store.priceUnit) ? undefined : unit,
+        unit,
         category: category.trim() || undefined,
         shelf: canonicalShelf(shelf, shelves) || undefined,
         inStock,

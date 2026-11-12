@@ -1,16 +1,23 @@
 "use client";
 
 import clsx from "clsx";
-import { Check } from "lucide-react";
+import { Check, ChevronDown } from "lucide-react";
 import { Stagger } from "@/components/motion/Reveal";
 import { Badge, Switch, Thumb } from "@/components/ui";
 import { LOW_CONFIDENCE } from "@/domain/extraction";
-import type { Product } from "@/domain/product";
+import { PRICE_UNITS, type PriceUnit, type Product } from "@/domain/product";
 import type { Currency } from "@/domain/store";
 import { formatPrice } from "@/lib/format";
 import type { Draft } from "./drafts";
 import type { Missing } from "./merge";
 import styles from "./ReviewList.module.scss";
+
+const UNIT_LABELS: Record<PriceUnit, string> = {
+  each: "per item",
+  kg: "per kg",
+  bunch: "per bunch",
+  pack: "per pack",
+};
 
 // New products are fully editable. Known ones (`known` has their match) keep
 // their name and photo: only the price and the include check change.
@@ -67,16 +74,37 @@ export function ReviewList({
               </div>
             </div>
 
-            <label className={clsx(styles.price, !draft.price && styles.missing)}>
-              <span className={styles.currency}>{currency}</span>
-              <input
-                value={draft.price}
-                onChange={(event) => onChange(draft.key, { price: event.target.value })}
-                inputMode="decimal"
-                placeholder="—"
-                aria-label={`Price in ${currency}`}
-              />
-            </label>
+            <div className={styles.pricing}>
+              <label className={clsx(styles.price, !draft.price && styles.missing)}>
+                <span className={styles.currency}>{currency}</span>
+                <input
+                  value={draft.price}
+                  onChange={(event) => onChange(draft.key, { price: event.target.value })}
+                  inputMode="decimal"
+                  placeholder="—"
+                  aria-label={`Price in ${currency}`}
+                />
+              </label>
+              {/* The AI's pick for a new product; a known one keeps its own. */}
+              {product ? (
+                draft.unit === "each" ? null : <span className={styles.unitText}>{UNIT_LABELS[draft.unit]}</span>
+              ) : (
+                <span className={styles.unit}>
+                  <select
+                    value={draft.unit}
+                    onChange={(event) => onChange(draft.key, { unit: event.target.value as PriceUnit })}
+                    aria-label={`What the price of ${draft.name || "this product"} is for`}
+                  >
+                    {PRICE_UNITS.map((unit) => (
+                      <option key={unit} value={unit}>
+                        {UNIT_LABELS[unit]}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown aria-hidden />
+                </span>
+              )}
+            </div>
           </li>
         );
       })}

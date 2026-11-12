@@ -1,5 +1,5 @@
 import { MAX_KNOWN_PRODUCTS, type ExtractedProduct, type KnownProduct } from "@/domain/extraction";
-import type { Product } from "@/domain/product";
+import type { PriceUnit, Product } from "@/domain/product";
 import { toDraft, type Draft } from "./drafts";
 
 // What the AI is told about the shelf's current products.
@@ -46,10 +46,11 @@ export type Merge = { drafts: Draft[]; missing: Missing[] };
 export function mergeShelf(
   items: readonly ExtractedProduct[],
   shelfProducts: readonly Product[],
-  options: { restock: boolean; markMissingSoldOut: boolean },
+  // shopUnit: the unit of products that don't have their own.
+  options: { restock: boolean; markMissingSoldOut: boolean; shopUnit?: PriceUnit },
 ): Merge {
   const matches = resolveMatches(items, shelfProducts);
-  const drafts = items.map((item, index) => toDraft(item, index, matches[index] ?? undefined));
+  const drafts = items.map((item, index) => toDraft(item, index, matches[index] ?? undefined, options.shopUnit));
   if (!options.restock) return { drafts, missing: [] };
 
   const seen = new Set(matches.map((match) => match?.id));

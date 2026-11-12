@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { agentEventSchema } from "./agents";
+import { priceUnitSchema } from "./product";
 
 // Where a product sits in its video frame, as fractions (0–1) of the frame.
 export const frameBoxSchema = z.object({
@@ -18,6 +19,8 @@ export const extractedProductSchema = z.object({
   // null = no price was said; a known product then keeps its current price.
   price: z.number().nullable(),
   category: z.string().nullable(),
+  // What the price is for, as the AI judged it. Missing = the shop's usual unit.
+  unit: priceUnitSchema.optional(),
   // When the product is clearest, and where it is in that frame (for its photo).
   seenAtSeconds: z.number(),
   box: frameBoxSchema.nullable(),
