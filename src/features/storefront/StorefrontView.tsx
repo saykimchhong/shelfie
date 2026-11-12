@@ -13,10 +13,13 @@ import { Badge, Button, Container, EmptyState, Text } from "@/components/ui";
 import { hasOptions, unitOf, type Product, type Variant } from "@/domain/product";
 import { sectionsOf } from "@/domain/shelf";
 import { DEFAULT_SHOP_TYPE, shopTypeOf } from "@/domain/shop";
-import type { PublicStore } from "@/domain/store";
+import type { LabelLanguage, PublicStore } from "@/domain/store";
 import { DEFAULT_THEME, type Template } from "@/domain/theme";
 import { initials } from "@/lib/format";
 import { isDarkColor } from "@/lib/palette";
+import { hoursLabel } from "./labels";
+import { LanguageProvider, usePageLanguage, useWords } from "./language";
+import { LanguagePicker } from "./LanguagePicker";
 import { OptionSheet } from "./OptionSheet";
 import { OrderBar } from "./OrderBar";
 import { cartLines, lineKey, quantityOf } from "./order";
@@ -34,10 +37,15 @@ export type StorefrontViewProps = {
   products: Product[];
   // Inside a preview frame (dashboard, /templates) rather than the real page.
   embedded?: boolean;
+  // Previews: the language to open in, when not the shop's own.
+  startIn?: LabelLanguage;
 };
 
-export function StorefrontView({ store, products, embedded }: StorefrontViewProps) {
+export function StorefrontView({ store, products, embedded, startIn }: StorefrontViewProps) {
   const theme = store.theme ?? DEFAULT_THEME;
+  // The customer's saved language, else the shop's. Previews don't save it.
+  const [pageLanguage, setLanguage] = usePageLanguage(store.labelLanguage, !embedded, startIn);
+  const { language, words } = pageLanguage;
   useBrowserChrome(embedded ? undefined : theme.background);
   const chipId = useId();
   const sectionId = useId();
@@ -63,7 +71,7 @@ export function StorefrontView({ store, products, embedded }: StorefrontViewProp
   const visible = category ? searched.filter((product) => product.category === category) : searched;
   // Menu and shelves show every product in sections; their chips jump to one.
   const sectioned = theme.template === "menu" || theme.template === "shelves";
-  const sections = sectioned ? sectionsOf(searched) : [];
+  const sections = sectioned ? sectionsOf(searched, words.otherProducts) : [];
   const sectionAnchor = (index: number) => `${sectionId}-section-${index}`;
 
   function jumpTo(index: number) {
@@ -95,13 +103,18 @@ export function StorefrontView({ store, products, embedded }: StorefrontViewProp
   };
 
   return (
+    <LanguageProvider value={pageLanguage}>
     <ThemeScope
       accent={theme.accent}
       background={theme.background}
       className={clsx(styles.page, styles[`t-${theme.template}`])}
       data-style={store.shopType ?? DEFAULT_SHOP_TYPE}
+      lang={language}
     >
       <header className={styles.banner}>
+        <div className={styles.language}>
+          <LanguagePicker language={language} onChange={setLanguage} label={words.language} />
+        </div>
         <Container className={styles.header}>
           <span className={styles.avatar} aria-hidden>
             {store.logoUrl ? (
@@ -126,7 +139,7 @@ export function StorefrontView({ store, products, embedded }: StorefrontViewProp
                 icon={hours.open ? undefined : <Clock />}
                 className={styles.hours}
               >
-                {hours.label}
+                {hoursLabel(hours, words)}
               </Badge>
             ) : null}
             {store.description ? <About text={store.description} /> : null}
@@ -142,12 +155,12 @@ export function StorefrontView({ store, products, embedded }: StorefrontViewProp
               type="search"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder={`Search ${products.length} products`}
-              aria-label="Search products"
+              placeholder={words.searchCount(products.length)}
+              aria-label={words.search}
               enterKeyHint="search"
             />
             {query ? (
-              <button type="button" className={styles.clearSearch} aria-label="Clear search" onClick={() => setQuery("")}>
+              <button type="button" className={styles.clearSearch} aria-label={words.clearSearch} onClick={() => setQuery("")}>
                 <X aria-hidden />
               </button>
             ) : null}
@@ -155,7 +168,7 @@ export function StorefrontView({ store, products, embedded }: StorefrontViewProp
         ) : null}
 
         {sectioned && sections.length > 1 ? (
-          <nav className={styles.chips} aria-label="Sections">
+          <nav className={styles.chips} aria-label={words.sections}>
             {sections.map((section, index) => (
               <button key={index} type="button" className={styles.chip} onClick={() => jumpTo(index)}>
                 <span className={styles.chipLabel}>{section.title}</span>
@@ -163,7 +176,7 @@ export function StorefrontView({ store, products, embedded }: StorefrontViewProp
             ))}
           </nav>
         ) : !sectioned && categories.length > 1 ? (
-          <nav className={styles.chips} aria-label="Categories">
+          <nav className={styles.chips} aria-label={words.categories}>
             {[null, ...categories].map((value) => {
               const active = value === category;
               return (
@@ -175,7 +188,7 @@ export function StorefrontView({ store, products, embedded }: StorefrontViewProp
                   onClick={() => setCategory(value)}
                 >
                   {active ? <motion.span layoutId={chipId} className={styles.chipThumb} /> : null}
-                  <span className={styles.chipLabel}>{value ?? "All"}</span>
+                  <span className={styles.chipLabel}>{value ?? words.all}</span>
                 </button>
               );
             })}
@@ -183,15 +196,15 @@ export function StorefrontView({ store, products, embedded }: StorefrontViewProp
         ) : null}
 
         {products.length === 0 ? (
-          <EmptyState icon={<PackageOpen />} title={type.emptyTitle} tone="sun" />
+          <EmptyState icon={<PackageOpen />} title={words.empty[store.shopType ?? DEFAULT_SHOP_TYPE]} tone="sun" />
         ) : searched.length === 0 ? (
           <EmptyState
             icon={<SearchX />}
-            title={`Nothing matches “${query.trim()}”`}
-            description="Try another word, or the name on the label."
+            title={words.nothingMatches(query.trim())}
+            description={words.tryAnotherWord}
             action={
               <Button variant="soft" onClick={() => setQuery("")}>
-                Clear search
+                {words.clearSearch}
               </Button>
             }
           />
@@ -244,7 +257,7 @@ export function StorefrontView({ store, products, embedded }: StorefrontViewProp
 
         <Link href="/" className={styles.madeWith}>
           <LogoMark size={18} />
-          Made with Shelfie
+          {words.madeWith}
         </Link>
       </Container>
 
@@ -269,6 +282,7 @@ export function StorefrontView({ store, products, embedded }: StorefrontViewProp
         onSent={() => update((current) => markSent(current, Date.now()))}
       />
     </ThemeScope>
+    </LanguageProvider>
   );
 }
 
@@ -304,6 +318,7 @@ const CARD_VARIANT: Partial<Record<Template, "showcase" | "compact">> = {
 // Shop description: three lines, with "More" when there's more to read.
 function About({ text }: { text: string }) {
   const [open, setOpen] = useState(false);
+  const words = useWords();
   const long = text.length > 140 || text.split("\n").length > 3;
 
   return (
@@ -311,7 +326,7 @@ function About({ text }: { text: string }) {
       <p className={clsx(styles.description, long && !open && styles.clamped)}>{text}</p>
       {long ? (
         <button type="button" className={styles.more} aria-expanded={open} onClick={() => setOpen(!open)}>
-          {open ? "Less" : "More"}
+          {open ? words.showLess : words.showMore}
         </button>
       ) : null}
     </div>

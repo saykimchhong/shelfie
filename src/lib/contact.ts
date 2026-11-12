@@ -1,7 +1,7 @@
 // Ordering happens in the chat apps sellers already use. We never touch payments.
 import type { PriceUnit } from "@/domain/product";
 import type { FulfillmentMethod } from "@/domain/store";
-import { quantityWithUnit } from "./format";
+import { wordsFor, type Words } from "./words";
 
 export function whatsappLink(phone: string, text?: string): string {
   const digits = phone.replace(/\D/g, "");
@@ -36,25 +36,28 @@ export function orderMessage(input: {
   total: string | null;
   formatLineTotal: (amount: number) => string;
   fulfillment?: OrderFulfillment;
+  // The seller's language; English when left out.
+  words?: Words["message"];
 }): string {
+  const words = input.words ?? wordsFor("en").message;
   const items = input.lines.map((line) => {
     const price = line.lineTotal === null ? "" : ` (${input.formatLineTotal(line.lineTotal)})`;
     const note = oneLine(line.note).slice(0, ORDER_NOTE_MAX);
-    return `• ${quantityWithUnit(line.quantity, line.unit ?? "each")} × ${line.name}${price}${note ? ` – ${note}` : ""}`;
+    return `• ${words.quantity(line.quantity, line.unit ?? "each")} × ${line.name}${price}${note ? ` – ${note}` : ""}`;
   });
   return [
-    `Hi ${input.storeName}! I'd like to order:`,
+    words.greeting(input.storeName),
     ...items,
-    input.total ? `Total: ${input.total}` : null,
-    input.fulfillment ? fulfillmentLine(input.fulfillment) : null,
-    input.fulfillment?.when ? `When: ${input.fulfillment.when}` : null,
+    input.total ? words.total(input.total) : null,
+    input.fulfillment ? fulfillmentLine(input.fulfillment, words) : null,
+    input.fulfillment?.when ? words.when(input.fulfillment.when) : null,
   ]
     .filter(Boolean)
     .join("\n");
 }
 
-function fulfillmentLine({ method, address }: OrderFulfillment): string {
-  if (method === "pickup") return "I'll pick it up.";
+function fulfillmentLine({ method, address }: OrderFulfillment, words: Words["message"]): string {
+  if (method === "pickup") return words.pickup;
   const where = oneLine(address);
-  return where ? `Please deliver to: ${where}` : "Please deliver it. I'll send the address.";
+  return where ? words.deliverTo(where) : words.deliver;
 }

@@ -4,6 +4,8 @@ import clsx from "clsx";
 import { Badge, Text, Thumb } from "@/components/ui";
 import type { PriceUnit, Product } from "@/domain/product";
 import type { Currency } from "@/domain/store";
+import { productNames } from "./labels";
+import { useLanguage } from "./language";
 import { Price } from "./Price";
 import { ChooseButton, QuantityControl } from "./QuantityControl";
 import styles from "./ProductCard.module.scss";
@@ -29,8 +31,10 @@ export function ProductCard({
   onChoose,
   variant = "grid",
 }: ProductCardProps & { variant?: "grid" | "showcase" | "compact" }) {
-  // Compact cards are three across: no room for the label name.
-  const localName = variant === "compact" ? undefined : product.localName;
+  const { language, shopLanguage, words } = useLanguage();
+  const names = productNames(product, language, shopLanguage);
+  // Compact cards are three across: no room for the second name.
+  const otherName = variant === "compact" ? undefined : names.other;
   return (
     <article
       className={clsx(
@@ -44,28 +48,28 @@ export function ProductCard({
         <Thumb label={product.name} src={product.imageUrl} size={260} className={styles.thumb} />
         {!product.inStock ? (
           <Badge tone="neutral" className={styles.badge}>
-            Sold out
+            {words.soldOut}
           </Badge>
         ) : null}
         {/* Floats on the photo's corner, so the stepper can grow without covering the price. */}
         {product.inStock && (onChoose || onQuantityChange) ? (
           <div className={styles.quantity}>
             {onChoose ? (
-              <ChooseButton quantity={quantity} onChoose={onChoose} label={product.name} />
+              <ChooseButton quantity={quantity} onChoose={onChoose} label={names.name} />
             ) : onQuantityChange ? (
-              <QuantityControl quantity={quantity} onChange={onQuantityChange} label={product.name} unit={unit} />
+              <QuantityControl quantity={quantity} onChange={onQuantityChange} label={names.name} unit={unit} />
             ) : null}
           </div>
         ) : null}
       </div>
       <div className={styles.body}>
         {/* Two text lines at most, so cards in a row stay the same height. */}
-        <Text weight={600} clamp={localName ? 1 : 2} className={styles.name}>
-          {product.name}
+        <Text weight={600} clamp={otherName ? 1 : 2} className={styles.name}>
+          {names.name}
         </Text>
-        {localName ? (
+        {otherName ? (
           <Text tone="muted" clamp={1} className={styles.localName}>
-            {localName}
+            {otherName}
           </Text>
         ) : null}
         <div className={styles.footer}>

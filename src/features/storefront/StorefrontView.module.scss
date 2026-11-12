@@ -11,14 +11,19 @@
 // A soft wash of the store's color at the top; how strong depends on the shop type.
 .banner {
   --wash: 16%;
-  padding-top: var(--space-12);
+  position: relative;
+  // Room for the language picker above the shop name.
+  padding-top: var(--space-16);
   background:
     linear-gradient(180deg, color-mix(in oklab, var(--brand) var(--wash), transparent), transparent 85%),
     var(--bg);
+}
 
-  @include container-up(md) {
-    padding-top: var(--space-16);
-  }
+// Top corner, clear of the centered shop name.
+.language {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-4);
 }
 
 .header {
@@ -422,8 +427,9 @@
 }
 
 .t-list {
+  // Just below the language picker, which shares the top with the name here.
   .banner {
-    padding-top: var(--space-8);
+    padding-top: calc(var(--space-12) + var(--space-2));
   }
 
   // Compact, left-aligned header: more of the list fits on screen.

@@ -11,10 +11,13 @@ import {
   type FulfillmentMethod,
   type PublicStore,
 } from "@/domain/store";
-import { unitOf, variantLabel, type PriceUnit } from "@/domain/product";
+import { unitOf, type PriceUnit } from "@/domain/product";
 import { shopTypeOf } from "@/domain/shop";
 import { ORDER_NOTE_MAX } from "@/lib/contact";
-import { formatPrice, perUnit } from "@/lib/format";
+import { formatPrice } from "@/lib/format";
+import type { Words } from "@/lib/words";
+import { perUnitText, productNames, variantText } from "./labels";
+import { useLanguage, useWords } from "./language";
 import type { CartLine, FulfillmentChoice, OrderSummary } from "./order";
 import { OrderButtons } from "./OrderButtons";
 import { QuantityControl } from "./QuantityControl";
@@ -51,19 +54,22 @@ export function CartSheet({
   onSent: () => void;
 }) {
   const type = shopTypeOf(store);
+  const { language, shopLanguage, words } = useLanguage();
+  const noteHint = type.noteHint ? (words.noteHint[store.shopType ?? "shop"] ?? type.noteHint) : null;
   return (
     <Sheet
       open={open}
       onClose={onClose}
-      title="Your order"
+      title={words.yourOrder}
+      closeLabel={words.close}
       footer={
         <div className={styles.footer}>
           <div className={styles.totalRow}>
             <Text tone="muted" weight={600}>
-              Total
+              {words.total}
             </Text>
             <Text size="xl" weight={800}>
-              {summary.total ?? "Ask"}
+              {summary.total ?? words.ask}
             </Text>
           </div>
           <OrderButtons summary={summary} block onSend={onSent} />
@@ -72,7 +78,9 @@ export function CartSheet({
     >
       <ul className={styles.lines}>
         <AnimatePresence initial={false} mode="popLayout">
-          {lines.map(({ key, product, quantity, note, variant }) => (
+          {lines.map(({ key, product, quantity, note, variant }) => {
+            const { name } = productNames(product, language, shopLanguage);
+            return (
             <motion.li
               key={key}
               layout="position"
@@ -83,40 +91,41 @@ export function CartSheet({
               <Thumb label={product.name} src={product.imageUrl} size={52} className={styles.thumb} />
               <div className={styles.info}>
                 <Text weight={600} clamp={1}>
-                  {product.name}
+                  {name}
                 </Text>
                 {variant ? (
                   <Text size="sm" weight={600} tone="brand">
-                    {variantLabel(variant)}
+                    {variantText(variant, words)}
                   </Text>
                 ) : null}
                 <Text size="sm" tone="muted">
-                  {product.price === null ? "Price on request" : unitPrice(product.price, store, unitOf(product, store.priceUnit))}
+                  {product.price === null ? words.priceOnRequest : unitPrice(product.price, store, unitOf(product, store.priceUnit), words)}
                 </Text>
               </div>
               <QuantityControl
                 unit={unitOf(product, store.priceUnit)}
                 quantity={quantity}
                 onChange={(next) => onQuantityChange(key, next)}
-                label={product.name}
+                label={name}
               />
-              {type.noteHint ? (
+              {noteHint ? (
                 <input
                   className={styles.note}
                   value={note ?? ""}
                   onChange={(event) => onNoteChange(key, event.target.value)}
-                  placeholder={type.noteHint}
+                  placeholder={noteHint}
                   maxLength={ORDER_NOTE_MAX}
-                  aria-label={`Note for ${product.name}`}
+                  aria-label={words.noteFor(name)}
                 />
               ) : null}
             </motion.li>
-          ))}
+            );
+          })}
         </AnimatePresence>
       </ul>
       <div className={styles.clear}>
         <Button variant="ghost" size="sm" icon={<Trash2 />} onClick={onClear}>
-          Clear all
+          {words.clearAll}
         </Button>
       </div>
       <Fulfillment store={store} method={summary.method} choice={choice} onChange={onChoiceChange} />
@@ -127,34 +136,30 @@ export function CartSheet({
 }
 
 // "Rs 600 each" for items, "Rs 600 / kg" otherwise.
-function unitPrice(amount: number, store: PublicStore, unit: PriceUnit): string {
+function unitPrice(amount: number, store: PublicStore, unit: PriceUnit, words: Words): string {
   const price = formatPrice(amount, store.currency);
-  return unit === "each" ? `${price} each` : `${price}${perUnit(unit)}`;
+  return unit === "each" ? words.each(price) : `${price}${perUnitText(unit, words)}`;
 }
 
 // The seller's own PromptPay / LankaQR / KHQR code. On a phone the customer
 // can't scan their own screen, so a tap opens it full size to save.
 function PaymentQr({ store, url }: { store: PublicStore; url: string }) {
   const scheme = PAYMENT_QR_NAME[store.currency];
+  const words = useWords();
   return (
     <div className={styles.payment}>
-      <a href={url} target="_blank" rel="noreferrer" className={styles.qr} aria-label={`Open the ${scheme} code full size`}>
+      <a href={url} target="_blank" rel="noreferrer" className={styles.qr} aria-label={words.openPaymentCode(scheme)}>
         <Image src={url} alt={`${scheme} code for ${store.name}`} fill sizes="132px" unoptimized className={styles.qrImage} />
       </a>
       <div>
-        <Text weight={700}>Pay with {scheme}</Text>
+        <Text weight={700}>{words.payWith(scheme)}</Text>
         <Text size="sm" tone="muted">
-          Tap to save it. Pay once the shop confirms your order.
+          {words.payHint}
         </Text>
       </div>
     </div>
   );
 }
-
-const METHOD_OPTIONS = [
-  { value: "pickup", label: "Pickup" },
-  { value: "delivery", label: "Delivery" },
-] as const;
 
 // Pickup or delivery: a choice when the shop offers both, otherwise just shown.
 // Delivery asks where, optionally; it goes into the order message.
@@ -170,24 +175,29 @@ function Fulfillment({
   onChange: (choice: FulfillmentChoice) => void;
 }) {
   const offer = store.fulfillment ?? DEFAULT_FULFILLMENT;
+  const words = useWords();
+  const methods = [
+    { value: "pickup", label: words.pickup },
+    { value: "delivery", label: words.delivery },
+  ] as const;
   return (
     <div className={styles.fulfillment}>
       {offer === "both" ? (
         <Segmented
-          label="How do you want it?"
-          options={METHOD_OPTIONS}
+          label={words.howDoYouWantIt}
+          options={methods}
           value={choice.method}
           onChange={(next) => onChange({ ...choice, method: next })}
         />
       ) : (
         <Badge className={styles.offer} icon={offer === "pickup" ? <Store /> : <Truck />}>
-          {offer === "pickup" ? "Pickup only" : "Delivery only"}
+          {offer === "pickup" ? words.pickupOnly : words.deliveryOnly}
         </Badge>
       )}
       {method === "delivery" ? (
         <TextField
-          label="Delivery address or area"
-          hint="Optional · you can also send it in the chat"
+          label={words.deliveryAddress}
+          hint={words.deliveryHint}
           autoComplete="street-address"
           maxLength={DELIVERY_ADDRESS_MAX}
           value={choice.address}
@@ -208,21 +218,22 @@ function OrderTime({
   closedLabel: string | null;
   onChange: (choice: FulfillmentChoice) => void;
 }) {
+  const words = useWords();
   const options = [
-    { value: "soon", label: closedLabel ? "When you open" : "As soon as possible" },
-    { value: "later", label: "Pick a time" },
+    { value: "soon", label: closedLabel ? words.whenYouOpen : words.asSoonAsPossible },
+    { value: "later", label: words.pickATime },
   ] as const;
   return (
     <div className={styles.fulfillment}>
       <Segmented
-        label="When do you want it?"
+        label={words.whenDoYouWantIt}
         options={options}
         value={choice.when}
         onChange={(when) => onChange({ ...choice, when })}
       />
       {choice.when === "later" ? (
         <TextField
-          label="Day and time"
+          label={words.dayAndTime}
           type="datetime-local"
           value={choice.at}
           onChange={(event) => onChange({ ...choice, at: event.target.value })}

@@ -4,8 +4,9 @@ import { ChevronUp, ShoppingBag } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
 import { DEFAULT_FULFILLMENT, type PublicStore } from "@/domain/store";
-import { pluralize } from "@/lib/format";
 import { CartSheet } from "./CartSheet";
+import { hoursLabel } from "./labels";
+import { useWords } from "./language";
 import { DEFAULT_CHOICE, summarizeOrder, type CartLine, type FulfillmentChoice } from "./order";
 import { OrderButtons } from "./OrderButtons";
 import { useOpenState } from "./useOpenState";
@@ -33,6 +34,7 @@ export function OrderBar({
 }) {
   const [cartOpen, setCartOpen] = useState(false);
   const [choice, setChoice] = useState<FulfillmentChoice>(DEFAULT_CHOICE);
+  const words = useWords();
   const hours = useOpenState(store.hours, store.timeZone);
   const summary = summarizeOrder(store, lines, choice, { closed: hours?.open === false });
   // With both on offer, the customer picks in the cart before sending.
@@ -65,7 +67,7 @@ export function OrderBar({
               className={styles.summary}
               onClick={() => setCartOpen(true)}
               aria-haspopup="dialog"
-              aria-label={`Review order: ${pluralize(summary.count, "item")}${summary.total ? `, ${summary.total}` : ""}`}
+              aria-label={words.reviewOrder([words.items(summary.count), summary.total].filter(Boolean).join(", "))}
             >
               <span className={styles.bag}>
                 <ShoppingBag aria-hidden />
@@ -101,7 +103,7 @@ export function OrderBar({
         onChoiceChange={setChoice}
         onQuantityChange={changeQuantity}
         onNoteChange={onNoteChange}
-        closedLabel={hours?.open === false ? hours.label : null}
+        closedLabel={hours?.open === false ? hoursLabel(hours, words) : null}
         onClear={clear}
         onSent={onSent}
       />

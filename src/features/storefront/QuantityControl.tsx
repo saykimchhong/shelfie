@@ -3,6 +3,7 @@
 import { Minus, Plus, Trash2 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import type { PriceUnit } from "@/domain/product";
+import { useWords } from "./language";
 import { addOne, formatQuantity, removeOne } from "./quantity";
 import styles from "./QuantityControl.module.scss";
 
@@ -20,6 +21,7 @@ export function QuantityControl({
   label: string;
   unit?: PriceUnit;
 }) {
+  const words = useWords();
   const last = removeOne(quantity, unit) === 0;
   return (
     <motion.div layout className={styles.control} transition={{ type: "spring", stiffness: 500, damping: 35 }}>
@@ -35,19 +37,19 @@ export function QuantityControl({
             <button
               type="button"
               className={styles.step}
-              aria-label={last ? `Remove ${label}` : `Less ${label}`}
+              aria-label={last ? words.remove(label) : words.fewer(label)}
               onClick={() => onChange(removeOne(quantity, unit))}
             >
               {last ? <Trash2 aria-hidden /> : <Minus aria-hidden />}
             </button>
             <span key={quantity} className={styles.count} aria-live="polite">
               {formatQuantity(quantity)}
-              {unit === "kg" ? <small className={styles.unit}>kg</small> : null}
+              {unit === "kg" ? <small className={styles.unit}>{words.per.kg}</small> : null}
             </span>
           </motion.span>
         ) : null}
       </AnimatePresence>
-      <button type="button" className={styles.add} aria-label={`Add ${label}`} onClick={() => onChange(addOne(quantity, unit))}>
+      <button type="button" className={styles.add} aria-label={words.add(label)} onClick={() => onChange(addOne(quantity, unit))}>
         <Plus aria-hidden />
       </button>
     </motion.div>
@@ -57,14 +59,15 @@ export function QuantityControl({
 // For products with sizes or colours: "+" opens the chooser; the count is
 // everything of this product already in the cart.
 export function ChooseButton({ quantity, onChoose, label }: { quantity: number; onChoose: () => void; label: string }) {
+  const words = useWords();
   return (
     <div className={styles.control}>
       {quantity > 0 ? (
-        <span key={quantity} className={styles.count} aria-label={`${quantity} in your order`}>
+        <span key={quantity} className={styles.count} aria-label={words.inYourOrder(formatQuantity(quantity))}>
           {formatQuantity(quantity)}
         </span>
       ) : null}
-      <button type="button" className={styles.add} aria-label={`Choose options for ${label}`} onClick={onChoose}>
+      <button type="button" className={styles.add} aria-label={words.chooseOptions(label)} onClick={onChoose}>
         <Plus aria-hidden />
       </button>
     </div>

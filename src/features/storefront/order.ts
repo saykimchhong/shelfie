@@ -1,4 +1,4 @@
-import { unitOf, variantLabel, type Product, type Variant } from "@/domain/product";
+import { unitOf, type Product, type Variant } from "@/domain/product";
 import { shopTypeOf } from "@/domain/shop";
 import {
   DEFAULT_FULFILLMENT,
@@ -9,6 +9,8 @@ import {
 } from "@/domain/store";
 import { lineLink, orderMessage, whatsappLink } from "@/lib/contact";
 import { formatPrice } from "@/lib/format";
+import { wordsFor, type Words } from "@/lib/words";
+import { variantText } from "./labels";
 
 // One line per product, size and colour.
 export type CartLine = { key: string; product: Product; quantity: number; variant?: Variant; note?: string };
@@ -84,16 +86,16 @@ export const DEFAULT_CHOICE: FulfillmentChoice = { method: "pickup", address: ""
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 // "today at 12:30", "tomorrow at 09:00", "Sat 15 Nov at 12:30".
-export function whenLabel(at: string, now: Date): string {
+export function whenLabel(at: string, now: Date, words: Words["message"] = wordsFor("en").message): string {
   const [date, time] = at.split("T");
   const [year, month, day] = date.split("-").map(Number);
   const picked = new Date(year, month - 1, day);
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const days = Math.round((picked.getTime() - today.getTime()) / DAY_MS);
-  if (days === 0) return `today at ${time}`;
-  if (days === 1) return `tomorrow at ${time}`;
-  const named = new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric", month: "short" }).format(picked);
-  return `${named} at ${time}`;
+  if (days === 0) return words.todayAt(time);
+  if (days === 1) return words.tomorrowAt(time);
+  const named = new Intl.DateTimeFormat(words.dateLocale, { weekday: "short", day: "numeric", month: "short" }).format(picked);
+  return words.dayAt(named, time);
 }
 
 // The store's only option, or the customer's pick when it offers both.
@@ -111,7 +113,8 @@ export type OrderSummary = {
   method: FulfillmentMethod;
 };
 
-// Everything the order bar and the cart sheet need, from one place.
+// Everything the order bar and the cart sheet need, from one place. The
+// message is in the shop's own language: the seller is the one who reads it.
 // closed: the shop is closed right now, so "soon" means when it opens.
 export function summarizeOrder(
   store: PublicStore,
@@ -129,11 +132,12 @@ export function summarizeOrder(
   const price = (amount: number) => formatPrice(amount, store.currency);
   const total = subtotal > 0 ? `${price(subtotal)}${hasUnpriced ? "+" : ""}` : null;
   const method = orderMethod(store.fulfillment ?? DEFAULT_FULFILLMENT, choice.method);
+  const words = wordsFor(store.labelLanguage);
 
   const message = orderMessage({
     storeName: store.name,
     lines: lines.map((line) => ({
-      name: line.variant ? `${line.product.name} (${variantLabel(line.variant)})` : line.product.name,
+      name: line.variant ? `${line.product.name} (${variantText(line.variant, words)})` : line.product.name,
       quantity: line.quantity,
       unit: unitOf(line.product, store.priceUnit),
       lineTotal: line.product.price === null ? null : line.product.price * line.quantity,
@@ -144,8 +148,9 @@ export function summarizeOrder(
     fulfillment: {
       method,
       address: method === "delivery" ? choice.address.slice(0, DELIVERY_ADDRESS_MAX) : undefined,
-      when: shopTypeOf(store).orderTime ? orderWhen(choice, now, closed) : undefined,
+      when: shopTypeOf(store).orderTime ? orderWhen(choice, now, closed, words.message) : undefined,
     },
+    words: words.message,
   });
 
   return {
@@ -158,7 +163,7 @@ export function summarizeOrder(
 }
 
 // The clock is read only for a picked time: prerendering forbids new Date().
-function orderWhen(choice: FulfillmentChoice, now: Date | undefined, closed: boolean): string {
-  if (choice.when === "later" && choice.at) return whenLabel(choice.at, now ?? new Date());
-  return closed ? "when you open" : "as soon as possible";
+function orderWhen(choice: FulfillmentChoice, now: Date | undefined, closed: boolean, words: Words["message"]): string {
+  if (choice.when === "later" && choice.at) return whenLabel(choice.at, now ?? new Date(), words);
+  return closed ? words.whenYouOpen : words.asSoonAsPossible;
 }

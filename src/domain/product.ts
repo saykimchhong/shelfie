@@ -86,8 +86,3 @@ export function hasOptions(product: Pick<Product, "sizes" | "colors">): boolean 
 
 // What the customer picked.
 export type Variant = { size?: string; color?: string };
-
-// "Size M, Black"
-export function variantLabel(variant: Variant | undefined): string {
-  return [variant?.size ? `Size ${variant.size}` : null, variant?.color].filter(Boolean).join(", ");
-}

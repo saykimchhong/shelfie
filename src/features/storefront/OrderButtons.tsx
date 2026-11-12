@@ -1,6 +1,9 @@
+"use client";
+
 import clsx from "clsx";
 import { MessageCircle } from "lucide-react";
 import { Button, ButtonLink } from "@/components/ui";
+import { useWords } from "./language";
 import type { OrderSummary } from "./order";
 import styles from "./OrderButtons.module.scss";
 
@@ -19,17 +22,18 @@ export function OrderButtons({
   // The customer followed a link out to WhatsApp or LINE.
   onSend?: () => void;
 }) {
+  const words = useWords();
   if (onChoose) {
     return (
       <div className={clsx(styles.buttons, block && styles.block)}>
         {summary.lineHref ? (
-          <Button className={styles.line} aria-label="Order on LINE" aria-haspopup="dialog" onClick={onChoose}>
+          <Button className={styles.line} aria-label={words.orderOnLine} aria-haspopup="dialog" onClick={onChoose}>
             LINE
           </Button>
         ) : null}
         {summary.whatsappHref ? (
           <Button icon={<MessageCircle />} className={styles.whatsapp} aria-haspopup="dialog" onClick={onChoose}>
-            Order
+            {words.order}
           </Button>
         ) : null}
       </div>
@@ -44,7 +48,7 @@ export function OrderButtons({
           target="_blank"
           rel="noreferrer"
           className={styles.line}
-          aria-label="Order on LINE"
+          aria-label={words.orderOnLine}
           onClick={onSend}
         >
           LINE
@@ -59,7 +63,7 @@ export function OrderButtons({
           className={styles.whatsapp}
           onClick={onSend}
         >
-          Order
+          {words.order}
         </ButtonLink>
       ) : null}
     </div>

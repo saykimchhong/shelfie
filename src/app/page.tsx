@@ -54,7 +54,7 @@ export default function Home() {
 
           <Reveal delay={0.1} className={styles.preview}>
             <PhonePreview className={styles.phone} label="An example shop">
-              <StorefrontView store={example.store} products={example.products} embedded />
+              <StorefrontView store={example.store} products={example.products} embedded startIn="en" />
             </PhonePreview>
           </Reveal>
         </section>

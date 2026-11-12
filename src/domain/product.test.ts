@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { hasOptions, parseOptions, variantLabel } from "./product";
+import { hasOptions, parseOptions } from "./product";
 
 describe("parseOptions", () => {
   it("splits on commas or new lines, trims and drops repeats", () => {
@@ -13,13 +13,7 @@ describe("parseOptions", () => {
   });
 });
 
-describe("variantLabel", () => {
-  it("names the size and colour that were picked", () => {
-    expect(variantLabel({ size: "M", color: "Black" })).toBe("Size M, Black");
-    expect(variantLabel({ color: "Red" })).toBe("Red");
-    expect(variantLabel(undefined)).toBe("");
-  });
-
+describe("hasOptions", () => {
   it("knows which products need a choice", () => {
     expect(hasOptions({ sizes: ["S"] })).toBe(true);
     expect(hasOptions({ sizes: [], colors: undefined })).toBe(false);

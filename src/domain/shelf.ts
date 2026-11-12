@@ -23,7 +23,7 @@ export type Section = { title: string | null; products: Product[] };
 // By shelf when the shop uses shelves, else by category, in the order they
 // first appear. Products with neither come last, under "More". A single group
 // gets no title.
-export function sectionsOf(products: readonly Product[]): Section[] {
+export function sectionsOf(products: readonly Product[], otherTitle = "More"): Section[] {
   for (const field of ["shelf", "category"] as const) {
     const groups = new Map<string, Section>();
     for (const product of products) {
@@ -35,7 +35,7 @@ export function sectionsOf(products: readonly Product[]): Section[] {
     if (groups.size < 2) continue;
     const unsorted = groups.get(UNSORTED);
     groups.delete(UNSORTED);
-    return [...groups.values(), ...(unsorted ? [{ title: "More", products: unsorted.products }] : [])];
+    return [...groups.values(), ...(unsorted ? [{ title: otherTitle, products: unsorted.products }] : [])];
   }
   return products.length > 0 ? [{ title: null, products: [...products] }] : [];
 }

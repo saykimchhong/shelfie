@@ -9,7 +9,7 @@ const doc = {
   ownerId: "seller",
   name: "Kamal Stores",
   currency: "LKR",
-  labelLanguage: "si",
+  labelLanguage: "en",
   contact: { whatsapp: "+94 77 123 4567" },
   published: true,
   createdAt: 0,

@@ -14,25 +14,25 @@ describe("shopClock", () => {
 
 describe("openState", () => {
   it("is open between the times, until close", () => {
-    expect(at(daily, "12:00")).toEqual({ open: true, label: "Open · until 21:00" });
-    expect(at(daily, "21:00")).toEqual({ open: false, label: "Closed · opens tomorrow 07:00" });
+    expect(at(daily, "12:00")).toMatchObject({ open: true, label: "Open · until 21:00" });
+    expect(at(daily, "21:00")).toMatchObject({ open: false, label: "Closed · opens tomorrow 07:00" });
   });
 
   it("says when it opens later today", () => {
-    expect(at(daily, "06:15")).toEqual({ open: false, label: "Closed · opens 07:00" });
+    expect(at(daily, "06:15")).toMatchObject({ open: false, label: "Closed · opens 07:00" });
   });
 
   it("skips closed days", () => {
     const closedThursFri = { ...daily, closedDays: [4, 5] };
-    expect(at(closedThursFri, "22:00")).toEqual({ open: false, label: "Closed · opens Sat 07:00" });
+    expect(at(closedThursFri, "22:00")).toMatchObject({ open: false, label: "Closed · opens Sat 07:00" });
     expect(at({ ...daily, closedDays: [3] }, "12:00").open).toBe(false);
   });
 
   it("runs past midnight when it closes before it opens", () => {
     const nightMarket = { open: "18:00", close: "02:00", closedDays: [] };
-    expect(at(nightMarket, "23:30")).toEqual({ open: true, label: "Open · until 02:00" });
-    expect(at(nightMarket, "01:30")).toEqual({ open: true, label: "Open · until 02:00" });
-    expect(at(nightMarket, "03:00")).toEqual({ open: false, label: "Closed · opens 18:00" });
+    expect(at(nightMarket, "23:30")).toMatchObject({ open: true, label: "Open · until 02:00" });
+    expect(at(nightMarket, "01:30")).toMatchObject({ open: true, label: "Open · until 02:00" });
+    expect(at(nightMarket, "03:00")).toMatchObject({ open: false, label: "Closed · opens 18:00" });
   });
 
   it("keeps the night open after a closed day only if that night started on an open day", () => {
@@ -42,7 +42,7 @@ describe("openState", () => {
   });
 
   it("handles always-open and never-open shops", () => {
-    expect(at({ open: "00:00", close: "00:00", closedDays: [] }, "03:00")).toEqual({ open: true, label: "Open 24 hours" });
-    expect(at({ ...daily, closedDays: [0, 1, 2, 3, 4, 5, 6] }, "12:00")).toEqual({ open: false, label: "Closed" });
+    expect(at({ open: "00:00", close: "00:00", closedDays: [] }, "03:00")).toMatchObject({ open: true, label: "Open 24 hours" });
+    expect(at({ ...daily, closedDays: [0, 1, 2, 3, 4, 5, 6] }, "12:00")).toMatchObject({ open: false, label: "Closed" });
   });
 });

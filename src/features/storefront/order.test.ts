@@ -7,7 +7,7 @@ const store: PublicStore = {
   slug: "kamal-stores",
   name: "Kamal Stores",
   currency: "LKR",
-  labelLanguage: "si",
+  labelLanguage: "en",
   contact: { whatsapp: "+94 77 123 4567" },
   published: true,
   createdAt: 0,
@@ -89,6 +89,28 @@ describe("food orders", () => {
     expect(message(summarizeOrder(store, [{ key: rice.id, product: rice, quantity: 1 }], DEFAULT_CHOICE, { now }).whatsappHref)).not.toContain(
       "When:",
     );
+  });
+});
+
+describe("the message's language", () => {
+  const now = new Date(2025, 10, 12, 10, 0);
+  const thaiCafe: PublicStore = { ...store, currency: "THB", labelLanguage: "th", shopType: "food", fulfillment: "delivery" };
+  const shirt: Product = { ...rice, id: "shirt", name: "Linen Shirt", unit: "kg", sizes: ["M"] };
+
+  it("is written in the shop's language, for the seller to read", () => {
+    const later = { ...DEFAULT_CHOICE, address: "สุขุมวิท 11", when: "later" as const, at: "2025-11-13T09:00" };
+    const lines = [{ key: "a", product: shirt, quantity: 1.5, variant: { size: "M" } }];
+    expect(message(summarizeOrder(thaiCafe, lines, later, { now }).whatsappHref).split("\n")).toEqual([
+      "สวัสดี Kamal Stores! ขอสั่ง:",
+      expect.stringMatching(/^• 1\.5 กก\. × Linen Shirt \(ขนาด M\) \(฿375\)$/u),
+      "รวม: ฿375",
+      "กรุณาส่งที่: สุขุมวิท 11",
+      "เวลา: พรุ่งนี้ 09:00",
+    ]);
+  });
+
+  it("stays English for shops labelled in English", () => {
+    expect(message(summarizeOrder(store, [{ key: rice.id, product: rice, quantity: 1 }]).whatsappHref)).toMatch(/^Hi Kamal Stores! I'd like to order:/);
   });
 });
 

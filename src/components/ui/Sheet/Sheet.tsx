@@ -12,6 +12,8 @@ export type SheetProps = {
   children: ReactNode;
   // Sticky action row at the bottom (Save / Order…).
   footer?: ReactNode;
+  // The close button's name, for sheets that aren't in English.
+  closeLabel?: string;
 };
 
 // Longest close transition in Sheet.module.scss, plus a little slack.
@@ -20,7 +22,7 @@ const EXIT_MS = 320;
 // Bottom sheet on phones, centered dialog on wider screens. Native <dialog>
 // gives focus trapping, Esc to close and an accessible modal for free. Open
 // and close are CSS transitions (transform + opacity only).
-export function Sheet({ open, onClose, title, children, footer }: SheetProps) {
+export function Sheet({ open, onClose, title, children, footer, closeLabel = "Close" }: SheetProps) {
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
 
@@ -60,7 +62,7 @@ export function Sheet({ open, onClose, title, children, footer }: SheetProps) {
           <h2 id={titleId} className={styles.title}>
             {title}
           </h2>
-          <Button variant="ghost" size="sm" iconOnly icon={<X />} aria-label="Close" onClick={onClose} />
+          <Button variant="ghost" size="sm" iconOnly icon={<X />} aria-label={closeLabel} onClick={onClose} />
         </header>
         <div className={styles.body}>{open || closing ? children : null}</div>
         {footer && (open || closing) ? <footer className={styles.footer}>{footer}</footer> : null}

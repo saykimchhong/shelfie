@@ -6,6 +6,8 @@ import { useState, type CSSProperties } from "react";
 import { Button, Sheet, Thumb } from "@/components/ui";
 import type { PriceUnit, Product, Variant } from "@/domain/product";
 import type { Currency } from "@/domain/store";
+import { productNames } from "./labels";
+import { useLanguage } from "./language";
 import { Price } from "./Price";
 import styles from "./OptionSheet.module.scss";
 
@@ -28,15 +30,17 @@ export function OptionSheet({
   const [size, setSize] = useState<string | undefined>(product.sizes?.length === 1 ? product.sizes[0] : undefined);
   const [color, setColor] = useState<string | undefined>(product.colors?.length === 1 ? product.colors[0] : undefined);
   const ready = (!product.sizes?.length || size !== undefined) && (!product.colors?.length || color !== undefined);
+  const { language, shopLanguage, words } = useLanguage();
 
   return (
     <Sheet
       open={open}
       onClose={onClose}
-      title={product.name}
+      title={productNames(product, language, shopLanguage).name}
+      closeLabel={words.close}
       footer={
         <Button size="lg" block icon={<ShoppingBag />} disabled={!ready} onClick={() => onAdd({ size, color })}>
-          {ready ? "Add to order" : `Choose ${!product.sizes?.length || size ? "a colour" : "a size"}`}
+          {ready ? words.addToOrder : !product.sizes?.length || size ? words.chooseColour : words.chooseSize}
         </Button>
       }
     >
@@ -44,9 +48,9 @@ export function OptionSheet({
         <Thumb label={product.name} src={product.imageUrl} size={72} className={styles.thumb} />
         <Price amount={product.price} currency={currency} unit={unit} className={styles.price} />
       </div>
-      {product.sizes?.length ? <Choices label="Size" values={product.sizes} value={size} onChange={setSize} /> : null}
+      {product.sizes?.length ? <Choices label={words.size} values={product.sizes} value={size} onChange={setSize} /> : null}
       {product.colors?.length ? (
-        <Choices label="Colour" values={product.colors} value={color} onChange={setColor} swatches />
+        <Choices label={words.colour} values={product.colors} value={color} onChange={setColor} swatches />
       ) : null}
     </Sheet>
   );
