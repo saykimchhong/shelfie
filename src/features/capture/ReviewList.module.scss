@@ -23,6 +23,12 @@
   opacity: 0.45;
 }
 
+// A row with its unit menu open sits above the rows after it.
+.row:has([aria-expanded="true"]) {
+  position: relative;
+  z-index: 2;
+}
+
 .check {
   display: grid;
   place-items: center;
@@ -129,35 +135,6 @@
   align-items: flex-end;
   gap: var(--space-1);
   flex-shrink: 0;
-}
-
-// What the price is for. A plain system menu: every phone user knows it.
-.unit {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  color: var(--fg-muted);
-
-  select {
-    appearance: none;
-    height: 28px;
-    padding: 0 var(--space-8) 0 var(--space-3);
-    border: 0;
-    border-radius: var(--radius-full);
-    background: var(--surface-1);
-    font-size: var(--text-sm);
-    font-weight: 600;
-    color: inherit;
-    cursor: pointer;
-  }
-
-  svg {
-    position: absolute;
-    right: var(--space-3);
-    width: 14px;
-    height: 14px;
-    pointer-events: none;
-  }
 }
 
 .unitText {

@@ -1,9 +1,9 @@
 "use client";
 
 import clsx from "clsx";
-import { Check, ChevronDown } from "lucide-react";
+import { Check } from "lucide-react";
 import { Stagger } from "@/components/motion/Reveal";
-import { Badge, Switch, Thumb } from "@/components/ui";
+import { Badge, Select, Switch, Thumb } from "@/components/ui";
 import { LOW_CONFIDENCE } from "@/domain/extraction";
 import { PRICE_UNITS, type PriceUnit, type Product } from "@/domain/product";
 import type { Currency } from "@/domain/store";
@@ -18,6 +18,8 @@ const UNIT_LABELS: Record<PriceUnit, string> = {
   bunch: "per bunch",
   pack: "per pack",
 };
+
+const UNIT_OPTIONS = PRICE_UNITS.map((unit) => ({ value: unit, label: UNIT_LABELS[unit] }));
 
 // New products are fully editable. Known ones (`known` has their match) keep
 // their name and photo: only the price and the include check change.
@@ -89,20 +91,15 @@ export function ReviewList({
               {product ? (
                 draft.unit === "each" ? null : <span className={styles.unitText}>{UNIT_LABELS[draft.unit]}</span>
               ) : (
-                <span className={styles.unit}>
-                  <select
-                    value={draft.unit}
-                    onChange={(event) => onChange(draft.key, { unit: event.target.value as PriceUnit })}
-                    aria-label={`What the price of ${draft.name || "this product"} is for`}
-                  >
-                    {PRICE_UNITS.map((unit) => (
-                      <option key={unit} value={unit}>
-                        {UNIT_LABELS[unit]}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown aria-hidden />
-                </span>
+                <Select
+                  size="sm"
+                  tone="soft"
+                  align="end"
+                  value={draft.unit}
+                  options={UNIT_OPTIONS}
+                  onChange={(unit) => onChange(draft.key, { unit })}
+                  label={`What the price of ${draft.name || "this product"} is for`}
+                />
               )}
             </div>
           </li>

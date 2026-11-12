@@ -7,6 +7,7 @@ export { ConfirmSheet, type ConfirmSheetProps } from "./ConfirmSheet/ConfirmShee
 export { Container, type ContainerProps } from "./Container/Container";
 export { EmptyState, type EmptyStateProps } from "./EmptyState/EmptyState";
 export { Segmented, type SegmentedOption, type SegmentedProps } from "./Segmented/Segmented";
+export { Select, type SelectOption, type SelectProps } from "./Select/Select";
 export { Sheet, type SheetProps } from "./Sheet/Sheet";
 export { Skeleton } from "./Skeleton/Skeleton";
 export { Spinner } from "./Spinner/Spinner";

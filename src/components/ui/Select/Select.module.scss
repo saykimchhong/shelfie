@@ -1,0 +1,223 @@
+@use "styles" as *;
+
+// Transform and opacity only, like every other moving part.
+$enter: 180ms;
+$exit: 120ms;
+
+.root {
+  --select-h: 40px;
+
+  position: relative;
+  display: inline-flex;
+}
+
+.sm {
+  --select-h: 30px;
+}
+
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: var(--select-h);
+  padding: 0 var(--space-3) 0 var(--space-4);
+  border-radius: var(--radius-full);
+  color: var(--fg);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  white-space: nowrap;
+  @include pressable;
+
+  .sm & {
+    gap: var(--space-1);
+    padding: 0 var(--space-2) 0 var(--space-3);
+    color: var(--fg-muted);
+  }
+}
+
+.raised .trigger {
+  background: var(--bg-raised);
+  @include elevation(1);
+}
+
+.soft .trigger {
+  background: var(--surface-1);
+
+  @include hover {
+    background: var(--surface-2);
+  }
+}
+
+.icon {
+  display: grid;
+  margin-left: calc(var(--space-1) * -1);
+  color: var(--brand-text);
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+.chevron {
+  width: 16px;
+  height: 16px;
+  color: var(--fg-muted);
+  transition: transform var(--dur-base) var(--ease-out);
+
+  .sm & {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+}
+
+.menu {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + var(--space-2));
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: max(100%, 168px);
+  margin: 0;
+  padding: var(--space-1);
+  list-style: none;
+  border-radius: var(--radius-lg);
+  background: var(--bg-raised);
+  color: var(--fg);
+  transform-origin: top left;
+  animation: menu-in $enter var(--ease-out);
+  @include elevation(3);
+
+  &[data-state="closing"] {
+    pointer-events: none;
+    animation: menu-out $exit ease-in forwards;
+  }
+
+  // Tier 3: the fade stays, the movement goes.
+  @include reduced-motion {
+    animation-name: menu-fade-in;
+
+    &[data-state="closing"] {
+      animation-name: menu-fade-out;
+    }
+  }
+}
+
+.start {
+  left: 0;
+}
+
+.end {
+  right: 0;
+  transform-origin: top right;
+}
+
+.upward {
+  top: auto;
+  bottom: calc(100% + var(--space-2));
+  transform-origin: bottom left;
+
+  &.end {
+    transform-origin: bottom right;
+  }
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  min-height: 42px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-md);
+  font-size: var(--text-md);
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  outline: none;
+  transition: background-color var(--dur-fast) var(--ease-out);
+  // Rows follow the menu in, one after another.
+  animation: row-in 220ms var(--ease-out) backwards;
+
+  @for $i from 1 through 8 {
+    &:nth-child(#{$i}) {
+      animation-delay: #{$i * 24}ms;
+    }
+  }
+
+  @include hover {
+    background: var(--surface-1);
+  }
+
+  &:focus-visible {
+    background: var(--surface-1);
+  }
+
+  &:active {
+    background: var(--surface-2);
+  }
+
+  @include reduced-motion {
+    animation: none;
+  }
+}
+
+// The label keeps full contrast on any store colour; the tick carries the brand.
+.chosen {
+  background: var(--brand-soft);
+
+  @include hover {
+    background: var(--brand-soft);
+  }
+
+  &:focus-visible {
+    background: var(--brand-soft);
+    @include focus-ring;
+  }
+}
+
+.tick {
+  color: var(--brand-text);
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  stroke-width: 3;
+}
+
+@keyframes menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.96);
+  }
+}
+
+@keyframes menu-out {
+  to {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.97);
+  }
+}
+
+@keyframes menu-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes menu-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes row-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
