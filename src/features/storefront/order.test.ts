@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Product } from "@/domain/product";
 import type { PublicStore } from "@/domain/store";
-import { cartLines, DEFAULT_CHOICE, lineKey, orderMethod, quantityOf, summarizeOrder, whenLabel } from "./order";
+import { cartLines, DEFAULT_CHOICE, isLineKey, lineKey, orderMethod, quantityOf, summarizeOrder, whenLabel } from "./order";
 
 const store: PublicStore = {
   slug: "kamal-stores",
@@ -124,5 +124,25 @@ describe("sizes and colours", () => {
   it("names the choice in the order message", () => {
     const summary = summarizeOrder(store, cartLines(products, quantities));
     expect(message(summary.whatsappHref)).toMatch(/• 1 × Linen Shirt \(Size M, Black\)/);
+  });
+
+  it("leaves out what a saved cart can no longer order", () => {
+    const ids = (shelf: Product[]) => cartLines(shelf, quantities).map((line) => [line.product.id, line.variant?.size]);
+    // Sold out since.
+    expect(ids([{ ...rice, inStock: false }, shirt])).toEqual([["shirt", "M"], ["shirt", "S"]]);
+    // Size S no longer listed.
+    expect(ids([rice, { ...shirt, sizes: ["M", "L"] }])).toEqual([["rice", undefined], ["shirt", "M"]]);
+    // The shirt lost its options, and rice gained some: both need choosing again.
+    expect(ids([{ ...rice, sizes: ["1 kg"] }, { ...shirt, sizes: undefined, colors: undefined }])).toEqual([]);
+  });
+});
+
+describe("isLineKey", () => {
+  it("accepts only keys lineKey makes", () => {
+    expect(isLineKey(lineKey("rice"))).toBe(true);
+    expect(isLineKey(lineKey("shirt", { size: "M" }))).toBe(true);
+    for (const bad of ["rice", "{}", "[]", '["rice"]', '[1,null,null]', '["rice",2,null]']) {
+      expect(isLineKey(bad)).toBe(false);
+    }
   });
 });

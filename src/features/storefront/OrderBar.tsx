@@ -21,12 +21,15 @@ export function OrderBar({
   onQuantityChange,
   onNoteChange,
   onClear,
+  onSent,
 }: {
   store: PublicStore;
   lines: CartLine[];
   onQuantityChange: (key: string, quantity: number) => void;
   onNoteChange: (key: string, note: string) => void;
   onClear: () => void;
+  // The customer tapped through to WhatsApp or LINE.
+  onSent: () => void;
 }) {
   const [cartOpen, setCartOpen] = useState(false);
   const [choice, setChoice] = useState<FulfillmentChoice>(DEFAULT_CHOICE);
@@ -79,7 +82,11 @@ export function OrderBar({
               {summary.total ? <strong className={styles.total}>{summary.total}</strong> : null}
               <ChevronUp aria-hidden className={styles.chevron} />
             </button>
-            <OrderButtons summary={summary} onChoose={mustChoose ? () => setCartOpen(true) : undefined} />
+            <OrderButtons
+              summary={summary}
+              onChoose={mustChoose ? () => setCartOpen(true) : undefined}
+              onSend={onSent}
+            />
           </motion.div>
         ) : null}
       </AnimatePresence>
@@ -96,6 +103,7 @@ export function OrderBar({
         onNoteChange={onNoteChange}
         closedLabel={hours?.open === false ? hours.label : null}
         onClear={clear}
+        onSent={onSent}
       />
     </>
   );

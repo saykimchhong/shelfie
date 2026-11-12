@@ -26,6 +26,7 @@ import { storeUrl, storeUrlLabel } from "@/lib/site";
 import { deleteAllProducts, updateProduct, updateStore, useProducts, useRefreshStorefront } from "./data";
 import { ProductEditor } from "./ProductEditor";
 import { ProductRow } from "./ProductRow";
+import { QrCodeButton } from "./QrCodeButton";
 import { ShareLinkButton } from "./ShareLinkButton";
 import styles from "./StoreOverview.module.scss";
 
@@ -94,11 +95,17 @@ export function StoreOverview({ store }: { store: Store }) {
                 label={store.published ? "Visible to customers" : "Hidden from customers"}
                 showLabel
               />
-              <Stack direction="row" gap={2}>
+              <Stack direction="row" gap={2} wrap>
                 <ButtonLink href="/dashboard/edit" variant="soft" size="sm" icon={<Palette />}>
                   Edit store
                 </ButtonLink>
                 <ShareLinkButton url={storeUrl(store.slug)} title={store.name} />
+                <QrCodeButton
+                  url={storeUrl(store.slug)}
+                  linkLabel={storeUrlLabel(store.slug)}
+                  shopName={store.name}
+                  slug={store.slug}
+                />
               </Stack>
             </Stack>
           </Stack>

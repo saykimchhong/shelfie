@@ -23,7 +23,9 @@ import { cartLines, lineKey, quantityOf } from "./order";
 import { ProductCard } from "./ProductCard";
 import { ProductListItem } from "./ProductListItem";
 import { ProductMenuItem } from "./ProductMenuItem";
+import { EMPTY_CART, markSent, withNote, withQuantity } from "./savedCart";
 import { matchesSearch, showsSearch } from "./search";
+import { useCart } from "./useCart";
 import { useOpenState } from "./useOpenState";
 import styles from "./StorefrontView.module.scss";
 
@@ -40,9 +42,9 @@ export function StorefrontView({ store, products, embedded }: StorefrontViewProp
   const chipId = useId();
   const sectionId = useId();
   const reduceMotion = useReducedMotion();
-  // Quantities and notes by cart line (product + size + colour, see lineKey).
-  const [cart, setCart] = useState<Record<string, number>>({});
-  const [notes, setNotes] = useState<Record<string, string>>({});
+  // Kept on the customer's phone, so a refresh or a trip to WhatsApp doesn't
+  // empty it. Previews keep theirs in memory.
+  const { cart, update } = useCart(embedded ? null : store.slug);
   // The product whose sizes or colours are being chosen; kept while the sheet
   // closes. A new id per opening starts each choice fresh.
   const [choosing, setChoosing] = useState<{ product: Product; open: boolean; id: number } | null>(null);
@@ -61,36 +63,21 @@ export function StorefrontView({ store, products, embedded }: StorefrontViewProp
   const visible = category ? searched.filter((product) => product.category === category) : searched;
   // Menu and shelves show every product in sections; their chips jump to one.
   const sectioned = theme.template === "menu" || theme.template === "shelves";
-  const sections = useMemo(() => (sectioned ? sectionsOf(searched) : []), [sectioned, searched]);
+  const sections = sectioned ? sectionsOf(searched) : [];
   const sectionAnchor = (index: number) => `${sectionId}-section-${index}`;
 
   function jumpTo(index: number) {
     document.getElementById(sectionAnchor(index))?.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth" });
   }
-  const lines = cartLines(products, cart, notes);
+  const lines = cartLines(products, cart.quantities, cart.notes);
 
   function setQuantity(key: string, quantity: number) {
-    setCart((current) => {
-      const next = { ...current };
-      if (quantity <= 0) delete next[key];
-      else next[key] = quantity;
-      return next;
-    });
-    if (quantity <= 0) setNote(key, "");
-  }
-
-  function setNote(key: string, note: string) {
-    setNotes((current) => {
-      const next = { ...current };
-      if (note) next[key] = note;
-      else delete next[key];
-      return next;
-    });
+    update((current) => withQuantity(current, key, quantity));
   }
 
   function addChosen(product: Product, variant: Variant) {
     const key = lineKey(product.id, variant);
-    setQuantity(key, (cart[key] ?? 0) + 1);
+    update((current) => withQuantity(current, key, (current.quantities[key] ?? 0) + 1));
     setChoosing((current) => current && { ...current, open: false });
   }
 
@@ -101,7 +88,7 @@ export function StorefrontView({ store, products, embedded }: StorefrontViewProp
       product,
       currency: store.currency,
       unit: unitOf(product, store.priceUnit),
-      quantity: choose ? quantityOf(lines, product.id) : (cart[key] ?? 0),
+      quantity: choose ? quantityOf(lines, product.id) : (cart.quantities[key] ?? 0),
       onQuantityChange: canOrder && !choose ? (quantity: number) => setQuantity(key, quantity) : undefined,
       onChoose: canOrder && choose ? () => setChoosing({ product, open: true, id: Date.now() }) : undefined,
     };
@@ -277,11 +264,9 @@ export function StorefrontView({ store, products, embedded }: StorefrontViewProp
         store={store}
         lines={lines}
         onQuantityChange={setQuantity}
-        onNoteChange={setNote}
-        onClear={() => {
-          setCart({});
-          setNotes({});
-        }}
+        onNoteChange={(key, note) => update((current) => withNote(current, key, note))}
+        onClear={() => update(() => EMPTY_CART)}
+        onSent={() => update((current) => markSent(current, Date.now()))}
       />
     </ThemeScope>
   );

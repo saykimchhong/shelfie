@@ -107,3 +107,35 @@ p {
     scroll-behavior: auto !important;
   }
 }
+
+// Printing a sheet (the shop's QR code): only the element marked data-print
+// reaches the paper.
+[data-print] {
+  display: none;
+}
+
+@media print {
+  @page {
+    margin: 12mm;
+  }
+
+  body:has(> [data-print]) > :not([data-print]) {
+    display: none !important;
+  }
+
+  body:has(> [data-print]) {
+    min-height: 0;
+    background: #fff;
+  }
+
+  [data-print] {
+    display: flex;
+    justify-content: center;
+
+    img {
+      width: auto;
+      max-width: 100%;
+      max-height: 265mm;
+    }
+  }
+}

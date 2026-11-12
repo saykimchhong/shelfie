@@ -11,10 +11,13 @@ export function OrderButtons({
   summary,
   block,
   onChoose,
+  onSend,
 }: {
   summary: OrderSummary;
   block?: boolean;
   onChoose?: () => void;
+  // The customer followed a link out to WhatsApp or LINE.
+  onSend?: () => void;
 }) {
   if (onChoose) {
     return (
@@ -42,6 +45,7 @@ export function OrderButtons({
           rel="noreferrer"
           className={styles.line}
           aria-label="Order on LINE"
+          onClick={onSend}
         >
           LINE
         </ButtonLink>
@@ -53,6 +57,7 @@ export function OrderButtons({
           rel="noreferrer"
           icon={<MessageCircle />}
           className={styles.whatsapp}
+          onClick={onSend}
         >
           Order
         </ButtonLink>

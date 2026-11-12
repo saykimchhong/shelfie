@@ -1,0 +1,48 @@
+@use "styles" as *;
+
+.content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+// The sheet as it prints: white paper, whatever the dashboard's colours.
+.poster {
+  width: min(100%, 260px);
+  height: auto;
+  aspect-ratio: 3 / 4;
+  border-radius: var(--radius-lg);
+  background: #fff;
+  @include elevation(2);
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 100%;
+}
+
+.save {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  height: 54px;
+  border-radius: var(--radius-full);
+  background: var(--brand-soft);
+  color: var(--brand-text);
+  font-size: var(--text-lg);
+  font-weight: 650;
+  @include pressable;
+
+  svg {
+    width: 1.2em;
+    height: 1.2em;
+  }
+
+  @include hover {
+    background: color-mix(in oklab, var(--brand-soft) 82%, var(--brand));
+  }
+}

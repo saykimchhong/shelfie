@@ -34,6 +34,7 @@ export function CartSheet({
   onNoteChange,
   closedLabel,
   onClear,
+  onSent,
 }: {
   open: boolean;
   onClose: () => void;
@@ -47,6 +48,7 @@ export function CartSheet({
   // "Closed · opens 07:00" while the shop is closed; null when open or unknown.
   closedLabel: string | null;
   onClear: () => void;
+  onSent: () => void;
 }) {
   const type = shopTypeOf(store);
   return (
@@ -64,7 +66,7 @@ export function CartSheet({
               {summary.total ?? "Ask"}
             </Text>
           </div>
-          <OrderButtons summary={summary} block />
+          <OrderButtons summary={summary} block onSend={onSent} />
         </div>
       }
     >

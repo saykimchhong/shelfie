@@ -21,11 +21,13 @@ env:
     availability:
       - RUNTIME
 
-  # Public URL for share links and page metadata. Set it to this backend's
-  # URL (shown in the console after the first rollout), e.g.
-  # https://shelfie--project08-empty.asia-southeast1.hosted.app
-  # - variable: NEXT_PUBLIC_SITE_URL
-  #   value: https://<backend>--<project>.<region>.hosted.app
+  # Public URL for share links, QR codes and link-preview pictures. Change it
+  # when the site moves to its own domain.
+  - variable: NEXT_PUBLIC_SITE_URL
+    value: https://shelfie--project08-empty.asia-southeast1.hosted.app
+    availability:
+      - BUILD
+      - RUNTIME
 
   # Gemini key, from Cloud Secret Manager. Create it before the first rollout
   # that reads it, or the rollout fails:

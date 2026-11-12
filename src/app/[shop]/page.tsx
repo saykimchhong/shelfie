@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { StorefrontSkeleton, StorefrontView } from "@/features/storefront";
+import { SHARE_IMAGE, sharePhotos } from "@/server/shareImage";
 import { getStorefront } from "@/server/storefront";
 
 // Public storefront: shelfie.app/{slug}. The skeleton is the static shell;
@@ -14,10 +15,16 @@ export async function generateMetadata({ params }: PageProps<"/[shop]">): Promis
 
   const { store, products } = storefront;
   const description = store.tagline ?? `${products.length} products · order on WhatsApp or LINE`;
+  // The link preview shows product photos, when the store has any.
+  const images =
+    sharePhotos(products).length > 0
+      ? [{ url: `/${store.slug}/share-image`, ...SHARE_IMAGE, type: "image/jpeg", alt: store.name }]
+      : undefined;
   return {
     title: store.name,
     description,
-    openGraph: { title: store.name, description, type: "website" },
+    openGraph: { title: store.name, description, type: "website", url: `/${store.slug}`, images },
+    twitter: { card: images ? "summary_large_image" : "summary", title: store.name, description, images },
   };
 }
 

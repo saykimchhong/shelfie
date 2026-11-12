@@ -22,6 +22,29 @@ function parseLineKey(key: string): { productId: string; variant?: Variant } {
   return { productId, variant: size || color ? { size: size ?? undefined, color: color ?? undefined } : undefined };
 }
 
+// A key lineKey() made: saved carts come back from the browser's storage.
+export function isLineKey(key: string): boolean {
+  try {
+    const parts: unknown = JSON.parse(key);
+    return (
+      Array.isArray(parts) &&
+      parts.length === 3 &&
+      typeof parts[0] === "string" &&
+      parts.slice(1).every((part) => part === null || typeof part === "string")
+    );
+  } catch {
+    return false;
+  }
+}
+
+// Sold out, or a size or colour the shop no longer lists: a saved cart can
+// be older than the shelf.
+function canOrder(product: Product, variant: Variant = {}): boolean {
+  const offered = (options: string[] | undefined, picked: string | undefined) =>
+    options?.length ? picked !== undefined && options.includes(picked) : picked === undefined;
+  return product.inStock && offered(product.sizes, variant.size) && offered(product.colors, variant.color);
+}
+
 // The cart's lines in shelf order (products come sorted), then in the order added.
 export function cartLines(
   products: readonly Product[],
@@ -33,7 +56,7 @@ export function cartLines(
     .flatMap(([key, quantity]) => {
       const { productId, variant } = parseLineKey(key);
       const index = position.get(productId);
-      return index === undefined || quantity <= 0
+      return index === undefined || quantity <= 0 || !canOrder(products[index], variant)
         ? []
         : [{ key, product: products[index], quantity, variant, note: notes[key], index }];
     })
