@@ -2,7 +2,7 @@
 
 import { TriangleAlert } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { EmptyState } from "@/components/ui";
 import type { Store } from "@/domain/store";
 import type { ProductChange } from "@/domain/updates";
@@ -14,11 +14,15 @@ import { requestUpdates } from "./api";
 import { toListedProducts, toWrites } from "./changes";
 import { ChatRoom, type Ask } from "./ChatRoom";
 
+const noSubscribe = () => () => {};
+
 // The shop assistant's page: ask about the products, or say what changed.
 export function AssistantRoom() {
   const user = useSignedInUser();
   const store = useMyStore(user.uid);
   const router = useRouter();
+  // The chat is read from this device's storage, so the room only renders in the browser.
+  const mounted = useSyncExternalStore(noSubscribe, () => true, () => false);
 
   useEffect(() => {
     if (store.status === "ready" && !store.data) router.replace("/dashboard");
@@ -27,7 +31,7 @@ export function AssistantRoom() {
   if (store.status === "error") {
     return <EmptyState tone="berry" icon={<TriangleAlert />} title="Couldn't load your store" description={store.error?.message} />;
   }
-  if (!store.data) return <DashboardSkeleton />;
+  if (!store.data || !mounted) return <DashboardSkeleton />;
   return <Room key={store.data.slug} store={store.data} />;
 }
 

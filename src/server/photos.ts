@@ -2,6 +2,7 @@ import "server-only";
 import { createPartFromBase64, type Part } from "@google/genai";
 import { serverEnv } from "./env";
 import { gemini } from "./gemini";
+import { addUsage, logUsage, NO_USAGE } from "./usage";
 
 // "AI photo": one Gemini image call that both checks and fixes. The frame was
 // grabbed where the Watcher said the product was, which can be off by a
@@ -26,11 +27,13 @@ export async function makeProductPhoto(input: { name: string; frame: Blob | null
   let lastError: unknown;
   for (const model of models) {
     try {
+      const started = performance.now();
       const response = await gemini().models.generateContent({
         model,
         contents: [{ role: "user", parts }],
         config: { responseModalities: ["TEXT", "IMAGE"], imageConfig: { aspectRatio: "1:1" } },
       });
+      logUsage("photo", model, addUsage(NO_USAGE, response.usageMetadata), performance.now() - started);
       const image = response.candidates?.[0]?.content?.parts?.find((part) => part.inlineData?.data)?.inlineData;
       if (!image?.data) throw new Error("Gemini returned no image");
       return { bytes: Buffer.from(image.data, "base64"), mimeType: image.mimeType ?? "image/png" };

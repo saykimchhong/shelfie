@@ -2,7 +2,7 @@
 
 import clsx from "clsx";
 import { ArrowLeft, Mic, RotateCcw, SendHorizontal, Square } from "lucide-react";
-import { useEffect, useRef, useState, useSyncExternalStore, type FormEvent, type KeyboardEvent } from "react";
+import { Fragment, useEffect, useRef, useState, useSyncExternalStore, type FormEvent, type KeyboardEvent } from "react";
 import { Button, ButtonLink, Text } from "@/components/ui";
 import type { Product } from "@/domain/product";
 import type { Store } from "@/domain/store";
@@ -15,10 +15,12 @@ import {
 } from "@/domain/updates";
 import { ChangeCard } from "./ChangeCard";
 import {
+  dayLabel,
   describeChanges,
   keptChanges,
   loadChat,
   saveChat,
+  startsNewDay,
   toHistory,
   waitingChanges,
   withFailure,
@@ -88,7 +90,9 @@ export function ChatRoom({ store, products, ready, ask, onSave }: Props) {
     const replyId = newId();
     const before = messages;
     const mine: ChatMessage =
-      "text" in message ? { id: ownerId, role: "owner", text: message.text } : { id: ownerId, role: "owner", text: "", voice: true };
+      "text" in message
+        ? { id: ownerId, role: "owner", text: message.text, at: Date.now() }
+        : { id: ownerId, role: "owner", text: "", at: Date.now(), voice: true };
     setMessages([...before, mine]);
     setPhase("reading");
     try {
@@ -211,35 +215,47 @@ export function ChatRoom({ store, products, ready, ask, onSave }: Props) {
           ) : null}
         </li>
 
-        {messages.map((message) => {
+        {messages.map((message, index) => {
+          const day =
+            message.at !== undefined && startsNewDay(message, messages[index - 1]) ? (
+              <li className={styles.day} aria-hidden>
+                <span>{dayLabel(message.at)}</span>
+              </li>
+            ) : null;
           if (message.role === "owner") {
             return (
-              <li key={message.id} className={clsx(styles.turn, styles.mine)}>
-                <div className={styles.bubble}>
-                  {message.voice ? <Mic aria-label="Voice note" className={styles.voice} /> : null}
-                  {message.text || (message.voice ? "Voice note" : "")}
-                </div>
-                {message.failed ? <span className={styles.failed}>Not sent</span> : null}
-              </li>
+              <Fragment key={message.id}>
+                {day}
+                <li className={clsx(styles.turn, styles.mine)}>
+                  <div className={styles.bubble}>
+                    {message.voice ? <Mic aria-label="Voice note" className={styles.voice} /> : null}
+                    {message.text || (message.voice ? "Voice note" : "")}
+                  </div>
+                  {message.failed ? <span className={styles.failed}>Not sent</span> : null}
+                </li>
+              </Fragment>
             );
           }
           const { id, proposal } = message;
           return (
-            <li key={id} className={clsx(styles.turn, styles.theirs, proposal?.state === "waiting" && styles.wide)}>
-              {message.text ? <div className={clsx(styles.bubble, message.error && styles.error)}>{message.text}</div> : null}
-              {proposal ? (
-                <ChangeCard
-                  proposal={proposal}
-                  products={byId}
-                  currency={store.currency}
-                  shopUnit={store.priceUnit}
-                  busy={phase !== "idle"}
-                  onToggle={(index) => toggle(id, index)}
-                  onSave={() => save(id, proposal)}
-                  onDrop={() => drop(id, proposal)}
-                />
-              ) : null}
-            </li>
+            <Fragment key={id}>
+              {day}
+              <li className={clsx(styles.turn, styles.theirs, proposal?.state === "waiting" && styles.wide)}>
+                {message.text ? <div className={clsx(styles.bubble, message.error && styles.error)}>{message.text}</div> : null}
+                {proposal ? (
+                  <ChangeCard
+                    proposal={proposal}
+                    products={byId}
+                    currency={store.currency}
+                    shopUnit={store.priceUnit}
+                    busy={phase !== "idle"}
+                    onToggle={(index) => toggle(id, index)}
+                    onSave={() => save(id, proposal)}
+                    onDrop={() => drop(id, proposal)}
+                  />
+                ) : null}
+              </li>
+            </Fragment>
           );
         })}
 

@@ -90,7 +90,8 @@ Reading a shelf video is a [Google ADK](https://github.com/google/adk-js) workfl
 
 - `POST /api/extract` takes `source` = `video`, `photos` (`photo` × 1–10, shrunk to about 1600 px on the phone) or `text`. It streams each step's progress (`AgentEvent` in `src/domain/agents.ts`), then the result, for the activity feed.
 - `POST /api/updates` runs the Update reader (`src/domain/updates.ts`). The phone records voice as 16 kHz WAV, so every browser sends the same format. The seller ticks which changes to keep, and the browser saves them.
-- The chat's memory lives in the browser tab (`src/features/updates/chat.ts`, `sessionStorage`), not on the server. Each message carries the last 12 turns and the changes not saved yet; the server merges this message into them (`toChanges`) and sends back the full waiting list. Closing the tab or "New chat" forgets it. The product list is the long-term memory.
+- The chat's memory lives on the seller's device (`src/features/updates/chat.ts`, `localStorage`, kept for 30 days after the last message), not on the server. Each message carries the last 12 turns and the changes not saved yet; the server merges this message into them (`toChanges`) and sends back the full waiting list. "New chat" forgets it. The product list is the long-term memory.
+- Every AI call logs one `ai usage` JSON line (`src/server/usage.ts`): the workflow or model name, calls, prompt, output, thought and cached tokens, and time. Filter the App Hosting logs by `"ai usage"` to add up a day's tokens; multiply by the model's price per token for the cost.
 - `POST /api/photos/find` runs the Photo finder (`src/domain/photos.ts`); the phone crops the picked frame from the original video.
 - Agents only propose. Nothing is saved until the seller confirms, and no step invents a price.
 - Shared helpers: `src/server/gemini.ts` (client, video upload) and `src/server/adk.ts` (ADK model, `runWorkflow`).

@@ -27,6 +27,8 @@ const messageSchema = z.discriminatedUnion("role", [
     id: z.string(),
     role: z.literal("owner"),
     text: z.string(),
+    // When it was sent (ms), for the day lines in a chat that spans days.
+    at: z.number().optional(),
     voice: z.boolean().optional(),
     failed: z.boolean().optional(),
   }),
@@ -34,6 +36,7 @@ const messageSchema = z.discriminatedUnion("role", [
     id: z.string(),
     role: z.literal("assistant"),
     text: z.string(),
+    at: z.number().optional(),
     error: z.boolean().optional(),
     proposal: proposalSchema.optional(),
   }),
@@ -43,6 +46,8 @@ export type ChatMessage = z.infer<typeof messageSchema>;
 export type AssistantMessage = Extract<ChatMessage, { role: "assistant" }>;
 
 const MAX_KEPT_MESSAGES = 60;
+// A chat nobody has written in for this long is forgotten.
+export const KEEP_CHAT_MS = 30 * 24 * 60 * 60 * 1000;
 
 export const keptChanges = (proposal: Proposal): ProductChange[] =>
   proposal.changes.filter((_, index) => !proposal.skipped.includes(index));
@@ -64,6 +69,7 @@ export function withReply(
   ownerId: string,
   replyId: string,
   response: Pick<UpdatesResponse, "heard" | "reply" | "changes">,
+  at = Date.now(),
 ): ChatMessage[] {
   const earlier = messages.map((message): ChatMessage => {
     if (message.role === "owner") return message.id === ownerId && response.heard ? { ...message, text: response.heard } : message;
@@ -71,14 +77,20 @@ export function withReply(
   });
   const proposal: Proposal | undefined =
     response.changes.length > 0 ? { changes: response.changes, skipped: [], state: "waiting" } : undefined;
-  return [...earlier, { id: replyId, role: "assistant", text: response.reply, proposal }];
+  return [...earlier, { id: replyId, role: "assistant", text: response.reply, at, proposal }];
 }
 
 // The message didn't go through. Waiting changes stay where they are.
-export function withFailure(messages: readonly ChatMessage[], ownerId: string, replyId: string, text: string): ChatMessage[] {
+export function withFailure(
+  messages: readonly ChatMessage[],
+  ownerId: string,
+  replyId: string,
+  text: string,
+  at = Date.now(),
+): ChatMessage[] {
   return [
     ...messages.map((message) => (message.id === ownerId ? { ...message, failed: true } : message)),
-    { id: replyId, role: "assistant", text, error: true },
+    { id: replyId, role: "assistant", text, at, error: true },
   ];
 }
 
@@ -127,21 +139,26 @@ export function toHistory(messages: readonly ChatMessage[]): ChatTurn[] {
 
 export const chatStorageKey = (slug: string) => `shelfie:assistant:${slug}`;
 
-export const encodeChat = (messages: readonly ChatMessage[]): string => JSON.stringify(messages.slice(-MAX_KEPT_MESSAGES));
+const savedChatSchema = z.object({ savedAt: z.number(), messages: z.array(messageSchema) });
 
-export function decodeChat(raw: string | null): ChatMessage[] {
+export const encodeChat = (messages: readonly ChatMessage[], now = Date.now()): string =>
+  JSON.stringify({ savedAt: now, messages: messages.slice(-MAX_KEPT_MESSAGES) });
+
+// The saved chat, unless it's missing, broken or too old.
+export function decodeChat(raw: string | null, now = Date.now()): ChatMessage[] {
   if (!raw) return [];
   try {
-    return z.array(messageSchema).safeParse(JSON.parse(raw)).data ?? [];
+    const saved = savedChatSchema.safeParse(JSON.parse(raw)).data;
+    return saved && now - saved.savedAt < KEEP_CHAT_MS ? saved.messages : [];
   } catch {
     return [];
   }
 }
 
-// Kept for this browser tab only, so going back to the product list doesn't lose the chat.
+// Kept on this device for a month, so the seller can come back to the chat.
 export function loadChat(slug: string): ChatMessage[] {
   try {
-    return decodeChat(sessionStorage.getItem(chatStorageKey(slug)));
+    return decodeChat(localStorage.getItem(chatStorageKey(slug)));
   } catch {
     return [];
   }
@@ -149,9 +166,23 @@ export function loadChat(slug: string): ChatMessage[] {
 
 export function saveChat(slug: string, messages: readonly ChatMessage[]): void {
   try {
-    if (messages.length === 0) sessionStorage.removeItem(chatStorageKey(slug));
-    else sessionStorage.setItem(chatStorageKey(slug), encodeChat(messages));
+    if (messages.length === 0) localStorage.removeItem(chatStorageKey(slug));
+    else localStorage.setItem(chatStorageKey(slug), encodeChat(messages));
   } catch {
     // Private mode or full storage: the chat just isn't kept.
   }
+}
+
+// "Today", "Yesterday" or the date, for the line between two days of chat.
+export function dayLabel(at: number, now = Date.now(), locale?: string): string {
+  const day = (ms: number) => new Date(ms).toDateString();
+  if (day(at) === day(now)) return "Today";
+  if (day(at) === day(now - 24 * 60 * 60 * 1000)) return "Yesterday";
+  return new Date(at).toLocaleDateString(locale, { day: "numeric", month: "short" });
+}
+
+// True when this message starts a new day in the chat.
+export function startsNewDay(message: ChatMessage, previous: ChatMessage | undefined): boolean {
+  if (message.at === undefined) return false;
+  return previous?.at === undefined || new Date(previous.at).toDateString() !== new Date(message.at).toDateString();
 }
