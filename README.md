@@ -1,8 +1,22 @@
 # Shelfie
 
-**Film your shelf. Get a store.** A small seller records one walk-through video of their shop, saying prices out loud (or snaps a few photos, or types a list). Gemini turns it into a product list with prices and Khmer/Sinhala/Tamil/Thai labels. The seller checks it, and gets a shareable store at `shelfie.app/<shop>`. Customers order through WhatsApp or LINE. Shelfie never handles payments.
+**Film your shelf. Get a store.** A small seller records one walk-through video of their shop, saying prices out loud (or snaps a few photos, or types a list). Gemini turns it into a product list with prices and Khmer/Sinhala/Tamil/Thai labels. The seller checks it, and gets a shareable store link, `/<shop>` on the Shelfie site. Customers order through WhatsApp or LINE. Shelfie never handles payments.
 
 **Who it's for:** small shops in Sri Lanka, Thailand and Cambodia that already sell through WhatsApp, Facebook, Instagram or LINE. Their pain is posting products one by one and answering "price?" and "do you have this?" all day. Shelfie gives them a catalog link to share anywhere. Orders arrive as a pre-filled WhatsApp/LINE message (with pickup or delivery), and the seller takes payment the way they already do, e.g. their own PromptPay or LankaQR code shown in the cart.
+
+## Google Cloud AI Builder Cup 2026
+
+Built by team **Double Shot, No Sugar**, one of the Top 50 finalists.
+
+- **Live app:** https://shelfie--project08-empty.asia-southeast1.hosted.app
+- **What we submitted:** the tag [`submission-2026-10-18`](https://github.com/saykimchhong/shelfie/tree/submission-2026-10-18) (commit `74a24d3`, pushed 18 Oct 2026, 18:02 UTC). Nothing else was pushed until 10 Nov.
+- **Since then (finalist and mentor phase):** releases v0.2.0 to v0.4.0 on `main` ([every change since the submission](https://github.com/saykimchhong/shelfie/compare/submission-2026-10-18...main)):
+  - Products from photos or a typed list, not only video, plus a Photo finder agent that picks each product's photo frame.
+  - Shop types (shop, food, grocery, fashion, market, bakery) with their own templates, samples and wording, opening hours, sizes and colours, search, and half-kilo steps.
+  - A fixed background colour per store, and the storefront in the customer's language (English, Khmer, Sinhala, Tamil, Thai).
+  - A cart that survives a refresh, link-preview pictures, a printable QR poster, and the AI picking each product's unit and converting prices when the currency changes.
+  - A shop assistant chat: the seller asks about their products or says what changed, and the assistant remembers the conversation. Nothing is saved until the seller taps Save.
+  - One `ai usage` log line per AI call, to measure token use and cost.
 
 ## Architecture
 
