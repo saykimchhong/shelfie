@@ -54,6 +54,7 @@ describe("POST /api/updates", () => {
     expect(await response.json()).toEqual({
       provider: "mock",
       heard: null,
+      reply: "Check these changes, then tap Save.",
       changes: [
         { kind: "update", id: "milo", edit: { price: 99 } },
         { kind: "update", id: "rice", edit: { inStock: false } },
@@ -61,17 +62,33 @@ describe("POST /api/updates", () => {
     });
   });
 
+  it("answers a question and keeps the changes that are still waiting", async () => {
+    const waiting = [{ kind: "update", id: "milo", edit: { price: 99 } }];
+    const response = await POST(request({ text: "what is sold out?", waiting: JSON.stringify(waiting) }));
+
+    expect(await response.json()).toEqual({ provider: "mock", heard: null, reply: "Nothing is sold out.", changes: waiting });
+  });
+
+  it("corrects a waiting change from a follow-up message", async () => {
+    const waiting = [{ kind: "update", id: "milo", edit: { price: 99 } }];
+    const response = await POST(request({ text: "milo 97", waiting: JSON.stringify(waiting) }));
+
+    expect((await response.json()).changes).toEqual([{ kind: "update", id: "milo", edit: { price: 97 } }]);
+  });
+
   it("sends a voice note to the real AI with the shop's settings", async () => {
     server.provider = "gemini";
-    server.readUpdate.mockResolvedValue({ heard: "milo is ninety nine", changes: [] });
+    server.readUpdate.mockResolvedValue({ heard: "milo is ninety nine", reply: "", changes: [] });
+    const history = [{ role: "owner", text: "hello" }];
 
-    const response = await POST(request({ audio: voice() }));
+    const response = await POST(request({ audio: voice(), history: JSON.stringify(history) }));
 
-    expect(await response.json()).toEqual({ provider: "gemini", heard: "milo is ninety nine", changes: [] });
-    const [message, sentProducts, settings] = server.readUpdate.mock.calls[0];
+    expect(await response.json()).toMatchObject({ provider: "gemini", heard: "milo is ninety nine", changes: [] });
+    const [message, sentProducts, settings, memory] = server.readUpdate.mock.calls[0];
     expect(await message.audio.text()).toBe("RIFF");
     expect(sentProducts).toEqual(products);
     expect(settings).toEqual({ currency: "THB", labelLanguage: "th" });
+    expect(memory).toMatchObject({ history, waiting: [] });
   });
 
   it("asks for typing when voice can't be read in mock mode", async () => {
@@ -92,6 +109,8 @@ describe("POST /api/updates", () => {
     ["a file that isn't audio", { audio: new File(["x"], "a.png", { type: "image/png" }) }],
     ["products that aren't JSON", { text: "Milo 99", products: "nope" }],
     ["an unknown currency", { text: "Milo 99", currency: "EUR" }],
+    ["a chat that is too long", { text: "Milo 99", history: JSON.stringify(Array(13).fill({ role: "owner", text: "hi" })) }],
+    ["waiting changes that aren't changes", { text: "Milo 99", waiting: '[{"kind":"paint"}]' }],
   ])("rejects %s", async (_, fields) => {
     expect((await POST(request(fields))).status).toBe(400);
   });

@@ -29,6 +29,56 @@
   font-size: var(--text-lg);
 }
 
+// The way into the assistant's chat: one big row, like the button above it.
+.assistant {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-xl);
+  background: var(--bg-raised);
+  @include elevation(1);
+  @include pressable;
+  @include lift(-1px, 2);
+}
+
+.assistantIcon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent);
+
+  svg {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+.assistantText {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+
+  span {
+    color: var(--fg-muted);
+    font-size: var(--text-sm);
+  }
+}
+
+.assistantArrow {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  color: var(--fg-subtle);
+}
+
 .listHeader {
   padding: var(--space-2) var(--space-3) var(--space-3);
 }

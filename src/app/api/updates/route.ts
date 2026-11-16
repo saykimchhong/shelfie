@@ -1,12 +1,19 @@
+import type { ZodType } from "zod";
 import { shopTypeSchema } from "@/domain/shop";
 import { currencySchema, labelLanguageSchema } from "@/domain/store";
-import { listedProductsSchema, MAX_UPDATE_AUDIO_BYTES, MAX_UPDATE_TEXT, type ListedProduct } from "@/domain/updates";
+import {
+  chatHistorySchema,
+  listedProductsSchema,
+  MAX_UPDATE_AUDIO_BYTES,
+  MAX_UPDATE_TEXT,
+  waitingChangesSchema,
+} from "@/domain/updates";
 import { AuthError, requireUser } from "@/server/auth";
 import { readUpdates, VoiceNeedsAiError, type UpdateInput } from "@/server/updates";
 
-// POST multipart: text or audio (WAV), products (JSON ListedProduct[]),
-// currency, labelLanguage → UpdatesResponse. Nothing is saved here: the
-// seller confirms the changes and the browser writes them.
+// POST multipart: text or audio (WAV), products (JSON ListedProduct[]), currency,
+// labelLanguage, and the chat so far (history, waiting) → UpdatesResponse.
+// Nothing is saved or remembered here: the browser keeps the chat and writes the changes.
 
 export const maxDuration = 60;
 
@@ -29,12 +36,15 @@ export async function POST(request: Request) {
     return problem(400, "`audio` must be a short voice note");
   }
 
-  const products = parseProducts(form?.get("products"));
+  const products = parseJson(listedProductsSchema, form?.get("products"));
+  const history = parseJson(chatHistorySchema, form?.get("history") ?? "[]");
+  const waiting = parseJson(waitingChangesSchema, form?.get("waiting") ?? "[]");
   const currency = currencySchema.safeParse(form?.get("currency"));
   const labelLanguage = labelLanguageSchema.safeParse(form?.get("labelLanguage"));
   if (!products || !currency.success || !labelLanguage.success) {
     return problem(400, "Send `products`, `currency` and `labelLanguage`");
   }
+  if (!history || !waiting) return problem(400, "`history` and `waiting` aren't readable");
 
   const input: UpdateInput = {
     message: hasAudio ? { audio } : { text },
@@ -42,6 +52,8 @@ export async function POST(request: Request) {
     currency: currency.data,
     labelLanguage: labelLanguage.data,
     shopType: shopTypeSchema.safeParse(form?.get("shopType")).data,
+    history,
+    waiting,
   };
   try {
     const result = await readUpdates(input);
@@ -51,6 +63,7 @@ export async function POST(request: Request) {
         provider: result.provider,
         voice: hasAudio,
         products: products.length,
+        turns: history.length,
         changes: result.changes.length,
         totalMs: Math.round(performance.now() - started),
       }),
@@ -63,11 +76,10 @@ export async function POST(request: Request) {
   }
 }
 
-function parseProducts(value: FormDataEntryValue | null | undefined): ListedProduct[] | null {
+function parseJson<T>(schema: ZodType<T>, value: FormDataEntryValue | null | undefined): T | null {
   if (typeof value !== "string") return null;
   try {
-    const parsed = listedProductsSchema.safeParse(JSON.parse(value));
-    return parsed.success ? parsed.data : null;
+    return schema.safeParse(JSON.parse(value)).data ?? null;
   } catch {
     return null;
   }

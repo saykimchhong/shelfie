@@ -2,14 +2,16 @@ import "server-only";
 import type { ListedProduct } from "@/domain/updates";
 import type { ReaderOutput } from "./reader";
 
-// Mock mode: a few English patterns, enough to demo "Tell AI" without Gemini.
-// "Milo 30", "Coke sold out", "rice back in stock", "remove soap", "add eggs 4 each".
+// Mock mode: a few English patterns, enough to demo the assistant without Gemini.
+// "Milo 30", "Coke sold out", "remove soap", "add eggs 4 each", "what is sold out?".
 
 const SOLD_OUT = /\b(sold out|out of stock|none left|no more|finished|ran out)\b/;
 const BACK = /\b(back|in stock|restocked|available)\b/;
 const REMOVE = /\b(remove|delete|stop selling|no longer sell)\b/;
 const ADD = /\b(add|new)\b/;
 const PRICE = /(\d+(?:\.\d+)?)/;
+const QUESTION = /\?\s*$|^(what|which|how many|how much|list|show)\b/;
+const NO_PRICE = /\b(no price|without a price|missing price)\b/;
 const UNITS = [
   ["kg", /\b(kg|kilo|per kilo)\b/],
   ["bunch", /\bbunch\b/],
@@ -33,8 +35,30 @@ function findProduct(clause: string, products: readonly ListedProduct[]): number
 }
 
 const titleCase = (text: string) => text.replace(/\b\p{L}/gu, (letter) => letter.toLocaleUpperCase());
+const names = (products: readonly ListedProduct[]) => products.map((product) => product.name).join("\n");
+
+// A plain answer to a question about the list, or null when it isn't one.
+function answer(question: string, products: readonly ListedProduct[]): string | null {
+  if (!QUESTION.test(question)) return null;
+  if (SOLD_OUT.test(question)) {
+    const soldOut = products.filter((product) => !product.inStock);
+    return soldOut.length > 0 ? `Sold out:\n${names(soldOut)}` : "Nothing is sold out.";
+  }
+  if (NO_PRICE.test(question)) {
+    const unpriced = products.filter((product) => product.price === null);
+    return unpriced.length > 0 ? `No price yet:\n${names(unpriced)}` : "Every product has a price.";
+  }
+  if (/\bhow many\b/.test(question)) return `You have ${products.length} products.`;
+  const product = products[findProduct(question, products)];
+  if (!product) return "I can tell you what is sold out, what has no price, or a product's price.";
+  const price = product.price === null ? "no price" : `${product.price} ${product.unit === "each" ? "each" : `per ${product.unit}`}`;
+  return `${product.name}: ${price}, ${product.inStock ? "in stock" : "sold out"}.`;
+}
 
 export function mockRead(text: string, products: readonly ListedProduct[]): ReaderOutput {
+  const reply = answer(text.trim().toLocaleLowerCase(), products);
+  if (reply) return { heard: null, reply, changes: [] };
+
   const changes: ReaderOutput["changes"] = [];
   for (const clause of text.split(/[,;\n]+|\band\b|\.\s+/i)) {
     const lower = clause.trim().toLocaleLowerCase();
@@ -57,5 +81,5 @@ export function mockRead(text: string, products: readonly ListedProduct[]): Read
       if (name) changes.push({ ...base, action: "add", name, price, unit });
     }
   }
-  return { heard: null, changes };
+  return { heard: null, reply: "", changes };
 }

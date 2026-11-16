@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { ListedProduct } from "@/domain/updates";
+import type { ListedProduct, ProductChange } from "@/domain/updates";
 import { toChanges, type ReaderOutput } from "./reader";
 
 const products: ListedProduct[] = [
@@ -12,7 +12,8 @@ type Change = ReaderOutput["changes"][number];
 const none = { product: null, name: null, localName: null, price: null, unit: null, inStock: null };
 const update = (product: number, fields: Partial<Change>): Change => ({ ...none, action: "update", product, ...fields });
 const add = (name: string, fields: Partial<Change> = {}): Change => ({ ...none, action: "add", name, ...fields });
-const read = (...changes: Change[]) => toChanges({ heard: null, changes }, products);
+const cancel = (fields: Partial<Change>): Change => ({ ...none, action: "cancel", ...fields });
+const read = (...changes: Change[]) => toChanges({ changes }, products);
 
 describe("toChanges", () => {
   it("keeps only what actually changes", () => {
@@ -56,5 +57,58 @@ describe("toChanges", () => {
     expect(read(update(1, { price: -5 }), add("Soap", { price: Number.NaN }))).toEqual([
       { kind: "add", product: { name: "Soap", localName: null, price: null, unit: null } },
     ]);
+  });
+
+  it("goes back to the current value when a later mention undoes an earlier one", () => {
+    expect(read(update(1, { price: 25, inStock: false }), update(1, { price: 20 }))).toEqual([
+      { kind: "update", id: "coke", edit: { inStock: false } },
+    ]);
+  });
+});
+
+describe("toChanges with waiting changes", () => {
+  const waiting: ProductChange[] = [
+    { kind: "update", id: "coke", edit: { price: 25 } },
+    { kind: "add", product: { name: "Eggs", localName: null, price: 4, unit: "each" } },
+    { kind: "remove", id: "milo" },
+  ];
+  const next = (...changes: Change[]) => toChanges({ changes }, products, waiting);
+
+  it("keeps them when the message is about something else", () => {
+    expect(next()).toEqual(waiting);
+    expect(next(update(3, { inStock: true }))).toEqual([
+      waiting[0],
+      { kind: "update", id: "rice", edit: { inStock: true } },
+      waiting[1],
+      waiting[2],
+    ]);
+  });
+
+  it("corrects a waiting change", () => {
+    expect(next(update(1, { price: 30 }), add("eggs", { price: 5 }))).toEqual([
+      { kind: "update", id: "coke", edit: { price: 30 } },
+      { kind: "add", product: { name: "Eggs", localName: null, price: 5, unit: "each" } },
+      waiting[2],
+    ]);
+  });
+
+  it("drops a waiting change that goes back to the current value", () => {
+    expect(next(update(1, { price: 20 }))).toEqual([waiting[1], waiting[2]]);
+  });
+
+  it("cancels by product number or by a new product's name", () => {
+    expect(next(cancel({ product: 1 }), cancel({ name: "eggs" }), cancel({ product: 2 }))).toEqual([]);
+  });
+
+  it("takes back a waiting removal when the product is updated instead", () => {
+    expect(next(update(2, { price: 99 }))).toEqual([
+      waiting[0],
+      { kind: "update", id: "milo", edit: { price: 99 } },
+      waiting[1],
+    ]);
+  });
+
+  it("forgets waiting changes to products that are gone", () => {
+    expect(toChanges({ changes: [] }, products, [{ kind: "update", id: "gone", edit: { price: 1 } }])).toEqual([]);
   });
 });

@@ -1,1 +1,1 @@
-export { QuickUpdate } from "./QuickUpdate";
+export { AssistantRoom } from "./Assistant";

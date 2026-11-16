@@ -1,6 +1,7 @@
 "use client";
 
-import { ExternalLink, ListX, PackagePlus, Palette, Plus, Trash2 } from "lucide-react";
+import { ChevronRight, ExternalLink, ListX, MessageCircle, PackagePlus, Palette, Plus, Trash2 } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import { Reveal, Stagger } from "@/components/motion/Reveal";
 import {
@@ -20,7 +21,6 @@ import { unitOf, type Product } from "@/domain/product";
 import { shelvesOf } from "@/domain/shelf";
 import type { Store } from "@/domain/store";
 import { removeImage } from "@/features/media";
-import { QuickUpdate } from "@/features/updates";
 import { pluralize } from "@/lib/format";
 import { storeUrl, storeUrlLabel } from "@/lib/site";
 import { deleteAllProducts, updateProduct, updateStore, useProducts, useRefreshStorefront } from "./data";
@@ -118,11 +118,18 @@ export function StoreOverview({ store }: { store: Store }) {
         </ButtonLink>
       </Reveal>
 
-      {products.status === "ready" ? (
-        <Reveal delay={0.12}>
-          <QuickUpdate store={store} products={products.data} />
-        </Reveal>
-      ) : null}
+      <Reveal delay={0.12}>
+        <Link href="/dashboard/assistant" className={styles.assistant}>
+          <span className={styles.assistantIcon}>
+            <MessageCircle aria-hidden />
+          </span>
+          <span className={styles.assistantText}>
+            <strong>Chat with your assistant</strong>
+            <span>Say what changed, or ask about your products</span>
+          </span>
+          <ChevronRight aria-hidden className={styles.assistantArrow} />
+        </Link>
+      </Reveal>
 
       <Reveal delay={0.16}>
         <Surface padding="sm" radius="xl">

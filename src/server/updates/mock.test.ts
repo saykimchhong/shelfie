@@ -32,4 +32,11 @@ describe("mock update reader", () => {
   it("finds nothing in small talk", () => {
     expect(changes("hello there")).toEqual([]);
   });
+
+  it("answers questions about the list without changing anything", () => {
+    expect(mockRead("What is sold out?", products)).toEqual({ heard: null, reply: "Sold out:\nJasmine Rice", changes: [] });
+    expect(mockRead("how much is the milo?", products).reply).toBe("Milo 400g: 95 each, in stock.");
+    expect(mockRead("How many products do I have?", products).reply).toBe("You have 4 products.");
+    expect(mockRead("which products have no price", products).reply).toBe("Every product has a price.");
+  });
 });

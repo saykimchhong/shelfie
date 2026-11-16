@@ -1,6 +1,12 @@
 import type { ShopType } from "@/domain/shop";
 import type { Currency, LabelLanguage } from "@/domain/store";
-import { updatesResponseSchema, type ListedProduct, type UpdatesResponse } from "@/domain/updates";
+import {
+  updatesResponseSchema,
+  type ChatTurn,
+  type ListedProduct,
+  type ProductChange,
+  type UpdatesResponse,
+} from "@/domain/updates";
 
 export type UpdateRequest = {
   message: { text: string } | { audio: Blob };
@@ -8,6 +14,9 @@ export type UpdateRequest = {
   currency: Currency;
   labelLanguage: LabelLanguage;
   shopType?: ShopType;
+  // The chat so far: earlier turns, and changes not saved yet.
+  history?: ChatTurn[];
+  waiting?: ProductChange[];
   idToken: string;
   signal?: AbortSignal;
 };
@@ -18,6 +27,8 @@ export async function requestUpdates({
   currency,
   labelLanguage,
   shopType,
+  history = [],
+  waiting = [],
   idToken,
   signal,
 }: UpdateRequest): Promise<UpdatesResponse> {
@@ -28,6 +39,8 @@ export async function requestUpdates({
   body.append("currency", currency);
   body.append("labelLanguage", labelLanguage);
   if (shopType) body.append("shopType", shopType);
+  body.append("history", JSON.stringify(history));
+  body.append("waiting", JSON.stringify(waiting));
 
   const response = await fetch("/api/updates", {
     method: "POST",

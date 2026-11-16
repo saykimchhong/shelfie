@@ -39,3 +39,8 @@
     padding-block: var(--space-8) var(--space-20);
   }
 }
+
+// A page that fills the screen (the assistant's chat) ends at the bottom edge.
+.main:has([data-fills-screen]) {
+  padding-bottom: 0;
+}

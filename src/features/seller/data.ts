@@ -197,7 +197,7 @@ async function commitInBatches(writes: Write[]): Promise<void> {
 
 export type ProductUpdate = { id: string; patch: Partial<ProductInput> };
 
-// Everything one shelf video (or one "Tell AI" message) changes, saved
+// Everything one shelf video (or one assistant chat) changes, saved
 // together: new products after the existing ones (positions from
 // startPosition, in order), updates to known ones, and removed ones.
 export async function saveProductChanges(

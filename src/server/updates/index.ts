@@ -1,11 +1,11 @@
 import "server-only";
-import type { ListedProduct, UpdatesResponse } from "@/domain/updates";
+import type { ListedProduct, ProductChange, UpdatesResponse } from "@/domain/updates";
 import { geminiThinkingLevel } from "../adk";
 import { extractionProvider } from "../extraction";
 import { mockRead } from "./mock";
-import { readUpdate, toChanges, type ShopSettings, type UpdateMessage } from "./reader";
+import { readUpdate, toChanges, type ChatMemory, type ShopSettings, type UpdateMessage } from "./reader";
 
-export type UpdateInput = ShopSettings & { message: UpdateMessage; products: ListedProduct[] };
+export type UpdateInput = ShopSettings & ChatMemory & { message: UpdateMessage; products: ListedProduct[] };
 
 export class VoiceNeedsAiError extends Error {
   constructor() {
@@ -13,12 +13,24 @@ export class VoiceNeedsAiError extends Error {
   }
 }
 
-export async function readUpdates({ message, products, ...settings }: UpdateInput): Promise<UpdatesResponse> {
+// Used when the AI sends no words back.
+const fallbackReply = (changes: readonly ProductChange[]) =>
+  changes.length > 0
+    ? "Check these changes, then tap Save."
+    : "I didn't find anything to change. Name the product and what changed, or ask me about your products.";
+
+export async function readUpdates({ message, products, history, waiting, ...settings }: UpdateInput): Promise<UpdatesResponse> {
   const provider = extractionProvider();
   if (provider === "mock") {
     if (!("text" in message)) throw new VoiceNeedsAiError();
-    return { provider, heard: null, changes: toChanges(mockRead(message.text, products), products) };
+    const output = mockRead(message.text, products);
+    const changes = toChanges(output, products, waiting);
+    return { provider, heard: null, reply: output.reply || fallbackReply(changes), changes };
   }
-  const { heard, changes } = await readUpdate(message, products, settings, { thinkingLevel: geminiThinkingLevel() });
-  return { provider, heard, changes };
+  const { heard, reply, changes } = await readUpdate(message, products, settings, {
+    thinkingLevel: geminiThinkingLevel(),
+    history,
+    waiting,
+  });
+  return { provider, heard, reply: reply || fallbackReply(changes), changes };
 }
