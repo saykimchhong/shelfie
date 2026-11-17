@@ -108,6 +108,33 @@ p {
   }
 }
 
+// Moving between seller pages (<ViewTransition update="page">): the old page
+// fades out fast, the new one fades in while its own entrance plays. Opacity
+// only, so it stays as it is for reduced motion.
+::view-transition-group(.page) {
+  animation-duration: 0s;
+}
+
+::view-transition-old(.page) {
+  animation: page-out var(--dur-fast) var(--ease-out) both;
+}
+
+::view-transition-new(.page) {
+  animation: page-in var(--dur-base) var(--ease-out) both;
+}
+
+@keyframes page-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes page-in {
+  from {
+    opacity: 0;
+  }
+}
+
 // Printing a sheet (the shop's QR code): only the element marked data-print
 // reaches the paper.
 [data-print] {

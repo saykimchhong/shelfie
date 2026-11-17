@@ -3,19 +3,17 @@
 .list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--space-1);
   padding: 0;
   list-style: none;
 }
 
+// Rows sit on the page; the price field is the one fill in each.
 .row {
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  padding: var(--space-2) var(--space-3) var(--space-2) var(--space-2);
-  border-radius: var(--radius-lg);
-  background: var(--bg-raised);
-  @include elevation(1);
+  padding: var(--space-2) 0;
   transition: opacity var(--dur-base) var(--ease-out);
 }
 
@@ -30,6 +28,7 @@
 }
 
 .check {
+  position: relative;
   display: grid;
   place-items: center;
   width: 28px;
@@ -39,6 +38,14 @@
   background: var(--surface-2);
   color: transparent;
   @include pressable;
+
+  // A 44px tap area around the small circle.
+  &::before {
+    content: "";
+    position: absolute;
+    inset: -8px;
+    border-radius: 50%;
+  }
 
   svg {
     width: 16px;

@@ -39,6 +39,8 @@ export function StoreOverview({ store }: { store: Store }) {
   const [publishing, setPublishing] = useState(false);
   const [editing, setEditing] = useState<Editing>(null);
   const [clearing, setClearing] = useState(false);
+  const linkLabel = storeUrlLabel(store.slug);
+  const linkHost = linkLabel.slice(0, linkLabel.length - store.slug.length - 1);
 
   async function clearProducts() {
     const photos = await deleteAllProducts(store.slug);
@@ -66,26 +68,19 @@ export function StoreOverview({ store }: { store: Store }) {
       <Reveal>
         <Surface tone="brand" padding="lg" radius="xl" className={styles.hero}>
           <Stack gap={4}>
-            <Stack direction="row" justify="between" align="start" gap={3}>
-              <Stack direction="row" align="center" gap={3}>
-                <Avatar name={store.name} src={store.logoUrl} size={56} />
-                <Stack gap={1}>
-                  <Text as="h1" size="3xl">
-                    {store.name}
-                  </Text>
-                  <a href={storeUrl(store.slug)} target="_blank" rel="noreferrer" className={styles.link}>
-                    {storeUrlLabel(store.slug)}
-                    <ExternalLink aria-hidden />
-                  </a>
-                </Stack>
+            <Stack direction="row" align="center" gap={3}>
+              <Avatar name={store.name} src={store.logoUrl} size={56} />
+              <Stack gap={1} className={styles.identity}>
+                <Text as="h1" size="2xl">
+                  {store.name}
+                </Text>
+                <a href={storeUrl(store.slug)} target="_blank" rel="noreferrer" className={styles.link}>
+                  {/* The long site address gives way, so the shop's own part always shows. */}
+                  <span className={styles.host}>{linkHost}</span>
+                  <span className={styles.slug}>/{store.slug}</span>
+                  <ExternalLink aria-hidden />
+                </a>
               </Stack>
-              {store.published ? (
-                <Badge tone="success" pulse>
-                  Live
-                </Badge>
-              ) : (
-                <Badge>Draft</Badge>
-              )}
             </Stack>
             <Stack direction="row" justify="between" align="center" gap={3} wrap>
               <Switch
@@ -132,10 +127,10 @@ export function StoreOverview({ store }: { store: Store }) {
       </Reveal>
 
       <Reveal delay={0.16}>
-        <Surface padding="sm" radius="xl">
+        <section aria-labelledby="products-title">
           <Stack direction="row" justify="between" align="center" className={styles.listHeader}>
             <Stack direction="row" align="center" gap={2}>
-              <Text as="h2" size="lg" weight={700}>
+              <Text as="h2" size="lg" weight={700} id="products-title">
                 Products
               </Text>
               {products.status === "ready" ? <Badge tone="brand">{products.data.length}</Badge> : null}
@@ -153,7 +148,7 @@ export function StoreOverview({ store }: { store: Store }) {
           </Stack>
 
           {products.status === "loading" ? (
-            <Stack gap={2} className={styles.loading}>
+            <Stack gap={2}>
               {[0, 1, 2].map((key) => (
                 <Skeleton key={key} height={56} radius="var(--radius-md)" />
               ))}
@@ -178,7 +173,7 @@ export function StoreOverview({ store }: { store: Store }) {
               ))}
             </Stagger>
           )}
-        </Surface>
+        </section>
       </Reveal>
 
       {products.status === "error" ? (

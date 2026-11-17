@@ -21,7 +21,7 @@ export type SelectProps<T extends string> = {
   icon?: ReactNode;
   size?: "sm" | "md";
   // raised: floats on a coloured area. soft: sits on a card.
-  tone?: "raised" | "soft";
+  tone?: "raised" | "soft" | "plain";
   // Which edge of the button the menu lines up with.
   align?: "start" | "end";
   className?: string;

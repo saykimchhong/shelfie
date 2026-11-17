@@ -22,7 +22,7 @@ export function ProductRow({ product, currency, unit, onOpen, onToggleStock }: P
       <button type="button" className={styles.open} onClick={onOpen} aria-label={`Edit ${product.name}`}>
         <Thumb label={product.name} src={product.imageUrl} size={56} className={styles.thumb} />
         <span className={styles.info}>
-          <Text as="span" weight={600} clamp={1}>
+          <Text as="span" weight={600} clamp={2}>
             {product.name}
           </Text>
           {product.localName ? (

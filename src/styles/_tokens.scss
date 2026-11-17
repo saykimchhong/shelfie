@@ -17,27 +17,31 @@ $theme-light: (
   surface-2: #ffe4d2,
   overlay: rgb(42 26 18 / 40%),
 
+  // Every text color reads at 4.5:1 or more on every surface below.
   fg: #2a1a12,
-  fg-muted: #7a5e50,
-  fg-subtle: #a88f82,
+  fg-muted: #634c41,
+  fg-subtle: #7b6256,
 
   // Brand: vivid coral for decoration, a deeper solid for text-safe fills.
   brand: #f26430,
   brand-solid: #c2410c,
   brand-soft: #ffe3d6,
-  brand-text: #c2410c,
+  brand-text: #b83e0b,
   on-brand: #ffffff,
 
+  // accent and berry are for fills and icons; the -text ones for words.
   accent: #0f9f8e,
   accent-soft: #d4f4ee,
+  accent-text: #0b7366,
   sun: #f5b52e,
   sun-soft: #fff1cc,
   berry: #d6336c,
   berry-soft: #ffe0ea,
+  berry-text: #c1275d,
 
-  success: #15803d,
+  success: #147739,
   success-soft: #dcf5e4,
-  danger: #c92a2a,
+  danger: #c52929,
   danger-soft: #ffe3e3,
 
   ring: rgb(242 100 48 / 45%),
@@ -56,7 +60,7 @@ $theme-dark: (
 
   fg: #fcefe6,
   fg-muted: #c7ae9f,
-  fg-subtle: #8e7666,
+  fg-subtle: #a79385,
 
   brand: #ff7a50,
   brand-solid: #ff8a5c,
@@ -66,10 +70,12 @@ $theme-dark: (
 
   accent: #3ccfbc,
   accent-soft: #123b36,
+  accent-text: #3ccfbc,
   sun: #ffc94d,
   sun-soft: #3d2f10,
   berry: #ff6b9a,
   berry-soft: #45182a,
+  berry-text: #ff6b9a,
 
   success: #4ade80,
   success-soft: #14321f,

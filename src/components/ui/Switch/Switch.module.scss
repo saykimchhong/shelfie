@@ -1,10 +1,18 @@
 @use "styles" as *;
 
 .root {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
   border-radius: var(--radius-full);
+
+  // A 44px-tall tap area around the 28px track.
+  &::before {
+    content: "";
+    position: absolute;
+    inset: -8px 0;
+  }
 
   &:focus-visible {
     @include focus-ring;

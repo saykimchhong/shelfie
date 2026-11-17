@@ -93,7 +93,7 @@ export function ReviewList({
               ) : (
                 <Select
                   size="sm"
-                  tone="soft"
+                  tone="plain"
                   align="end"
                   value={draft.unit}
                   options={UNIT_OPTIONS}

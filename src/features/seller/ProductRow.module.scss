@@ -13,32 +13,59 @@
   }
 }
 
+// Phones: the price goes under the name, so the name gets the row's width.
 .open {
-  display: flex;
+  display: grid;
   flex: 1;
+  grid-template-columns: 56px minmax(0, 1fr);
+  grid-template-areas:
+    "thumb info"
+    "thumb price";
   align-items: center;
-  gap: var(--space-3);
+  column-gap: var(--space-3);
   min-width: 0;
   padding: var(--space-2);
   border-radius: var(--radius-lg);
   text-align: start;
   @include pressable;
+
+  @include up(sm) {
+    grid-template-columns: 56px minmax(0, 1fr) auto;
+    grid-template-areas: "thumb info price";
+  }
 }
 
 .thumb {
+  grid-area: thumb;
   width: 56px;
-  flex-shrink: 0;
 }
 
 .info {
+  grid-area: info;
   display: flex;
-  flex: 1;
   flex-direction: column;
+  align-self: end;
   min-width: 0;
+
+  @include up(sm) {
+    align-self: center;
+  }
 }
 
 .price {
+  grid-area: price;
+  align-self: start;
   white-space: nowrap;
+
+  @include up(sm) {
+    align-self: center;
+  }
+}
+
+.thumb,
+.info,
+.price {
+  transition: opacity var(--dur-base) var(--ease-out);
 }
 
 .soldOut {

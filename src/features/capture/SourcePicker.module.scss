@@ -66,20 +66,18 @@
   font-size: var(--text-lg);
 }
 
+// Tips are words with an icon, not buttons, so they get no fill.
 .tips {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-2);
+  gap: var(--space-2) var(--space-5);
 }
 
 .tip {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  height: 36px;
-  padding: 0 var(--space-4);
-  border-radius: var(--radius-full);
-  background: var(--sun-soft);
+  color: var(--fg-muted);
   font-size: var(--text-sm);
   font-weight: 600;
 

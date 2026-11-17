@@ -51,19 +51,16 @@
   box-shadow: 0 0 0 2px var(--brand);
 }
 
+// A bare icon: the tile is already the box.
 .icon {
   grid-area: icon;
   display: grid;
   place-items: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: var(--bg-raised);
   color: var(--brand-text);
 
   svg {
-    width: 18px;
-    height: 18px;
+    width: 22px;
+    height: 22px;
   }
 }
 

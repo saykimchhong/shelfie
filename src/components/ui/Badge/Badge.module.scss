@@ -21,9 +21,9 @@
 $tones: (
   neutral: (var(--surface-1), var(--fg-muted)),
   brand: (var(--brand-soft), var(--brand-text)),
-  accent: (var(--accent-soft), var(--accent)),
+  accent: (var(--accent-soft), var(--accent-text)),
   sun: (var(--sun-soft), var(--fg)),
-  berry: (var(--berry-soft), var(--berry)),
+  berry: (var(--berry-soft), var(--berry-text)),
   success: (var(--success-soft), var(--success)),
   danger: (var(--danger-soft), var(--danger)),
 );

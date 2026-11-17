@@ -81,29 +81,28 @@
 
 .steps {
   display: grid;
-  gap: var(--space-4);
+  gap: var(--space-10);
   padding: 0;
   list-style: none;
 
   @include up(md) {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-6);
   }
 }
 
+// The drawing is the only box; the words sit on the page under it.
 .step {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-  padding: var(--space-5);
-  border-radius: var(--radius-xl);
-  background: var(--surface-1);
 }
 
 .drawing {
   margin-bottom: var(--space-2);
-  padding: var(--space-3);
-  border-radius: var(--radius-lg);
-  background: var(--bg);
+  padding: var(--space-4);
+  border-radius: var(--radius-xl);
+  background: var(--surface-1);
 
   svg {
     display: block;

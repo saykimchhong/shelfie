@@ -16,12 +16,21 @@
 }
 
 %round {
+  position: relative;
   display: grid;
   place-items: center;
   width: 32px;
   height: 32px;
   border-radius: 50%;
   @include pressable;
+
+  // A 44px tap area around the 32px circle.
+  &::before {
+    content: "";
+    position: absolute;
+    inset: -6px;
+    border-radius: 50%;
+  }
 
   svg {
     width: 16px;

@@ -19,13 +19,12 @@
   list-style: none;
 }
 
+// Rows sit straight on the card: one box, not boxes in a box.
 .row {
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  padding: var(--space-2);
-  border-radius: var(--radius-md);
-  background: var(--surface-1);
+  padding: var(--space-1) 0;
   transition: opacity var(--dur-base) var(--ease-out);
 }
 
@@ -34,6 +33,7 @@
 }
 
 .check {
+  position: relative;
   display: grid;
   place-items: center;
   width: 28px;
@@ -43,6 +43,14 @@
   background: var(--surface-2);
   color: transparent;
   @include pressable;
+
+  // A 44px tap area around the small circle.
+  &::before {
+    content: "";
+    position: absolute;
+    inset: -8px;
+    border-radius: 50%;
+  }
 
   svg {
     width: 16px;
@@ -105,13 +113,18 @@
   }
 }
 
-// Saved or not saved: one quiet line where the card was.
+// Saved or not saved: one quiet line where the card was, faded in.
 .outcome {
   display: flex;
   gap: var(--space-2);
   color: var(--fg-muted);
   font-size: var(--text-sm);
   overflow-wrap: anywhere;
+  animation: outcome var(--dur-slow) var(--ease-out) backwards;
+
+  @include reduced-motion {
+    animation-name: fade;
+  }
 
   svg {
     flex-shrink: 0;
@@ -123,4 +136,17 @@
 
 .saved {
   color: var(--success);
+}
+
+@keyframes outcome {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 4px, 0);
+  }
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
 }

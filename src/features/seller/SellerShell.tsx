@@ -2,7 +2,7 @@
 
 import { LogOut } from "lucide-react";
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { ViewTransition, type ReactNode } from "react";
 import { Logo } from "@/components/brand/Logo";
 import { Avatar, Button, Container } from "@/components/ui";
 import { useAuth, useSignedInUser } from "@/features/auth";
@@ -28,7 +28,10 @@ export function SellerShell({ children }: { children: ReactNode }) {
         </Container>
       </header>
       <Container as="main" className={styles.main}>
-        {children}
+        {/* Going between dashboard pages fades the content; the top bar stays put. */}
+        <ViewTransition default="none" update="page">
+          {children}
+        </ViewTransition>
       </Container>
     </div>
   );

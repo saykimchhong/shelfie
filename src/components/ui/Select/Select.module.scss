@@ -48,6 +48,13 @@ $exit: 120ms;
   }
 }
 
+// Just the words and the chevron, for a menu inside a row that has its own fills.
+.plain .trigger {
+  @include hover {
+    background: var(--surface-1);
+  }
+}
+
 .icon {
   display: grid;
   margin-left: calc(var(--space-1) * -1);
