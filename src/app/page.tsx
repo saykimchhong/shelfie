@@ -2,7 +2,7 @@ import { ArrowRight, Check } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { Reveal } from "@/components/motion/Reveal";
 import { ButtonLink, Container, Text } from "@/components/ui";
-import { HowItWorks, PhotoStrip } from "@/features/landing";
+import { HowItWorks, PhotoStrip, SiteFooter } from "@/features/landing";
 import { exampleFruitStall } from "@/features/landing/exampleShop";
 import { StorefrontView } from "@/features/storefront";
 import { PhonePreview } from "@/features/theme";
@@ -114,6 +114,8 @@ export default function Home() {
           </section>
         </Container>
       </main>
+
+      <SiteFooter />
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { Camera, Check, ListPlus, MessageCircle, Mic, RefreshCw } from "lucide-react";
+import { Camera, Check, ListPlus, MessageCircle, Mic, RefreshCw, Sparkles } from "lucide-react";
 import Image from "next/image";
 import type { ReactNode } from "react";
 import { Stagger } from "@/components/motion/Reveal";
@@ -63,7 +63,12 @@ function Steps() {
           </span>
         </div>
       </Step>
-      <Step number={2} title="Four agents read it" body="Gemini agents list every product with its price. You check it and fix anything with one tap.">
+      <Step
+        number={2}
+        title="Four agents read it"
+        body="Gemini agents list every product with its price. You check it and fix anything with one tap."
+        note="Photos come straight from your video, or Gemini makes a clean one in the app."
+      >
         <div className={styles.panel}>
           <AgentActivityFeed steps={RUN} variant="recap" className={styles.feed} />
         </div>
@@ -115,7 +120,9 @@ function UpdateAnytime() {
   );
 }
 
-function Step({ number, title, body, children }: { number: number; title: string; body: string; children: ReactNode }) {
+type StepProps = { number: number; title: string; body: string; note?: string; children: ReactNode };
+
+function Step({ number, title, body, note, children }: StepProps) {
   return (
     <li className={styles.step}>
       <div className={styles.visual}>{children}</div>
@@ -124,6 +131,12 @@ function Step({ number, title, body, children }: { number: number; title: string
         {title}
       </Text>
       <Text tone="muted">{body}</Text>
+      {note && (
+        <Text size="sm" weight={600} className={styles.note}>
+          <Sparkles aria-hidden />
+          {note}
+        </Text>
+      )}
     </li>
   );
 }
