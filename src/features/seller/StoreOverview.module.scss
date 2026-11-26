@@ -4,8 +4,14 @@
   overflow: hidden;
 }
 
+.identity {
+  min-width: 0;
+}
+
 .link {
   display: inline-flex;
+  min-width: 0;
+  overflow-wrap: anywhere;
   align-items: center;
   gap: var(--space-1);
   width: fit-content;
@@ -93,4 +99,10 @@
   gap: var(--space-1);
   padding: 0;
   list-style: none;
+}
+
+.clearAll {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--space-3);
 }

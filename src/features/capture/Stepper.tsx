@@ -16,7 +16,7 @@ const LATER_STEPS = [
 ];
 
 // Where the seller is in the flow, mostly as icons.
-export function Stepper({ current, source = "video" }: { current: 0 | 1 | 2; source?: CaptureSource }) {
+export function Stepper({ current, source = "video" }: { current: 0 | 1 | 2 | 3; source?: CaptureSource }) {
   return (
     <ol className={styles.stepper} aria-label="Progress">
       {[FIRST_STEP[source], ...LATER_STEPS].map((step, index) => (

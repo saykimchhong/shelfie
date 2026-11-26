@@ -37,14 +37,14 @@
   min-width: 0;
 }
 
-.price {
-  white-space: nowrap;
+.localName {
+  color: var(--fg-muted);
+  font-weight: 500;
 }
 
 .soldOut {
   .thumb,
-  .info,
-  .price {
+  .info {
     opacity: 0.45;
   }
 }

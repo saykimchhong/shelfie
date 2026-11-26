@@ -21,19 +21,16 @@ export function ProductRow({ product, currency, unit, onOpen, onToggleStock }: P
     <li className={clsx(styles.row, !product.inStock && styles.soldOut)}>
       <button type="button" className={styles.open} onClick={onOpen} aria-label={`Edit ${product.name}`}>
         <Thumb label={product.name} src={product.imageUrl} size={56} className={styles.thumb} />
+        {/* Name first and given the full width; the price sits under it. */}
         <span className={styles.info}>
-          <Text as="span" weight={600} clamp={1}>
+          <Text as="span" weight={600} clamp={2}>
             {product.name}
+            {product.localName ? <span className={styles.localName}> · {product.localName}</span> : null}
           </Text>
-          {product.localName ? (
-            <Text as="span" size="sm" tone="muted" clamp={1}>
-              {product.localName}
-            </Text>
-          ) : null}
+          <Text as="span" size="sm" weight={700} tone={product.price === null ? "subtle" : "brand"}>
+            {product.price === null ? "No price yet" : `${formatPrice(product.price, currency)}${perUnit(unit)}`}
+          </Text>
         </span>
-        <Text as="span" weight={700} tone={product.price === null ? "subtle" : "brand"} className={styles.price}>
-          {product.price === null ? "—" : `${formatPrice(product.price, currency)}${perUnit(unit)}`}
-        </Text>
       </button>
       <div className={styles.stock}>
         <Switch checked={product.inStock} onChange={onToggleStock} label={`${product.name} in stock`} />
