@@ -11,15 +11,60 @@
   height: var(--topbar-h);
 }
 
-.main {
+// Centered, like a phone's first screen: the greeting, then one promise.
+.hero {
   display: flex;
   flex-direction: column;
-  gap: var(--space-16);
-  padding-block: var(--space-8) var(--space-20);
+  align-items: center;
+  gap: var(--space-5);
+  padding-block: var(--space-8) var(--space-10);
+  text-align: center;
+
+  @include up(md) {
+    padding-block: var(--space-12) var(--space-12);
+  }
+}
+
+.title {
+  max-width: 18ch;
+  margin-inline: auto;
+}
+
+.accent {
+  display: block;
+  color: var(--brand-text);
+}
+
+.lead {
+  max-width: 42ch;
+  margin-inline: auto;
+}
+
+.ctas {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-3);
+}
+
+.cta {
+  --btn-h: 56px;
+  padding-inline: var(--space-8);
+}
+
+.strip {
+  margin-bottom: var(--space-16);
+}
+
+.sections {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-20);
+  padding-bottom: var(--space-20);
 }
 
 // Phone: words, then the example shop. Desktop: side by side.
-.hero {
+.showcase {
   display: grid;
   gap: var(--space-10);
   align-items: center;
@@ -30,43 +75,42 @@
   }
 }
 
-.copy {
+.showcaseCopy {
   display: flex;
   flex-direction: column;
-  gap: var(--space-5);
+  gap: var(--space-4);
+  max-width: 34rem;
 }
 
-.title {
-  max-width: 13ch;
-}
-
-.accent {
-  display: block;
-  color: var(--brand-text);
-}
-
-.lead {
-  max-width: 40ch;
-}
-
-.ctas {
+.promises {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: var(--space-3);
-}
+  margin: var(--space-2) 0 0;
+  padding: 0;
+  list-style: none;
+  font-weight: 600;
 
-.cta {
-  --btn-h: 56px;
-  padding-inline: var(--space-8);
-}
+  li {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
 
-.preview {
-  display: flex;
-  justify-content: center;
+  svg {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    padding: 3px;
+    border-radius: 50%;
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
 }
 
 .phone {
   --zoom: 0.78;
+  justify-self: center;
 
   @include up(lg) {
     --zoom: 0.86;
@@ -79,50 +123,12 @@
   gap: var(--space-6);
 }
 
-.steps {
-  display: grid;
-  gap: var(--space-4);
-  padding: 0;
-  list-style: none;
-
-  @include up(md) {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-
-.step {
+.final {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
-  padding: var(--space-5);
+  align-items: center;
+  gap: var(--space-5);
+  padding: var(--space-12) var(--space-6);
   border-radius: var(--radius-xl);
   background: var(--surface-1);
-}
-
-.drawing {
-  margin-bottom: var(--space-2);
-  padding: var(--space-3);
-  border-radius: var(--radius-lg);
-  background: var(--bg);
-
-  svg {
-    display: block;
-    width: 100%;
-    max-width: 240px;
-    height: auto;
-    margin-inline: auto;
-  }
-}
-
-.number {
-  display: inline-grid;
-  place-items: center;
-  width: 28px;
-  height: 28px;
-  margin-right: var(--space-2);
-  border-radius: 50%;
-  background: var(--brand-solid);
-  color: var(--on-brand);
-  font-size: var(--text-sm);
-  vertical-align: 2px;
 }
