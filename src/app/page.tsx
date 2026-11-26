@@ -2,7 +2,7 @@ import { ArrowRight, Check } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { Reveal } from "@/components/motion/Reveal";
 import { ButtonLink, Container, Text } from "@/components/ui";
-import { HelloGreeting, HowItWorks, PhotoStrip } from "@/features/landing";
+import { HeroTitle, HowItWorks, PhotoStrip } from "@/features/landing";
 import { exampleFruitStall } from "@/features/landing/exampleShop";
 import { StorefrontView } from "@/features/storefront";
 import { PhonePreview } from "@/features/theme";
@@ -29,21 +29,16 @@ export default function Home() {
 
       <main>
         <Container as="section" className={styles.hero}>
-          <Reveal effect="fade">
-            <HelloGreeting />
+          <Reveal>
+            <HeroTitle />
           </Reveal>
-          <Reveal delay={0.1}>
-            <Text as="h1" size="display" align="center" className={styles.title}>
-              Film your shelf. <span className={styles.accent}>Get a shop online.</span>
-            </Text>
-          </Reveal>
-          <Reveal delay={0.16}>
+          <Reveal delay={0.12}>
             <Text size="lg" tone="muted" align="center" className={styles.lead}>
               Record your shop on your phone and say the prices. Shelfie makes your online shop, ready to share on
               WhatsApp or LINE.
             </Text>
           </Reveal>
-          <Reveal delay={0.22} className={styles.ctas}>
+          <Reveal delay={0.18} className={styles.ctas}>
             <ButtonLink href="/dashboard" size="lg" iconAfter={<ArrowRight />} className={styles.cta}>
               Start free
             </ButtonLink>
@@ -51,9 +46,9 @@ export default function Home() {
               See example shops
             </ButtonLink>
           </Reveal>
-          <Reveal delay={0.26}>
+          <Reveal delay={0.22}>
             <Text size="sm" tone="subtle" align="center">
-              Free · No app to install · Khmer, Sinhala, Tamil, Thai and English
+              Free · No app to install
             </Text>
           </Reveal>
         </Container>
