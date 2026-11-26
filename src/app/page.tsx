@@ -2,7 +2,7 @@ import { ArrowRight, Check } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { Reveal } from "@/components/motion/Reveal";
 import { ButtonLink, Container, Text } from "@/components/ui";
-import { HeroTitle, HowItWorks, PhotoStrip } from "@/features/landing";
+import { HowItWorks, PhotoStrip } from "@/features/landing";
 import { exampleFruitStall } from "@/features/landing/exampleShop";
 import { StorefrontView } from "@/features/storefront";
 import { PhonePreview } from "@/features/theme";
@@ -10,6 +10,15 @@ import styles from "./page.module.scss";
 
 // The real thing beats a description: an example shop, right on the page.
 const example = exampleFruitStall();
+
+// Every language Shelfie reads and shows, each in its own script.
+const LANGUAGES = [
+  { code: "en", name: "English" },
+  { code: "si", name: "සිංහල" },
+  { code: "ta", name: "தமிழ்" },
+  { code: "th", name: "ไทย" },
+  { code: "km", name: "ខ្មែរ" },
+];
 
 const PROMISES = [
   "Prices said out loud become prices on your shop",
@@ -30,12 +39,13 @@ export default function Home() {
       <main>
         <Container as="section" className={styles.hero}>
           <Reveal>
-            <HeroTitle />
+            <Text as="h1" size="display" align="center" className={styles.title}>
+              Your online shop, <span className={styles.accent}>ready in 5 minutes.</span>
+            </Text>
           </Reveal>
-          <Reveal delay={0.12}>
+          <Reveal delay={0.08}>
             <Text size="lg" tone="muted" align="center" className={styles.lead}>
-              Record your shop on your phone and say the prices. Shelfie makes your online shop, ready to share on
-              WhatsApp or LINE.
+              Film your shelf and say the prices. Shelfie builds your shop, ready to share on WhatsApp or LINE.
             </Text>
           </Reveal>
           <Reveal delay={0.18} className={styles.ctas}>
@@ -46,10 +56,17 @@ export default function Home() {
               See example shops
             </ButtonLink>
           </Reveal>
-          <Reveal delay={0.22}>
-            <Text size="sm" tone="subtle" align="center">
-              Free · No app to install
+          <Reveal delay={0.22} className={styles.languages}>
+            <Text as="span" size="sm" tone="subtle">
+              Free · No app to install · Works in
             </Text>
+            <ul className={styles.languageList} aria-label="Languages">
+              {LANGUAGES.map((language) => (
+                <li key={language.code} lang={language.code}>
+                  {language.name}
+                </li>
+              ))}
+            </ul>
           </Reveal>
         </Container>
 

@@ -25,6 +25,16 @@
   }
 }
 
+.title {
+  max-width: 16ch;
+  margin-inline: auto;
+}
+
+.accent {
+  display: block;
+  color: var(--brand-text);
+}
+
 .lead {
   max-width: 42ch;
   margin-inline: auto;
@@ -35,6 +45,32 @@
   flex-wrap: wrap;
   justify-content: center;
   gap: var(--space-3);
+}
+
+.languages {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.languageList {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--radius-full);
+    background: var(--surface-1);
+    color: var(--fg-muted);
+    font-size: var(--text-sm);
+    font-weight: 700;
+  }
 }
 
 .cta {

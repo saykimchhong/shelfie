@@ -1,4 +1,4 @@
-import { Mic } from "lucide-react";
+import { Camera, Check, ListPlus, MessageCircle, Mic, RefreshCw } from "lucide-react";
 import Image from "next/image";
 import type { ReactNode } from "react";
 import { Stagger } from "@/components/motion/Reveal";
@@ -30,8 +30,27 @@ const MESSAGE = orderMessage({
   fulfillment: { method: "delivery", address: "Nugegoda" },
 });
 
-// Three steps, each shown with the real thing rather than a drawing.
+// The ways a seller keeps the shop current after day one.
+const UPDATE_WAYS = [
+  { icon: <MessageCircle />, label: "Chat with your assistant" },
+  { icon: <Mic />, label: "Send a voice note" },
+  { icon: <RefreshCw />, label: "Re-film a shelf" },
+  { icon: <Camera />, label: "Snap photos" },
+  { icon: <ListPlus />, label: "Type a list" },
+];
+
+// Three steps, each shown with the real thing rather than a drawing, then
+// how the shop stays up to date.
 export function HowItWorks() {
+  return (
+    <div className={styles.how}>
+      <Steps />
+      <UpdateAnytime />
+    </div>
+  );
+}
+
+function Steps() {
   return (
     <Stagger as="ol" interval={0.08} className={styles.steps}>
       <Step number={1} title="Film your shelf" body="Walk past your shelf and say each price out loud. Photos or a typed list work too.">
@@ -55,6 +74,44 @@ export function HowItWorks() {
         </div>
       </Step>
     </Stagger>
+  );
+}
+
+// The shop assistant, as the seller sees it: say what changed, check, save.
+function UpdateAnytime() {
+  return (
+    <section className={styles.update} aria-labelledby="update-title">
+      <div className={styles.updateCopy}>
+        <Text as="h3" size="2xl" id="update-title">
+          Keep it up to date, your way
+        </Text>
+        <Text tone="muted">
+          Prices changed or something sold out? Just tell your assistant, in a message or a voice note. Nothing
+          changes until you tap Save.
+        </Text>
+        <ul className={styles.ways}>
+          {UPDATE_WAYS.map((way) => (
+            <li key={way.label}>
+              {way.icon}
+              {way.label}
+            </li>
+          ))}
+        </ul>
+      </div>
+      <div className={styles.chat} aria-hidden>
+        <p className={styles.sent}>Mango is 700 now, bananas sold out</p>
+        <div className={styles.reply}>
+          <strong>2 changes ready</strong>
+          <span>
+            <Check /> Mango: Rs 600 → Rs 700
+          </span>
+          <span>
+            <Check /> Bananas: sold out
+          </span>
+          <span className={styles.save}>Save</span>
+        </div>
+      </div>
+    </section>
   );
 }
 
