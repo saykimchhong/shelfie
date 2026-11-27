@@ -2,7 +2,8 @@
 
 .strip {
   overflow: hidden;
-  padding-block: var(--space-2);
+  // Room for a hovered card to rise with its shadow.
+  padding-block: var(--space-5);
   // Soft edges instead of a hard cut (static: never animated).
   mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
 
@@ -37,15 +38,17 @@
   padding-right: var(--space-4);
 }
 
+// No overflow: hidden, so lift()'s shadow isn't clipped; the photo rounds itself.
 .card {
   position: relative;
   width: 200px;
   aspect-ratio: 4 / 5;
   margin: 0;
-  overflow: hidden;
   border-radius: var(--radius-xl);
   background: var(--surface-1);
+  transition: transform var(--dur-slow) var(--ease-out);
   @include elevation(1);
+  @include lift(-6px, 3);
 
   @include up(md) {
     width: 260px;
@@ -53,6 +56,7 @@
 }
 
 .photo {
+  border-radius: inherit;
   object-fit: cover;
 }
 

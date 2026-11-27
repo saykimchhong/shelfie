@@ -63,18 +63,28 @@
   padding: 0;
   list-style: none;
 
-  li {
-    padding: var(--space-1) var(--space-3);
+  // Tapping one shows the example shop below in that language.
+  button {
+    min-height: 40px;
+    padding: 0 var(--space-4);
     border-radius: var(--radius-full);
     background: var(--surface-1);
     color: var(--fg-muted);
     font-size: var(--text-sm);
     font-weight: 700;
-  }
-}
+    cursor: pointer;
+    @include pressable;
 
-.srOnly {
-  @include visually-hidden;
+    @include hover {
+      background: var(--surface-2);
+      color: var(--fg);
+    }
+
+    &[aria-pressed="true"] {
+      background: var(--brand-soft);
+      color: var(--brand-text);
+    }
+  }
 }
 
 .cta {
@@ -153,12 +163,11 @@
   gap: var(--space-6);
 }
 
+// No card: the footer below is already the one tinted band.
 .final {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: var(--space-5);
-  padding: var(--space-12) var(--space-6);
-  border-radius: var(--radius-xl);
-  background: var(--surface-1);
+  padding-block: var(--space-8);
 }

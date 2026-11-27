@@ -10,15 +10,18 @@ export function PhonePreview({
   children,
   scale,
   label,
+  id,
   className,
 }: {
   children: ReactNode;
   scale?: number;
   label?: string;
+  id?: string;
   className?: string;
 }) {
   return (
     <figure
+      id={id}
       className={clsx(styles.figure, className)}
       style={scale ? ({ "--zoom": scale } as CSSProperties) : undefined}
     >
