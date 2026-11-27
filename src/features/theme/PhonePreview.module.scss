@@ -24,8 +24,8 @@
 
 .screen {
   height: 100%;
+  // No overscroll containment: at either end, the page carries on scrolling.
   overflow-y: auto;
-  overscroll-behavior: contain;
   scrollbar-width: none;
 
   &::-webkit-scrollbar {
