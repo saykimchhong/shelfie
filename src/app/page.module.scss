@@ -73,6 +73,10 @@
   }
 }
 
+.srOnly {
+  @include visually-hidden;
+}
+
 .cta {
   --btn-h: 56px;
   padding-inline: var(--space-8);

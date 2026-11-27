@@ -4,21 +4,13 @@ import { Reveal } from "@/components/motion/Reveal";
 import { ButtonLink, Container, Text } from "@/components/ui";
 import { HowItWorks, PhotoStrip, SiteFooter } from "@/features/landing";
 import { exampleFruitStall } from "@/features/landing/exampleShop";
+import { LABEL_LANGUAGE_OPTIONS } from "@/features/seller/options";
 import { StorefrontView } from "@/features/storefront";
 import { PhonePreview } from "@/features/theme";
 import styles from "./page.module.scss";
 
 // The real thing beats a description: an example shop, right on the page.
 const example = exampleFruitStall();
-
-// Every language Shelfie reads and shows, each in its own script.
-const LANGUAGES = [
-  { code: "en", name: "English" },
-  { code: "si", name: "සිංහල" },
-  { code: "ta", name: "தமிழ்" },
-  { code: "th", name: "ไทย" },
-  { code: "km", name: "ខ្មែរ" },
-];
 
 const PROMISES = [
   "Prices said out loud become prices on your shop",
@@ -61,9 +53,13 @@ export default function Home() {
               Free · No app to install · Works in
             </Text>
             <ul className={styles.languageList} aria-label="Languages">
-              {LANGUAGES.map((language) => (
-                <li key={language.code} lang={language.code}>
-                  {language.name}
+              {/* Same labels and order as the store's language setting. */}
+              {LABEL_LANGUAGE_OPTIONS.map((language) => (
+                <li key={language.value}>
+                  <span lang={language.value} aria-hidden>
+                    {language.label}
+                  </span>
+                  <span className={styles.srOnly}>{language.ariaLabel}</span>
                 </li>
               ))}
             </ul>
