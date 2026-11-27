@@ -1,0 +1,9 @@
+@use "styles" as *;
+
+// Fills the step's picture slot; the star burst is centred on it.
+.run {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}

@@ -228,7 +228,7 @@ The goal is **plain and clear for people new to apps**. Many sellers are using a
 - **Light and dark** come for free from the tokens. Check both.
 - **Mobile first:** `@include up(md) { … }`. Sellers and buyers are mostly on phones.
 - **Words with icons.** Every action a seller takes says what it does ("Clean photo", "Sign out", "On sale"); icon-only is for the universal few, like × to close. One short sentence at most in empty states, and visual pickers (`Segmented`) over dropdowns.
-- **No decoration that says nothing.** No gradient blobs, glows, gradient text or sparkle icons. AI features are named by what they do for the seller, not "AI". Where a picture helps, draw the real thing (`src/components/illustrations`), flat and in tokens.
+- **No decoration that says nothing.** No gradient blobs, glows, gradient text or sparkle icons. The one exception is the landing page's AI step (How it works, step 2), whose sparkle bursts into stars when it's reached. AI features are named by what they do for the seller, not "AI". Where a picture helps, draw the real thing (`src/components/illustrations`), flat and in tokens.
 - **Motion:** entrances use CSS (`<Reveal>`, `<Stagger>`), so pages work before JavaScript loads on slow phones. `motion/react` is for interaction: layout, presence and gestures. `<ScrollStagger>` reveals long lists as they enter the screen: an IntersectionObserver flips a data attribute, and a short CSS animation always plays to the end, never stuck half-way.
 - **Entrance fill mode is `backwards`, never `both`.** A finished `both` animation keeps control of `transform`, which freezes hover lifts and press feedback.
 - **60fps rule:** only `transform` and `opacity` may animate.

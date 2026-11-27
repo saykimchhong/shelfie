@@ -1,21 +1,15 @@
-import { Camera, Check, ListPlus, MessageCircle, Mic, RefreshCw, Sparkles } from "lucide-react";
+import clsx from "clsx";
+import { Check, MessageCircle, Mic, Sparkles, Video } from "lucide-react";
 import Image from "next/image";
 import type { ReactNode } from "react";
-import { Stagger } from "@/components/motion/Reveal";
+import { ScrollStagger } from "@/components/motion/ScrollStagger";
 import { Text } from "@/components/ui";
-import type { AgentEvent } from "@/domain/agents";
-import { AgentActivityFeed } from "@/features/capture/AgentActivityFeed";
 import { orderMessage } from "@/lib/contact";
 import { formatPrice } from "@/lib/format";
+import { AgentRunDemo } from "./AgentRunDemo";
+import { GuidedSteps } from "./GuidedSteps";
+import { MagicBurst } from "./MagicBurst";
 import styles from "./HowItWorks.module.scss";
-
-// A finished run, as the seller sees it on the review screen.
-const RUN: AgentEvent[] = [
-  { step: "watcher", status: "done", summary: "Found 6 products, heard 6 prices", ms: 5200 },
-  { step: "priceMatcher", status: "done", summary: "Paired 6 prices", ms: 3 },
-  { step: "shelfMatcher", status: "skipped" },
-  { step: "checker", status: "done", summary: "All clear", ms: 2 },
-];
 
 // The real order message a customer sends, built by the same code as the cart.
 const rupees = (amount: number) => formatPrice(amount, "LKR");
@@ -30,17 +24,7 @@ const MESSAGE = orderMessage({
   fulfillment: { method: "delivery", address: "Nugegoda" },
 });
 
-// The ways a seller keeps the shop current after day one.
-const UPDATE_WAYS = [
-  { icon: <MessageCircle />, label: "Chat with your assistant" },
-  { icon: <Mic />, label: "Send a voice note" },
-  { icon: <RefreshCw />, label: "Re-film a shelf" },
-  { icon: <Camera />, label: "Snap photos" },
-  { icon: <ListPlus />, label: "Type a list" },
-];
-
-// Three steps, each shown with the real thing rather than a drawing, then
-// how the shop stays up to date.
+// Three steps, each shown with the real thing, then how the shop stays current.
 export function HowItWorks() {
   return (
     <div className={styles.how}>
@@ -52,10 +36,15 @@ export function HowItWorks() {
 
 function Steps() {
   return (
-    <Stagger as="ol" interval={0.08} className={styles.steps}>
-      <Step number={1} title="Film your shelf" body="Walk past your shelf and say each price out loud. Photos or a typed list work too.">
-        <div className={styles.film}>
-          <Image src="/landing/fruit-stand.jpg" alt="" fill sizes="(min-width: 768px) 30vw, 90vw" className={styles.photo} />
+    <GuidedSteps className={styles.steps}>
+      <Step
+        number={1}
+        icon={<Video />}
+        title="Film your shelf"
+        body="Say each price out loud as you film. Photos or a typed list work too."
+      >
+        <div className={clsx(styles.box, styles.film)}>
+          <Image src="/landing/fruit-stand.jpg" alt="" fill sizes="(min-width: 1024px) 30vw, (min-width: 768px) 45vw, 90vw" className={styles.photo} />
           <span className={styles.rec}>REC</span>
           <span className={styles.said}>
             <Mic aria-hidden />
@@ -65,78 +54,91 @@ function Steps() {
       </Step>
       <Step
         number={2}
+        icon={<Sparkles />}
+        magic
         title="Four agents read it"
-        body="Gemini agents list every product with its price. You check it and fix anything with one tap."
-        note="Photos come straight from your video, or Gemini makes a clean one in the app."
+        body="Gemini lists every product and price, with photos from your video. Fix anything with one tap."
       >
-        <div className={styles.panel}>
-          <AgentActivityFeed steps={RUN} variant="recap" className={styles.feed} />
+        <AgentRunDemo className={clsx(styles.box, styles.agents)} />
+      </Step>
+      <Step
+        number={3}
+        icon={<MessageCircle />}
+        title="Customers order in chat"
+        body="Share your link. Orders arrive in your WhatsApp or LINE, ready to reply to."
+      >
+        <div className={clsx(styles.box, styles.chat)}>
+          <p className={styles.incoming}>{MESSAGE}</p>
+          <p className={styles.outgoing}>Thank you! On its way by 5 pm.</p>
         </div>
       </Step>
-      <Step number={3} title="Customers order in chat" body="Share your shop link. Orders arrive in your WhatsApp or LINE, ready to reply to.">
-        <div className={styles.panel}>
-          <p className={styles.bubble}>{MESSAGE}</p>
-        </div>
-      </Step>
-    </Stagger>
+    </GuidedSteps>
   );
 }
 
 // The shop assistant, as the seller sees it: say what changed, check, save.
 function UpdateAnytime() {
   return (
-    <section className={styles.update} aria-labelledby="update-title">
-      <div className={styles.updateCopy}>
-        <Text as="h3" size="2xl" id="update-title">
-          Keep it up to date, your way
-        </Text>
-        <Text tone="muted">
-          Prices changed or something sold out? Just tell your assistant, in a message or a voice note. Nothing
-          changes until you tap Save.
-        </Text>
-        <ul className={styles.ways}>
-          {UPDATE_WAYS.map((way) => (
-            <li key={way.label}>
-              {way.icon}
-              {way.label}
-            </li>
-          ))}
-        </ul>
-      </div>
-      <div className={styles.chat} aria-hidden>
-        <p className={styles.sent}>Mango is 700 now, bananas sold out</p>
-        <div className={styles.reply}>
-          <strong>2 changes ready</strong>
-          <span>
-            <Check /> Mango: Rs 600 → Rs 700
-          </span>
-          <span>
-            <Check /> Bananas: sold out
-          </span>
-          <span className={styles.save}>Save</span>
+    <section aria-labelledby="update-title">
+      <ScrollStagger interval={0.12} className={styles.update}>
+        <div className={styles.updateCopy}>
+          <Text as="h3" size="2xl" id="update-title">
+            Keep it up to date, your way
+          </Text>
+          <Text tone="muted">
+            Prices changed or something sold out? Tell your assistant in a message or a voice note. Nothing changes
+            until you tap Save.
+          </Text>
+          <Text size="sm" tone="subtle">
+            You can also re-film a shelf, snap photos or type a list.
+          </Text>
         </div>
-      </div>
+        <div className={clsx(styles.box, styles.chat, styles.assistant)} aria-hidden>
+          <p className={styles.sent}>Mango is 700 now, bananas sold out</p>
+          <div className={styles.reply}>
+            <strong>2 changes ready</strong>
+            <span>
+              <Check /> Mango: Rs 600 → Rs 700
+            </span>
+            <span>
+              <Check /> Bananas: sold out
+            </span>
+            <span className={styles.save}>Save</span>
+          </div>
+        </div>
+      </ScrollStagger>
     </section>
   );
 }
 
-type StepProps = { number: number; title: string; body: string; note?: string; children: ReactNode };
+type StepProps = { number: number; icon: ReactNode; title: string; body: string; magic?: boolean; children: ReactNode };
 
-function Step({ number, title, body, note, children }: StepProps) {
+// Each step's icon is a node on one line that joins the steps into a process.
+// A magic step's icon flicks like a wand and bursts into stars when it's reached.
+function Step({ number, icon, title, body, magic, children }: StepProps) {
   return (
     <li className={styles.step}>
-      <div className={styles.visual}>{children}</div>
-      <Text as="h3" size="lg" weight={700}>
-        <span className={styles.number}>{number}</span>
-        {title}
-      </Text>
-      <Text tone="muted">{body}</Text>
-      {note && (
-        <Text size="sm" weight={600} className={styles.note}>
-          <Sparkles aria-hidden />
-          {note}
+      <span className={styles.node} aria-hidden>
+        <span className={clsx(styles.icon, magic && styles.magic)}>
+          {magic ? <MagicBurst /> : null}
+          {icon}
+        </span>
+        <span className={styles.line}>
+          <span className={styles.fill} />
+        </span>
+      </span>
+      <div className={styles.heading}>
+        <Text as="span" size="sm" weight={700} tone="brand" className={styles.eyebrow} aria-hidden>
+          Step {number}
         </Text>
-      )}
+        <Text as="h3" size="xl" weight={700}>
+          {title}
+        </Text>
+      </div>
+      <div className={styles.visual}>{children}</div>
+      <Text tone="muted" className={styles.body}>
+        {body}
+      </Text>
     </li>
   );
 }

@@ -1,0 +1,54 @@
+@use "styles" as *;
+
+.burst {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 2;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+
+  // Decorative motion only: no stars at all for reduced motion.
+  @include reduced-motion {
+    display: none;
+  }
+}
+
+// A four-point star, shot out along its angle while it spins and fades.
+.star {
+  --star: calc(var(--size) * var(--grow, 1));
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--star);
+  height: var(--star);
+  margin: calc(var(--star) / -2) 0 0 calc(var(--star) / -2);
+  background: var(--color);
+  clip-path: polygon(50% 0%, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0% 50%, 38% 38%);
+  opacity: 0;
+  animation: burst 1s var(--ease-out) calc(var(--burst-delay, 0ms) + var(--delay)) both;
+  animation-play-state: var(--magic-play, paused);
+}
+
+@keyframes burst {
+  0% {
+    opacity: 0;
+    transform: rotate(var(--angle)) translateX(0) scale(0.3) rotate(0deg);
+  }
+
+  20% {
+    opacity: 1;
+  }
+
+  60% {
+    opacity: 1;
+    transform: rotate(var(--angle)) translateX(calc(var(--distance) * var(--scale) * 0.8)) scale(1.15)
+      rotate(calc(var(--spin) * 0.6));
+  }
+
+  100% {
+    opacity: 0;
+    transform: rotate(var(--angle)) translateX(calc(var(--distance) * var(--scale))) scale(0.8) rotate(var(--spin));
+  }
+}

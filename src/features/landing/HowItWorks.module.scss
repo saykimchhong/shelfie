@@ -3,41 +3,320 @@
 .how {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-16);
 }
 
+// The steps are nodes on one line. Phone and tablet: the line runs down the
+// left. Desktop: three columns, the line runs across, and each row (node,
+// title, picture, text) lines up through subgrid.
 .steps {
+  --node: 44px;
+  --row-gap: var(--space-12);
+  --column-gap: var(--space-10);
   display: grid;
-  gap: var(--space-4);
+  gap: var(--row-gap);
   margin: 0;
   padding: 0;
   list-style: none;
 
-  @include up(md) {
+  @include up(lg) {
+    --node: 52px;
     grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-4) var(--column-gap);
   }
 }
 
+// The picture is the only box; the words sit on the page around it.
 .step {
+  display: grid;
+  grid-template-columns: var(--node) minmax(0, 1fr);
+  grid-template-areas:
+    "node heading"
+    "node visual"
+    "node body";
+  gap: var(--space-3) var(--space-4);
+  align-content: start;
+
+  @include up(md) {
+    @include down(lg) {
+      grid-template-columns: var(--node) minmax(0, 1fr) minmax(0, 1fr);
+      grid-template-areas:
+        "node heading heading"
+        "node visual body";
+      column-gap: var(--space-6);
+    }
+  }
+
+  @include up(lg) {
+    grid-row: span 4;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: subgrid;
+    grid-template-areas: none;
+  }
+}
+
+.node {
+  grid-area: node;
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  align-items: center;
+  // Stacked: reach down through the gap to the next step's node.
+  margin-bottom: calc(-1 * var(--row-gap));
+
+  .step:last-child & {
+    margin-bottom: 0;
+  }
+
+  @include up(lg) {
+    grid-area: auto;
+    flex-direction: row;
+    margin-bottom: 0;
+  }
+}
+
+.icon {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: var(--node);
+  height: var(--node);
+  border-radius: 50%;
+  background: var(--brand-solid);
+  color: var(--on-brand);
+  box-shadow: 0 0 0 6px color-mix(in oklab, var(--brand-solid) 16%, transparent);
+
+  svg {
+    position: relative;
+    z-index: 3;
+    width: 46%;
+    height: 46%;
+  }
+}
+
+// Step 2's stars wait for the step to be reached, then fly as it lights up.
+.magic {
+  --burst-delay: 350ms;
+}
+
+.step[data-state="current"],
+.step[data-state="done"] {
+  --magic-play: running;
+}
+
+.step[data-state="current"] .magic svg {
+  animation: wand 0.8s var(--ease-spring) 0.3s both;
+}
+
+@keyframes wand {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+
+  30% {
+    transform: rotate(-22deg) scale(1.2);
+  }
+
+  60% {
+    transform: rotate(14deg) scale(1.12);
+  }
+
+  100% {
+    transform: rotate(0deg) scale(1);
+  }
+}
+
+// From each node to just short of the next: a faint track and a brand fill.
+.line {
+  position: relative;
+  flex: 1;
+  width: 2px;
+  margin-block: var(--space-2);
+  overflow: hidden;
+  border-radius: var(--radius-full);
+  background: color-mix(in oklab, var(--brand-text) 25%, transparent);
+
+  .step:last-child & {
+    visibility: hidden;
+  }
+
+  @include up(lg) {
+    width: auto;
+    height: 2px;
+    margin-block: 0;
+    margin-inline: var(--space-3) calc(var(--space-3) - var(--column-gap));
+  }
+}
+
+.fill {
+  position: absolute;
+  inset: 0;
+  background: var(--brand-solid);
+  transform-origin: top;
+  transition: transform 0.6s var(--ease-out);
+
+  @include up(lg) {
+    transform-origin: left;
+  }
+}
+
+.heading {
+  grid-area: heading;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  min-width: 0;
+  min-height: var(--node);
+
+  @include up(lg) {
+    grid-area: auto;
+    min-height: 0;
+  }
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.visual {
+  grid-area: visual;
+  display: flex;
+  flex-direction: column;
+
+  @include up(lg) {
+    grid-area: auto;
+  }
+}
+
+.body {
+  grid-area: body;
+  max-width: 40ch;
+
+  @include up(md) {
+    @include down(lg) {
+      align-self: center;
+    }
+  }
+
+  @include up(lg) {
+    grid-area: auto;
+  }
+}
+
+// Guided focus (GuidedSteps sets data-state): steps not reached yet are faint,
+// the current one lights up as its line's fill arrives and its node pings
+// once, and done ones stay lit with their line filled. No data-state (no JS,
+// reduced motion) shows every step lit. Transform and opacity only.
+.step {
+  transition:
+    opacity 0.55s var(--ease-out),
+    transform 0.55s var(--ease-out);
+
+  &[data-state="waiting"] {
+    opacity: 0.3;
+    transform: translate3d(0, 12px, 0);
+  }
+
+  // Lights up as the fill coming from the previous step arrives.
+  &[data-state="current"] {
+    transition-delay: 0.3s;
+  }
+
+  &[data-state="waiting"],
+  &[data-state="current"] {
+    .fill {
+      transform: scaleY(0);
+
+      @include up(lg) {
+        transform: scaleX(0);
+      }
+    }
+  }
+
+  &[data-state="current"] .icon::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: var(--brand-solid);
+    animation: ping 1s var(--ease-out) 0.3s both;
+  }
+
+  // Each step plays its own moment once it's in focus: the price is said,
+  // the order arrives and is answered. (Step 2's agents run in AgentRunDemo.)
+  &[data-state="waiting"] {
+    .said,
+    .incoming,
+    .outgoing {
+      opacity: 0;
+      transform: translate3d(0, 10px, 0) scale(0.94);
+    }
+  }
+
+  &[data-state="current"] {
+    .said {
+      transition-delay: 0.7s;
+    }
+
+    .incoming {
+      transition-delay: 0.6s;
+    }
+
+    .outgoing {
+      transition-delay: 1.3s;
+    }
+  }
+}
+
+.said,
+.incoming,
+.outgoing {
+  transition:
+    opacity 0.45s var(--ease-out),
+    transform 0.45s var(--ease-spring);
+}
+
+.said,
+.outgoing {
+  transform-origin: bottom right;
+}
+
+.incoming {
+  transform-origin: bottom left;
+}
+
+@keyframes ping {
+  from {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: scale(1.9);
+  }
+}
+
+.box {
+  flex: 1;
   padding: var(--space-4);
+  overflow: hidden;
   border-radius: var(--radius-xl);
   background: var(--surface-1);
 }
 
-// Every visual is the same height, so the three titles line up.
-.visual {
-  height: 260px;
-  margin-bottom: var(--space-3);
-}
-
+// Step 1: the seller filming, saying a price.
 .film {
   position: relative;
-  height: 100%;
-  overflow: hidden;
-  border-radius: var(--radius-lg);
+  min-height: 220px;
+  padding: 0;
+  aspect-ratio: 3 / 2;
+
+  @include up(lg) {
+    aspect-ratio: auto;
+  }
 }
 
 .photo {
@@ -79,62 +358,54 @@
   }
 }
 
-.panel {
+// Step 2: the agents' run (AgentRunDemo).
+.agents {
+  display: flex;
+  align-items: center;
+  padding: var(--space-2);
+}
+
+// Step 3 and the assistant: chat bubbles, from the top down.
+.chat {
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  height: 100%;
-  padding: var(--space-3);
-  overflow: hidden;
-  border-radius: var(--radius-lg);
-  background: var(--bg-raised);
+  gap: var(--space-3);
+  font-size: var(--text-sm);
+  line-height: var(--leading-snug);
 }
 
-// One column here: the recap's two columns are too narrow in a card this size.
-.panel .feed {
-  grid-template-columns: 1fr;
-  gap: 0;
-}
-
-// The order as it lands in the seller's chat.
-.bubble {
-  align-self: flex-end;
+// The order as it lands in the seller's WhatsApp or LINE.
+.incoming {
+  align-self: flex-start;
   max-width: 92%;
   margin: 0;
   padding: var(--space-3);
-  border-radius: var(--radius-lg) var(--radius-lg) var(--radius-sm) var(--radius-lg);
-  background: var(--success-soft);
+  border-radius: var(--radius-lg) var(--radius-lg) var(--radius-lg) var(--radius-sm);
+  background: var(--bg-raised);
   color: var(--fg);
-  font-size: var(--text-sm);
-  line-height: var(--leading-snug);
   white-space: pre-line;
 }
 
-.number {
-  display: inline-grid;
-  place-items: center;
-  width: 28px;
-  height: 28px;
-  margin-right: var(--space-2);
-  border-radius: 50%;
-  background: var(--brand-solid);
-  color: var(--on-brand);
-  font-size: var(--text-sm);
-  vertical-align: 2px;
+.outgoing {
+  align-self: flex-end;
+  max-width: 80%;
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-lg) var(--radius-lg) var(--radius-sm) var(--radius-lg);
+  background: var(--success-soft);
+  color: var(--fg);
+  font-weight: 600;
 }
 
-// After the steps: one wide card on keeping the shop current.
+// After the steps: the words, then the assistant beside them on wider screens.
 .update {
   display: grid;
   gap: var(--space-6);
   align-items: center;
-  padding: var(--space-6) var(--space-5);
-  border-radius: var(--radius-xl);
-  background: var(--surface-1);
 
   @include up(md) {
-    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
-    padding: var(--space-8);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 26rem);
+    gap: var(--space-10);
   }
 }
 
@@ -142,42 +413,11 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
+  max-width: 34rem;
 }
 
-.ways {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  margin: var(--space-2) 0 0;
-  padding: 0;
-  list-style: none;
-
-  li {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-2);
-    padding: var(--space-2) var(--space-3);
-    border-radius: var(--radius-full);
-    background: var(--bg-raised);
-    font-size: var(--text-sm);
-    font-weight: 700;
-  }
-
-  svg {
-    width: 16px;
-    height: 16px;
-    color: var(--brand-text);
-  }
-}
-
-.chat {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  padding: var(--space-4);
-  border-radius: var(--radius-lg);
-  background: var(--bg-raised);
-  @include elevation(1);
+.assistant {
+  padding: var(--space-5);
 }
 
 .sent {
@@ -188,7 +428,6 @@
   border-radius: var(--radius-lg) var(--radius-lg) var(--radius-sm) var(--radius-lg);
   background: var(--brand-solid);
   color: var(--on-brand);
-  font-size: var(--text-sm);
   font-weight: 600;
 }
 
@@ -200,8 +439,7 @@
   max-width: 90%;
   padding: var(--space-3);
   border-radius: var(--radius-lg) var(--radius-lg) var(--radius-lg) var(--radius-sm);
-  background: var(--surface-1);
-  font-size: var(--text-sm);
+  background: var(--bg-raised);
 
   span {
     display: inline-flex;
@@ -226,21 +464,46 @@
   font-weight: 700;
 }
 
-// A small aside under a step's text, e.g. where product photos come from.
-.note {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-2);
-  margin-top: var(--space-1);
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-md);
-  background: var(--bg-raised);
+// Scrolled into view (ScrollStagger): the seller's message goes out, the
+// changes come back one by one, then Save. Static with reduced motion.
+.assistant[data-reveal="in"] {
+  .sent {
+    transform-origin: bottom right;
+    animation: bubble-in 0.45s var(--ease-spring) 0.35s backwards;
+  }
 
-  svg {
-    flex-shrink: 0;
-    width: 16px;
-    height: 16px;
-    margin-top: 2px;
-    color: var(--brand-text);
+  .reply {
+    transform-origin: bottom left;
+    animation: bubble-in 0.45s var(--ease-spring) 1s backwards;
+  }
+
+  .reply > span {
+    animation: change-in 0.35s var(--ease-out) backwards;
+  }
+
+  .reply > span:nth-of-type(1) {
+    animation-delay: 1.3s;
+  }
+
+  .reply > span:nth-of-type(2) {
+    animation-delay: 1.5s;
+  }
+
+  .reply > .save {
+    animation: bubble-in 0.4s var(--ease-spring) 1.8s backwards;
+  }
+}
+
+@keyframes bubble-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0) scale(0.94);
+  }
+}
+
+@keyframes change-in {
+  from {
+    opacity: 0;
+    transform: translate3d(-6px, 0, 0);
   }
 }
