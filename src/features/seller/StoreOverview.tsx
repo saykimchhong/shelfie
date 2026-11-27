@@ -71,7 +71,7 @@ export function StoreOverview({ store }: { store: Store }) {
             <Stack direction="row" align="center" gap={3}>
               <Avatar name={store.name} src={store.logoUrl} size={56} />
               <Stack gap={1} className={styles.identity}>
-                <Text as="h1" size="2xl">
+                <Text as="h1" size="2xl" clamp={2}>
                   {store.name}
                 </Text>
                 <a href={storeUrl(store.slug)} target="_blank" rel="noreferrer" className={styles.link}>
@@ -135,16 +135,9 @@ export function StoreOverview({ store }: { store: Store }) {
               </Text>
               {products.status === "ready" ? <Badge tone="brand">{products.data.length}</Badge> : null}
             </Stack>
-            <Stack direction="row" gap={2}>
-              {products.data.length > 0 ? (
-                <Button variant="ghost" size="sm" icon={<ListX />} onClick={() => setClearing(true)}>
-                  Clear all
-                </Button>
-              ) : null}
-              <Button variant="soft" size="sm" icon={<Plus />} onClick={() => setEditing({ product: null })}>
-                Add
-              </Button>
-            </Stack>
+            <Button variant="soft" size="sm" icon={<Plus />} onClick={() => setEditing({ product: null })}>
+              Add
+            </Button>
           </Stack>
 
           {products.status === "loading" ? (
@@ -173,6 +166,15 @@ export function StoreOverview({ store }: { store: Store }) {
               ))}
             </Stagger>
           )}
+
+          {/* At the end of the list, away from everyday buttons: it deletes everything. */}
+          {products.data.length > 0 ? (
+            <div className={styles.clearAll}>
+              <Button variant="ghost" size="sm" icon={<ListX />} onClick={() => setClearing(true)}>
+                Clear all products
+              </Button>
+            </div>
+          ) : null}
         </section>
       </Reveal>
 

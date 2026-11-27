@@ -17,6 +17,7 @@ import type { LabelLanguage, PublicStore } from "@/domain/store";
 import { DEFAULT_THEME, type Template } from "@/domain/theme";
 import { initials } from "@/lib/format";
 import { isDarkColor } from "@/lib/palette";
+import { categoriesOf, categoryKey } from "./categories";
 import { hoursLabel } from "./labels";
 import { LanguageProvider, usePageLanguage, useWords } from "./language";
 import { LanguagePicker } from "./LanguagePicker";
@@ -62,13 +63,12 @@ export function StorefrontView({ store, products, embedded, startIn }: Storefron
   const type = shopTypeOf(store);
 
   const canOrder = Boolean(store.contact.whatsapp || store.contact.line);
-  const categories = useMemo(
-    () => [...new Set(products.map((product) => product.category).filter((value): value is string => !!value))],
-    [products],
-  );
+  const categories = useMemo(() => categoriesOf(products), [products]);
   const searchable = showsSearch(products.length, type.manyItems);
   const searched = searchable && query.trim() ? products.filter((product) => matchesSearch(product, query)) : products;
-  const visible = category ? searched.filter((product) => product.category === category) : searched;
+  const visible = category
+    ? searched.filter((product) => product.category && categoryKey(product.category) === categoryKey(category))
+    : searched;
   // Menu and shelves show every product in sections; their chips jump to one.
   const sectioned = theme.template === "menu" || theme.template === "shelves";
   const sections = sectioned ? sectionsOf(searched, words.otherProducts) : [];

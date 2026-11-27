@@ -1,0 +1,49 @@
+@use "styles" as *;
+
+.saved {
+  padding-block: var(--space-10);
+}
+
+// A big tick that pops in once: the "done" moment.
+.badge {
+  display: grid;
+  place-items: center;
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  background: var(--success-soft);
+  color: var(--success);
+  animation: pop 0.5s var(--ease-spring) 0.1s backwards;
+
+  svg {
+    width: 44px;
+    height: 44px;
+    stroke-width: 2.5;
+  }
+
+  // Feedback, so keep it (tier 2) as a short fade.
+  @include reduced-motion {
+    animation: fade 0.2s ease-out backwards;
+  }
+}
+
+.detail {
+  max-width: 34ch;
+}
+
+.actions {
+  width: min(100%, 320px);
+}
+
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}

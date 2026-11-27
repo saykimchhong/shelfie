@@ -37,13 +37,15 @@ import { mergeShelf, toKnownProducts, type Missing } from "./merge";
 import { MergeReview } from "./MergeReview";
 import { PhotoStep, type PhotoActions } from "./PhotoStep";
 import type { CaptureTarget } from "./ShelfPicker";
+import { SavedScreen } from "./SavedScreen";
 import { SourcePicker } from "./SourcePicker";
 import { Stepper } from "./Stepper";
 import styles from "./CapturePanel.module.scss";
 
-type Phase = "pick" | "reading" | "review" | "photos" | "error";
+type Phase = "pick" | "reading" | "review" | "photos" | "saved" | "error";
 
-const STEP_INDEX: Record<Phase, 0 | 1 | 2> = { pick: 0, reading: 0, error: 0, review: 1, photos: 2 };
+// "saved" is past the last step, so every step shows as done.
+const STEP_INDEX: Record<Phase, 0 | 1 | 2 | 3> = { pick: 0, reading: 0, error: 0, review: 1, photos: 2, saved: 3 };
 
 export function CapturePanel() {
   const user = useSignedInUser();
@@ -102,7 +104,6 @@ const RETRY_HINT: Record<CaptureSource, string> = {
 function Capture({ store, products }: { store: Store; products: Product[] }) {
   const { getIdToken } = useAuth();
   const refreshStorefront = useRefreshStorefront();
-  const router = useRouter();
 
   const [phase, setPhase] = useState<Phase>("pick");
   const [target, setTarget] = useState<CaptureTarget>({ mode: "add", shelf: UNSORTED });
@@ -118,6 +119,8 @@ function Capture({ store, products }: { store: Store; products: Product[] }) {
   const [shrinking, setShrinking] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  // What the last save did, for the "products are live" screen.
+  const [saved, setSaved] = useState<{ added: number; updated: number } | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   // Bumped per read, so a stale read's photos never land on a newer one.
   const runRef = useRef(0);
@@ -306,7 +309,9 @@ function Capture({ store, products }: { store: Store; products: Product[] }) {
       // Timestamp-based positions keep new items after older ones, in video order.
       await saveProductChanges(store.slug, { add, update: updates }, Date.now());
       await refreshStorefront(store.slug);
-      router.push("/dashboard");
+      setSaved({ added: add.length, updated: updates.length });
+      setSaving(false);
+      setPhase("saved");
     } catch (cause) {
       console.error(cause);
       setError("Couldn't save the products. Try again.");
@@ -452,6 +457,8 @@ function Capture({ store, products }: { store: Store; products: Product[] }) {
               </ActionBar>
             </Stack>
           ) : null}
+
+          {phase === "saved" && saved ? <SavedScreen store={store} added={saved.added} updated={saved.updated} /> : null}
 
           {phase === "error" ? (
             <EmptyState

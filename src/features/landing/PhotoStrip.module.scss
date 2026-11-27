@@ -1,0 +1,75 @@
+@use "styles" as *;
+
+.strip {
+  overflow: hidden;
+  padding-block: var(--space-2);
+  // Soft edges instead of a hard cut (static: never animated).
+  mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+
+  @include reduced-motion {
+    overflow-x: auto;
+  }
+}
+
+// Each item carries its own right padding instead of a gap, so the first half
+// of the track is exactly half its width and -50% loops without a seam.
+.track {
+  display: flex;
+  width: max-content;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  will-change: transform;
+  animation: drift 70s linear infinite;
+
+  .strip:hover & {
+    animation-play-state: paused;
+  }
+
+  // A decorative loop: stop it for reduced motion.
+  @include reduced-motion {
+    animation: none;
+  }
+}
+
+.item {
+  flex-shrink: 0;
+  padding-right: var(--space-4);
+}
+
+.card {
+  position: relative;
+  width: 200px;
+  aspect-ratio: 4 / 5;
+  margin: 0;
+  overflow: hidden;
+  border-radius: var(--radius-xl);
+  background: var(--surface-1);
+  @include elevation(1);
+
+  @include up(md) {
+    width: 260px;
+  }
+}
+
+.photo {
+  object-fit: cover;
+}
+
+.label {
+  position: absolute;
+  left: var(--space-3);
+  bottom: var(--space-3);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  background: color-mix(in oklab, var(--bg-raised) 90%, transparent);
+  color: var(--fg);
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+
+@keyframes drift {
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { SiteFooter } from "@/features/landing";
 import { TemplateGallery } from "./TemplateGallery";
 
 export const metadata: Metadata = {
@@ -7,5 +8,10 @@ export const metadata: Metadata = {
 };
 
 export default function TemplatesPage() {
-  return <TemplateGallery />;
+  return (
+    <>
+      <TemplateGallery />
+      <SiteFooter />
+    </>
+  );
 }

@@ -106,3 +106,9 @@
   padding: 0;
   list-style: none;
 }
+
+.clearAll {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--space-3);
+}
